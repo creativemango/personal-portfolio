@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -20,16 +19,21 @@ import java.util.stream.Collectors;
 public class BlogPostRepositoryImpl implements BlogPostRepository {
     
     // 使用内存存储作为示例，实际项目中可以使用数据库
-    private final ConcurrentHashMap<UUID, BlogPost> blogPostStore = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, BlogPost> blogPostStore = new ConcurrentHashMap<>();
     
     @Override
     public BlogPost save(BlogPost blogPost) {
+        // 如果ID为空，生成新的ID
+        if (blogPost.getId() == null) {
+            Long newId = System.currentTimeMillis();
+            blogPost.setId(newId);
+        }
         blogPostStore.put(blogPost.getId(), blogPost);
         return blogPost;
     }
     
     @Override
-    public Optional<BlogPost> findById(UUID id) {
+    public Optional<BlogPost> findById(Long id) {
         return Optional.ofNullable(blogPostStore.get(id));
     }
     
@@ -42,19 +46,19 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
     @Override
     public List<BlogPost> findPublishedPosts() {
         return blogPostStore.values().stream()
-                .filter(BlogPost::isPublished)
+                .filter(post -> post.getIsPublished())
                 .collect(Collectors.toList());
     }
     
     @Override
     public List<BlogPost> findByAuthor(String author) {
         return blogPostStore.values().stream()
-                .filter(post -> post.getAuthor().equals(author))
+                .filter(post -> post.getAuthor() != null && post.getAuthor().getUsername().equals(author))
                 .collect(Collectors.toList());
     }
     
     @Override
-    public void delete(UUID id) {
+    public void delete(Long id) {
         blogPostStore.remove(id);
     }
     

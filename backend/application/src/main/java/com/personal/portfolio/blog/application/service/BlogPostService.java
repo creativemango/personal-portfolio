@@ -1,12 +1,12 @@
 package com.personal.portfolio.blog.application.service;
 
 import com.personal.portfolio.blog.domain.entity.BlogPost;
+import com.personal.portfolio.blog.domain.entity.User;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 博客文章应用服务 - 协调领域对象和基础设施
@@ -20,13 +20,13 @@ public class BlogPostService {
     /**
      * 创建博客文章
      */
-    public BlogPost createBlogPost(String title, String content, String author) {
+    public BlogPost createBlogPost(String title, String slug, String content, User author) {
         // 检查标题是否已存在
         if (blogPostRepository.existsByTitle(title)) {
             throw new IllegalArgumentException("博客标题已存在: " + title);
         }
         
-        BlogPost blogPost = new BlogPost(title, content, author);
+        BlogPost blogPost = new BlogPost(title, slug, content, author);
         
         // 验证博客文章是否有效
         if (!blogPost.isValid()) {
@@ -39,7 +39,7 @@ public class BlogPostService {
     /**
      * 发布博客文章
      */
-    public BlogPost publishBlogPost(UUID id) {
+    public BlogPost publishBlogPost(Long id) {
         BlogPost blogPost = blogPostRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
         
@@ -64,7 +64,7 @@ public class BlogPostService {
     /**
      * 根据ID获取博客文章
      */
-    public BlogPost getBlogPostById(UUID id) {
+    public BlogPost getBlogPostById(Long id) {
         return blogPostRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
     }
@@ -72,7 +72,7 @@ public class BlogPostService {
     /**
      * 更新博客文章
      */
-    public BlogPost updateBlogPost(UUID id, String title, String content) {
+    public BlogPost updateBlogPost(Long id, String title, String slug, String content, String summary, String coverImage) {
         BlogPost blogPost = blogPostRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
         
@@ -81,14 +81,14 @@ public class BlogPostService {
             throw new IllegalArgumentException("博客标题已存在: " + title);
         }
         
-        blogPost.updateContent(title, content);
+        blogPost.updateContent(title, slug, content, summary, coverImage);
         return blogPostRepository.save(blogPost);
     }
     
     /**
      * 删除博客文章
      */
-    public void deleteBlogPost(UUID id) {
+    public void deleteBlogPost(Long id) {
         if (!blogPostRepository.findById(id).isPresent()) {
             throw new IllegalArgumentException("博客文章不存在: " + id);
         }

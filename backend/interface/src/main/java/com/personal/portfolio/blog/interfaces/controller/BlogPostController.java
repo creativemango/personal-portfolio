@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 博客文章控制器 - 处理HTTP请求和响应
@@ -26,8 +25,11 @@ public class BlogPostController {
      */
     @PostMapping
     public ResponseEntity<BlogPost> createBlogPost(@RequestBody CreateBlogPostRequest request) {
+        // 注意：这里需要先获取User对象，实际项目中可能需要用户认证
+        // 这里暂时简化处理，实际使用时需要根据认证信息获取当前用户
         BlogPost blogPost = blogPostService.createBlogPost(
             request.getTitle(), 
+            request.getSlug(), 
             request.getContent(), 
             request.getAuthor()
         );
@@ -56,7 +58,7 @@ public class BlogPostController {
      * 根据ID获取博客文章
      */
     @GetMapping("/{id}")
-    public ResponseEntity<BlogPost> getBlogPostById(@PathVariable UUID id) {
+    public ResponseEntity<BlogPost> getBlogPostById(@PathVariable Long id) {
         BlogPost blogPost = blogPostService.getBlogPostById(id);
         return ResponseEntity.ok(blogPost);
     }
@@ -65,7 +67,7 @@ public class BlogPostController {
      * 发布博客文章
      */
     @PutMapping("/{id}/publish")
-    public ResponseEntity<BlogPost> publishBlogPost(@PathVariable UUID id) {
+    public ResponseEntity<BlogPost> publishBlogPost(@PathVariable Long id) {
         BlogPost blogPost = blogPostService.publishBlogPost(id);
         return ResponseEntity.ok(blogPost);
     }
@@ -75,12 +77,15 @@ public class BlogPostController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<BlogPost> updateBlogPost(
-            @PathVariable UUID id, 
+            @PathVariable Long id, 
             @RequestBody UpdateBlogPostRequest request) {
         BlogPost blogPost = blogPostService.updateBlogPost(
             id, 
             request.getTitle(), 
-            request.getContent()
+            request.getSlug(), 
+            request.getContent(),
+            request.getSummary(),
+            request.getCoverImage()
         );
         return ResponseEntity.ok(blogPost);
     }
@@ -89,7 +94,7 @@ public class BlogPostController {
      * 删除博客文章
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBlogPost(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteBlogPost(@PathVariable Long id) {
         blogPostService.deleteBlogPost(id);
         return ResponseEntity.noContent().build();
     }
@@ -101,8 +106,11 @@ public class BlogPostController {
     @Setter
     public static class CreateBlogPostRequest {
         private String title;
+        private String slug;
         private String content;
-        private String author;
+        private String summary;
+        private String coverImage;
+        private com.personal.portfolio.blog.domain.entity.User author;
     }
     
     /**
@@ -112,6 +120,9 @@ public class BlogPostController {
     @Setter
     public static class UpdateBlogPostRequest {
         private String title;
+        private String slug;
         private String content;
+        private String summary;
+        private String coverImage;
     }
 }
