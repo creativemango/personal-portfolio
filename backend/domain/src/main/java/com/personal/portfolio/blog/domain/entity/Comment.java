@@ -15,33 +15,60 @@ import java.time.LocalDateTime;
 @Setter
 public class Comment {
     
+    /**
+     * 评论ID，主键，自增
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    /**
+     * 评论内容，必填，TEXT类型
+     */
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
     
+    /**
+     * 是否已批准，默认未批准
+     */
     @Column(name = "is_approved", nullable = false)
     private Boolean isApproved = false;
     
+    /**
+     * 点赞数，默认0
+     */
     @Column(name = "like_count", nullable = false)
     private Integer likeCount = 0;
     
+    /**
+     * 创建时间，必填
+     */
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
+    /**
+     * 更新时间，必填
+     */
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
+    /**
+     * 评论作者，多对一关系，必填
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
     
+    /**
+     * 所属博客文章，多对一关系，必填
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "blog_post_id", nullable = false)
     private BlogPost blogPost;
     
+    /**
+     * 父级评论，多对一关系，可选（用于回复评论）
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
     private Comment parentComment;

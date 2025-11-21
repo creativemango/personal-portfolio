@@ -17,31 +17,58 @@ import java.util.List;
 @Setter
 public class Category {
     
+    /**
+     * 分类ID，主键，自增
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    /**
+     * 分类名称，唯一，必填，最大长度50字符
+     */
     @Column(name = "name", unique = true, nullable = false, length = 50)
     private String name;
     
+    /**
+     * 分类别名，用于URL，唯一，必填，最大长度50字符
+     */
     @Column(name = "slug", unique = true, nullable = false, length = 50)
     private String slug;
     
+    /**
+     * 分类描述，可选，最大长度200字符
+     */
     @Column(name = "description", length = 200)
     private String description;
     
+    /**
+     * 分类颜色，可选，最大长度7字符（十六进制颜色代码）
+     */
     @Column(name = "color", length = 7)
     private String color;
     
+    /**
+     * 是否激活，默认激活
+     */
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
     
+    /**
+     * 创建时间，必填
+     */
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
+    /**
+     * 更新时间，必填
+     */
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
+    /**
+     * 博客文章列表，一对多关系
+     */
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<BlogPost> blogPosts = new ArrayList<>();
     
