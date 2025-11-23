@@ -90,7 +90,7 @@ const Navbar = ({ user, setUser }) => {
                   border: '1px solid rgba(255, 255, 255, 0.3)'
                 }}
               >
-                退出
+                注销
               </button>
             </div>
           ) : (

@@ -17,10 +17,27 @@ const Home = ({ user }) => {
               </Link>
             </div>
           ) : (
-            <div>
-              <p>请登录以访问完整功能</p>
-              <Link to="/login" className="btn">
-                使用 GitHub 登录
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '2rem',
+              borderRadius: '10px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              textAlign: 'center',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ color: 'white', marginBottom: '1rem' }}>
+                请登录以访问完整功能
+              </h3>
+              <p style={{ color: 'rgba(255, 255, 255, 0.8)', marginBottom: '1.5rem' }}>
+                登录后可以访问博客文章、发表评论等更多功能
+              </p>
+              <Link to="/login" className="btn" style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                fontSize: '1.1rem',
+                padding: '0.8rem 2rem'
+              }}>
+                🚀 使用 GitHub 登录
               </Link>
             </div>
           )}
