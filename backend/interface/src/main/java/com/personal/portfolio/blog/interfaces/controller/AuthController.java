@@ -1,12 +1,19 @@
 package com.personal.portfolio.blog.interfaces.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,6 +69,47 @@ public class AuthController {
     @ResponseBody
     public Map<String, Object> getApiUserProfile(@AuthenticationPrincipal OAuth2User principal) {
         return getUserProfile(principal);
+    }
+
+    /**
+     * API端点：退出登录
+     */
+    @PostMapping("/api/logout")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> apiLogout(HttpServletRequest request, HttpServletResponse response) {
+        // 清除认证信息
+        SecurityContextHolder.clearContext();
+        
+        // 使当前会话失效
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        
+        // 清除所有相关cookie
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("JSESSIONID") || 
+                    cookie.getName().equals("grafana_session") || 
+                    cookie.getName().equals("grafana_session_expiry")) {
+                    cookie.setValue("");
+                    cookie.setPath("/");
+                    cookie.setMaxAge(0);
+                    response.addCookie(cookie);
+                }
+            }
+        }
+        
+        Map<String, String> result = new HashMap<>();
+        result.put("message", "退出登录成功");
+        result.put("redirect_url", "/");
+        
+        return ResponseEntity.ok()
+                .header("Set-Cookie", "JSESSIONID=; Path=/; HttpOnly; Max-Age=0")
+                .header("Set-Cookie", "grafana_session=; Path=/; Max-Age=0")
+                .header("Set-Cookie", "grafana_session_expiry=; Path=/; Max-Age=0")
+                .body(result);
     }
 
     /**

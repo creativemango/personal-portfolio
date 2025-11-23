@@ -5,12 +5,13 @@ import { logout } from '../services/authService'
 const Navbar = ({ user, setUser }) => {
   const handleLogout = async () => {
     try {
-      await logout()
-      setUser(null)
+      await logout();
+      setUser(null); // 立即清空用户状态
+      window.location.href = '/';
     } catch (error) {
-      console.error('Logout failed:', error)
-      setUser(null)
-      window.location.href = '/'
+      console.error('Logout failed:', error);
+      setUser(null);
+      window.location.href = '/';
     }
   }
 

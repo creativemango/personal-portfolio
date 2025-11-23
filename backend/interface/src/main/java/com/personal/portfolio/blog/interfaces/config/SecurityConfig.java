@@ -6,6 +6,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+import javax.servlet.http.Cookie;
+
 /**
  * Spring Security 配置类
  */
@@ -18,7 +20,7 @@ public class SecurityConfig {
         http
             .authorizeRequests(authorize -> authorize
                 // 允许公开访问的端点
-                .antMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", "/api/user/profile").permitAll()
+                .antMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", "/api/user/profile", "/api/logout").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
             )
@@ -28,9 +30,40 @@ public class SecurityConfig {
                 .failureUrl("http://localhost:3001/login?error=true")
             )
             .logout(logout -> logout
+                .logoutUrl("/api/logout")
                 .logoutSuccessUrl("http://localhost:3001/")
                 .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID", "grafana_session", "grafana_session_expiry")
+                .addLogoutHandler((request, response, authentication) -> {
+                    Cookie[] cookies = request.getCookies();
+                    if (cookies != null) {
+                        for (Cookie cookie : cookies) {
+                            if (cookie.getName().equals("JSESSIONID")) {
+                                // 清除 Path=/ 的 JSESSIONID
+                                Cookie clearCookieRoot = new Cookie("JSESSIONID", "");
+                                clearCookieRoot.setPath("/");
+                                clearCookieRoot.setMaxAge(0);
+                                clearCookieRoot.setHttpOnly(cookie.isHttpOnly());
+                                response.addCookie(clearCookieRoot);
+
+                                // 清除 Path=/api 的 JSESSIONID
+                                Cookie clearCookieApi = new Cookie("JSESSIONID", "");
+                                clearCookieApi.setPath("/api");
+                                clearCookieApi.setMaxAge(0);
+                                clearCookieApi.setHttpOnly(cookie.isHttpOnly());
+                                response.addCookie(clearCookieApi);
+                            }
+                            if (cookie.getName().equals("grafana_session") || cookie.getName().equals("grafana_session_expiry")) {
+                                Cookie clearCookie = new Cookie(cookie.getName(), "");
+                                clearCookie.setPath("/");
+                                clearCookie.setMaxAge(0);
+                                clearCookie.setHttpOnly(cookie.isHttpOnly());
+                                response.addCookie(clearCookie);
+                            }
+                        }
+                    }
+                })
                 .permitAll()
             )
             // 禁用CSRF保护以便于开发（生产环境应该启用）

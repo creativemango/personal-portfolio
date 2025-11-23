@@ -33,6 +33,10 @@ api.interceptors.response.use(
 export const checkAuth = async () => {
   try {
     const response = await api.get('/user/profile')
+    // 如果返回的数据包含错误信息，说明未登录
+    if (response.data && response.data.data && response.data.data.error) {
+      return null
+    }
     return response.data
   } catch (error) {
     if (error.response?.status === 401) {
@@ -50,20 +54,43 @@ export const getGitHubLoginUrl = () => {
 // 退出登录
 export const logout = async () => {
   try {
-    // 直接调用后端的退出端点
-    await fetch('http://localhost:8080/logout', {
-      method: 'POST',
-      credentials: 'include', // 包含cookie
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    // 清除前端状态
-    window.location.href = '/'
+    console.log('开始退出登录...');
+    
+    // 调用后端安全退出接口
+    const response = await api.post('/logout');
+    console.log('退出API响应:', response.data);
+    
+    // 清理本地存储
+    localStorage.clear();
+    sessionStorage.clear();
+    console.log('本地存储已清除');
+    
+    // 强制刷新页面
+    console.log('正在重定向到首页...');
+    window.location.href = '/';
   } catch (error) {
-    console.error('Logout error:', error)
-    // 即使API调用失败，也重定向到首页
-    window.location.href = '/'
+    console.error('退出登录错误:', error);
+    
+    // 如果API调用失败，使用备用方案
+    try {
+      console.log('尝试备用退出方案...');
+      await fetch('http://localhost:8080/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      console.log('备用退出方案成功');
+    } catch (e) {
+      console.error('备用退出方案失败:', e);
+    }
+    
+    // 清理本地存储
+    localStorage.clear();
+    sessionStorage.clear();
+    console.log('本地存储已清除（备用方案）');
+    
+    // 强制刷新页面
+    console.log('正在重定向到首页（备用方案）...');
+    window.location.href = '/';
   }
 }
 
