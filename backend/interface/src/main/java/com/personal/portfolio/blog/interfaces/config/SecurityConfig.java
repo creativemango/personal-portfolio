@@ -18,19 +18,20 @@ public class SecurityConfig {
         http
             .authorizeRequests(authorize -> authorize
                 // 允许公开访问的端点
-                .antMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**").permitAll()
+                .antMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", "/api/user/profile").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
-                .defaultSuccessUrl("/user/profile", true)
-                .failureUrl("/login?error=true")
+                .defaultSuccessUrl("http://localhost:3001/home", true)
+                .failureUrl("http://localhost:3001/login?error=true")
             )
             .logout(logout -> logout
-                .logoutSuccessUrl("/")
+                .logoutSuccessUrl("http://localhost:3001/")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
+                .permitAll()
             )
             // 禁用CSRF保护以便于开发（生产环境应该启用）
             .csrf().disable()

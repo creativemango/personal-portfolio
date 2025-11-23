@@ -56,6 +56,15 @@ public class AuthController {
     }
 
     /**
+     * API端点：获取当前用户信息
+     */
+    @GetMapping("/api/user/profile")
+    @ResponseBody
+    public Map<String, Object> getApiUserProfile(@AuthenticationPrincipal OAuth2User principal) {
+        return getUserProfile(principal);
+    }
+
+    /**
      * 首页
      */
     @GetMapping("/")
