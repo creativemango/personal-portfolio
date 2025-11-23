@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 个人作品集</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        
+        .github-login-btn {
+            background-color: #24292e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        
+        .github-login-btn:hover {
+            background-color: #444d56;
+        }
+        
+        .error-message {
+            color: #d73a49;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: #ffeef0;
+            border-radius: 4px;
+            border: 1px solid #d73a49;
+        }
+        
+        .info-message {
+            color: #0366d6;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background-color: #f1f8ff;
+            border-radius: 4px;
+            border: 1px solid #0366d6;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>登录到个人作品集</h1>
+        
+        <a href="/oauth2/authorization/github" class="github-login-btn">
+            使用 GitHub 登录
+        </a>
+        
+        <div th:if="${param.error}" class="error-message">
+            登录失败，请重试
+        </div>
+        
+        <div th:if="${param.logout}" class="info-message">
+            您已成功退出登录
+        </div>
+        
+        <div style="margin-top: 2rem; color: #666; font-size: 14px;">
+            <p>使用您的GitHub账户登录</p>
+        </div>
+    </div>
+</body>
+</html>

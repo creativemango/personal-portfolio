@@ -61,16 +61,34 @@ public class User {
     private String bio;
     
     /**
+     * GitHub用户ID，可选
+     */
+    @Column(name = "github_id")
+    private Long githubId;
+
+    /**
+     * GitHub用户名，可选
+     */
+    @Column(name = "github_username", length = 50)
+    private String githubUsername;
+
+    /**
      * 用户角色，必填，最大长度20字符，默认USER
      */
     @Column(name = "role", nullable = false, length = 20)
     private String role = "USER";
-    
+
     /**
      * 是否激活，默认激活
      */
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
+
+    /**
+     * 登录方式：LOCAL, GITHUB
+     */
+    @Column(name = "login_type", nullable = false, length = 10)
+    private String loginType = "LOCAL";
     
     /**
      * 创建时间，必填
