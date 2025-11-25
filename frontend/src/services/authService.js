@@ -10,7 +10,8 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config) => {
-    console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`)
+    console.log(`Making ${config.method?.toUpperCase()} request to ${config.baseURL}${config.url}`)
+    console.log('Full request config:', config)
     return config
   },
   (error) => {
@@ -48,7 +49,7 @@ export const checkAuth = async () => {
 
 // 获取GitHub登录URL
 export const getGitHubLoginUrl = () => {
-  return 'http://localhost:8080/oauth2/authorization/github'
+  return '/oauth2/authorization/github'
 }
 
 // 退出登录
@@ -74,7 +75,7 @@ export const logout = async () => {
     // 如果API调用失败，使用备用方案
     try {
       console.log('尝试备用退出方案...');
-      await fetch('http://localhost:8080/logout', {
+      await fetch('/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -112,6 +113,50 @@ export const getBlogPost = async (id) => {
     return response.data
   } catch (error) {
     console.error('Error fetching blog post:', error)
+    throw error
+  }
+}
+
+// 创建博客文章
+export const createBlogPost = async (blogPostData) => {
+  try {
+    const response = await api.post('/blog/posts', blogPostData)
+    return response.data
+  } catch (error) {
+    console.error('Error creating blog post:', error)
+    throw error
+  }
+}
+
+// 更新博客文章
+export const updateBlogPost = async (id, blogPostData) => {
+  try {
+    const response = await api.put(`/blog/posts/${id}`, blogPostData)
+    return response.data
+  } catch (error) {
+    console.error('Error updating blog post:', error)
+    throw error
+  }
+}
+
+// 删除博客文章
+export const deleteBlogPost = async (id) => {
+  try {
+    const response = await api.delete(`/blog/posts/${id}`)
+    return response.data
+  } catch (error) {
+    console.error('Error deleting blog post:', error)
+    throw error
+  }
+}
+
+// 发布博客文章
+export const publishBlogPost = async (id) => {
+  try {
+    const response = await api.put(`/blog/posts/${id}/publish`)
+    return response.data
+  } catch (error) {
+    console.error('Error publishing blog post:', error)
     throw error
   }
 }

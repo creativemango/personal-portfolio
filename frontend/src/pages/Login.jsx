@@ -10,7 +10,7 @@ const Login = ({ user, setUser }) => {
 
   const handleGitHubLogin = () => {
     // 重定向到GitHub OAuth2授权页面
-    window.location.href = 'http://localhost:8080/oauth2/authorization/github'
+    window.location.href = getGitHubLoginUrl()
   }
 
   return (

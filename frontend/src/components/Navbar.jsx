@@ -33,6 +33,11 @@ const Navbar = ({ user, setUser }) => {
               <Link to="/home">博客</Link>
             </li>
           )}
+          {user && (
+            <li>
+              <Link to="/creator-center">创作者中心</Link>
+            </li>
+          )}
           <li>
             <Link to="/about">关于</Link>
           </li>

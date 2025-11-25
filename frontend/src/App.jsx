@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import BlogHome from './pages/BlogHome'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import CreatorCenter from './pages/CreatorCenter'
 import { checkAuth } from './services/authService'
 import './App.css'
 
@@ -52,6 +53,12 @@ function App() {
           />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route 
+            path="/creator-center" 
+            element={
+              user ? <CreatorCenter user={user} /> : <Navigate to="/login" replace />
+            } 
+          />
         </Routes>
       </main>
     </div>
