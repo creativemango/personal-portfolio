@@ -14,7 +14,7 @@ import java.util.List;
  * 博客文章控制器 - 处理HTTP请求和响应
  */
 @RestController
-@RequestMapping("/blog/posts")
+@RequestMapping("/api/blog/posts")
 @RequiredArgsConstructor
 public class BlogPostController {
     
@@ -110,6 +110,8 @@ public class BlogPostController {
         private String content;
         private String summary;
         private String coverImage;
+        private String category;
+        private List<String> tags;
         private com.personal.portfolio.blog.domain.entity.User author;
     }
     
