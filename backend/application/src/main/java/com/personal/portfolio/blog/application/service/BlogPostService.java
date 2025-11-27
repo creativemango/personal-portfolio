@@ -20,13 +20,13 @@ public class BlogPostService {
     /**
      * 创建博客文章
      */
-    public BlogPost createBlogPost(String title, String slug, String content, User author) {
+    public BlogPost createBlogPost(String title, String slug, String content, Long authorId) {
         // 检查标题是否已存在
         if (blogPostRepository.existsByTitle(title)) {
             throw new IllegalArgumentException("博客标题已存在: " + title);
         }
         
-        BlogPost blogPost = new BlogPost(title, slug, content, author);
+        BlogPost blogPost = new BlogPost(title, slug, content, authorId);
         
         // 验证博客文章是否有效
         if (!blogPost.isValid()) {

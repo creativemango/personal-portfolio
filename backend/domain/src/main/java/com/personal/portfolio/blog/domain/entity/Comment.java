@@ -2,15 +2,14 @@ package com.personal.portfolio.blog.domain.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import com.baomidou.mybatisplus.annotation.*;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
  * 评论实体类
  */
-@Entity
-@Table(name = "comments")
+@TableName("comments")
 @Getter
 @Setter
 public class Comment {
@@ -18,80 +17,73 @@ public class Comment {
     /**
      * 评论ID，主键，自增
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
     
     /**
-     * 评论内容，必填，TEXT类型
+     * 评论内容，必填，最大长度1000字符
      */
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
     
     /**
-     * 是否已批准，默认未批准
+     * 评论者名称，必填，最大长度50字符
      */
-    @Column(name = "is_approved", nullable = false)
-    private Boolean isApproved = false;
+    private String authorName;
     
     /**
-     * 点赞数，默认0
+     * 评论者邮箱，可选，最大长度100字符
      */
-    @Column(name = "like_count", nullable = false)
-    private Integer likeCount = 0;
+    private String authorEmail;
+    
+    /**
+     * 评论者网站，可选，最大长度255字符
+     */
+    private String authorWebsite;
+    
+    /**
+     * 是否已审核，默认未审核
+     */
+    private Boolean isApproved = false;
     
     /**
      * 创建时间，必填
      */
-    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
     /**
      * 更新时间，必填
      */
-    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
     /**
-     * 评论作者，多对一关系，必填
+     * 博客文章ID，必填
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
+    private Long blogPostId;
     
     /**
-     * 所属博客文章，多对一关系，必填
+     * 父评论ID，可选（用于回复评论）
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "blog_post_id", nullable = false)
-    private BlogPost blogPost;
+    private Long parentId;
     
     /**
-     * 父级评论，多对一关系，可选（用于回复评论）
+     * 用户ID，可选（如果评论者是注册用户）
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_comment_id")
-    private Comment parentComment;
+    private Long userId;
     
     public Comment() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
     
-    public Comment(String content, User author, BlogPost blogPost) {
+    public Comment(String content, String authorName, Long blogPostId) {
         this();
         this.content = content;
-        this.author = author;
-        this.blogPost = blogPost;
-    }
-    
-    public Comment(String content, User author, BlogPost blogPost, Comment parentComment) {
-        this(content, author, blogPost);
-        this.parentComment = parentComment;
+        this.authorName = authorName;
+        this.blogPostId = blogPostId;
     }
     
     /**
-     * 批准评论
+     * 审核评论
      */
     public void approve() {
         this.isApproved = true;
@@ -99,37 +91,11 @@ public class Comment {
     }
     
     /**
-     * 拒绝评论
+     * 取消审核评论
      */
-    public void reject() {
+    public void unapprove() {
         this.isApproved = false;
         this.updatedAt = LocalDateTime.now();
-    }
-    
-    /**
-     * 更新评论内容
-     */
-    public void updateContent(String content) {
-        this.content = content;
-        this.updatedAt = LocalDateTime.now();
-    }
-    
-    /**
-     * 增加点赞数
-     */
-    public void incrementLikeCount() {
-        this.likeCount++;
-        this.updatedAt = LocalDateTime.now();
-    }
-    
-    /**
-     * 减少点赞数
-     */
-    public void decrementLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-            this.updatedAt = LocalDateTime.now();
-        }
     }
     
     /**
@@ -137,17 +103,13 @@ public class Comment {
      */
     public boolean isValid() {
         return content != null && !content.trim().isEmpty() &&
-               author != null && blogPost != null;
+               authorName != null && !authorName.trim().isEmpty() &&
+               blogPostId != null;
     }
     
     /**
-     * 检查是否为回复评论
+     * 更新前自动设置更新时间
      */
-    public boolean isReply() {
-        return parentComment != null;
-    }
-    
-    @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }

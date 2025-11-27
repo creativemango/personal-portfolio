@@ -25,20 +25,16 @@ public class BlogPostController {
      */
     @PostMapping
     public BlogPost createBlogPost(@RequestBody CreateBlogPostRequest request) {
-        // 注意：这里需要先获取User对象，实际项目中可能需要用户认证
-        // 这里暂时简化处理，实际使用时需要根据认证信息获取当前用户
-        // 临时创建一个简单的User对象用于测试
-        User tempUser = new User();
-        tempUser.setId(1L); // 临时用户ID
-        tempUser.setUsername("testuser");
-        tempUser.setEmail("test@example.com");
-        tempUser.setDisplayName("测试用户");
+        // 注意：这里需要先获取用户ID，实际项目中可能需要用户认证
+        // 这里暂时简化处理，实际使用时需要根据认证信息获取当前用户ID
+        // 临时使用一个固定的用户ID用于测试
+        Long tempAuthorId = 1L; // 临时用户ID
         
         return blogPostService.createBlogPost(
             request.getTitle(), 
             request.getSlug(), 
             request.getContent(), 
-            tempUser
+            tempAuthorId
         );
     }
     

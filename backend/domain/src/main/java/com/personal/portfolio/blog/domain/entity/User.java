@@ -2,17 +2,14 @@ package com.personal.portfolio.blog.domain.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import com.baomidou.mybatisplus.annotation.*;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 用户实体类
  */
-@Entity
-@Table(name = "users")
+@TableName("users")
 @Getter
 @Setter
 public class User {
@@ -20,133 +17,99 @@ public class User {
     /**
      * 用户ID，主键，自增
      */
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
     
     /**
-     * 用户名，唯一，必填，最大长度50字符
+     * GitHub用户ID
      */
-    @Column(name = "username", unique = true, nullable = false, length = 50)
+    private String githubId;
+    
+    /**
+     * 用户名，必填，最大长度50字符
+     */
     private String username;
     
     /**
-     * 邮箱地址，唯一，必填，最大长度100字符
+     * 邮箱地址，可选，最大长度100字符
      */
-    @Column(name = "email", unique = true, nullable = false, length = 100)
     private String email;
-    
-    /**
-     * 密码，必填，最大长度255字符
-     */
-    @Column(name = "password", nullable = false, length = 255)
-    private String password;
     
     /**
      * 显示名称，可选，最大长度100字符
      */
-    @Column(name = "display_name", length = 100)
     private String displayName;
     
     /**
      * 头像URL，可选，最大长度255字符
      */
-    @Column(name = "avatar_url", length = 255)
     private String avatarUrl;
     
     /**
      * 个人简介，可选，最大长度500字符
      */
-    @Column(name = "bio", length = 500)
     private String bio;
     
     /**
-     * GitHub用户ID，可选
+     * 位置信息，可选，最大长度100字符
      */
-    @Column(name = "github_id")
-    private Long githubId;
-
+    private String location;
+    
     /**
-     * GitHub用户名，可选
+     * 公司信息，可选，最大长度100字符
      */
-    @Column(name = "github_username", length = 50)
-    private String githubUsername;
-
+    private String company;
+    
     /**
-     * 用户角色，必填，最大长度20字符，默认USER
+     * 个人网站，可选，最大长度255字符
      */
-    @Column(name = "role", nullable = false, length = 20)
-    private String role = "USER";
-
+    private String website;
+    
     /**
-     * 是否激活，默认激活
+     * Twitter用户名，可选，最大长度50字符
      */
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
-
+    private String twitterUsername;
+    
     /**
-     * 登录方式：LOCAL, GITHUB
+     * 公开仓库数量
      */
-    @Column(name = "login_type", nullable = false, length = 10)
-    private String loginType = "LOCAL";
+    private Integer publicRepos = 0;
+    
+    /**
+     * 粉丝数量
+     */
+    private Integer followers = 0;
+    
+    /**
+     * 关注数量
+     */
+    private Integer following = 0;
     
     /**
      * 创建时间，必填
      */
-    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
     /**
      * 更新时间，必填
      */
-    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-    
-    /**
-     * 博客文章列表，一对多关系
-     */
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<BlogPost> blogPosts = new ArrayList<>();
-    
-    /**
-     * 评论列表，一对多关系
-     */
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Comment> comments = new ArrayList<>();
     
     public User() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
     
-    public User(String username, String email, String password, String displayName) {
+    public User(String githubId, String username, String email) {
         this();
+        this.githubId = githubId;
         this.username = username;
         this.email = email;
-        this.password = password;
-        this.displayName = displayName;
     }
     
     /**
-     * 更新用户信息
+     * 更新前自动设置更新时间
      */
-    public void updateProfile(String displayName, String bio, String avatarUrl) {
-        this.displayName = displayName;
-        this.bio = bio;
-        this.avatarUrl = avatarUrl;
-        this.updatedAt = LocalDateTime.now();
-    }
-    
-    /**
-     * 验证用户信息是否有效
-     */
-    public boolean isValid() {
-        return username != null && !username.trim().isEmpty() &&
-               email != null && !email.trim().isEmpty() &&
-               password != null && !password.trim().isEmpty();
-    }
-    
-    @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
