@@ -6,7 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 /**
  * Spring Security 配置类
@@ -18,9 +18,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeRequests(authorize -> authorize
+            .authorizeHttpRequests(authorize -> authorize
                 // 允许公开访问的端点
-                .antMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", "/api/user/profile", "/api/logout").permitAll()
+                .requestMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", "/api/user/profile", "/api/logout").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
             )
