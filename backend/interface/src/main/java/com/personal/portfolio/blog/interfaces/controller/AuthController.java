@@ -1,5 +1,7 @@
 package com.personal.portfolio.blog.interfaces.controller;
 
+import com.personal.portfolio.blog.application.service.UserRegistrationService;
+import com.personal.portfolio.blog.domain.entity.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.servlet.http.Cookie;
@@ -23,6 +26,12 @@ import java.util.Map;
 @Controller
 public class AuthController {
 
+    private final UserRegistrationService userRegistrationService;
+
+    public AuthController(UserRegistrationService userRegistrationService) {
+        this.userRegistrationService = userRegistrationService;
+    }
+
     /**
      * 登录页面
      */
@@ -36,25 +45,47 @@ public class AuthController {
      */
     @GetMapping("/user/profile")
     @ResponseBody
-    public Map<String, Object> getUserProfile(@AuthenticationPrincipal OAuth2User principal) {
+    public Map<String, Object> getUserProfile(@AuthenticationPrincipal Object principal) {
         Map<String, Object> userInfo = new HashMap<>();
         
         if (principal != null) {
-            userInfo.put("id", principal.getAttribute("id"));
-            userInfo.put("login", principal.getAttribute("login"));
-            userInfo.put("name", principal.getAttribute("name"));
-            userInfo.put("email", principal.getAttribute("email"));
-            userInfo.put("avatar_url", principal.getAttribute("avatar_url"));
-            userInfo.put("bio", principal.getAttribute("bio"));
-            userInfo.put("location", principal.getAttribute("location"));
-            userInfo.put("company", principal.getAttribute("company"));
-            userInfo.put("blog", principal.getAttribute("blog"));
-            userInfo.put("twitter_username", principal.getAttribute("twitter_username"));
-            userInfo.put("public_repos", principal.getAttribute("public_repos"));
-            userInfo.put("followers", principal.getAttribute("followers"));
-            userInfo.put("following", principal.getAttribute("following"));
-            userInfo.put("created_at", principal.getAttribute("created_at"));
-            userInfo.put("updated_at", principal.getAttribute("updated_at"));
+            // 处理 OAuth2 用户
+            if (principal instanceof OAuth2User) {
+                OAuth2User oauth2User = (OAuth2User) principal;
+                userInfo.put("id", oauth2User.getAttribute("id"));
+                userInfo.put("login", oauth2User.getAttribute("login"));
+                userInfo.put("name", oauth2User.getAttribute("name"));
+                userInfo.put("email", oauth2User.getAttribute("email"));
+                userInfo.put("avatar_url", oauth2User.getAttribute("avatar_url"));
+                userInfo.put("bio", oauth2User.getAttribute("bio"));
+                userInfo.put("location", oauth2User.getAttribute("location"));
+                userInfo.put("company", oauth2User.getAttribute("company"));
+                userInfo.put("blog", oauth2User.getAttribute("blog"));
+                userInfo.put("twitter_username", oauth2User.getAttribute("twitter_username"));
+                userInfo.put("public_repos", oauth2User.getAttribute("public_repos"));
+                userInfo.put("followers", oauth2User.getAttribute("followers"));
+                userInfo.put("following", oauth2User.getAttribute("following"));
+                userInfo.put("created_at", oauth2User.getAttribute("created_at"));
+                userInfo.put("updated_at", oauth2User.getAttribute("updated_at"));
+            } 
+            // 处理本地用户（从 Spring Security 上下文获取）
+            else {
+                org.springframework.security.core.Authentication authentication = 
+                    SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.isAuthenticated() && 
+                    !(authentication.getPrincipal() instanceof String)) {
+                    
+                    // 这里假设认证主体包含用户信息，实际需要根据你的认证配置调整
+                    String username = authentication.getName();
+                    userInfo.put("login", username);
+                    userInfo.put("username", username);
+                    userInfo.put("name", username);
+                    userInfo.put("avatar_url", "https://via.placeholder.com/35x35/667eea/ffffff?text=" + 
+                        username.substring(0, 1).toUpperCase());
+                } else {
+                    userInfo.put("error", "用户未登录");
+                }
+            }
         } else {
             userInfo.put("error", "用户未登录");
         }
@@ -67,7 +98,7 @@ public class AuthController {
      */
     @GetMapping("/api/user/profile")
     @ResponseBody
-    public Map<String, Object> getApiUserProfile(@AuthenticationPrincipal OAuth2User principal) {
+    public Map<String, Object> getApiUserProfile(@AuthenticationPrincipal Object principal) {
         return getUserProfile(principal);
     }
 
@@ -110,6 +141,137 @@ public class AuthController {
                 .header("Set-Cookie", "grafana_session=; Path=/; Max-Age=0")
                 .header("Set-Cookie", "grafana_session_expiry=; Path=/; Max-Age=0")
                 .body(result);
+    }
+
+    /**
+     * API端点：用户注册
+     */
+    @PostMapping("/api/register")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String username = request.get("username");
+            String password = request.get("password");
+            String email = request.get("email");
+            
+            if (username == null || password == null) {
+                response.put("success", false);
+                response.put("message", "用户名和密码不能为空");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            User user = userRegistrationService.registerUser(username, password, email);
+            
+            response.put("success", true);
+            response.put("message", "注册成功");
+            response.put("user", Map.of(
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "email", user.getEmail(),
+                "displayName", user.getDisplayName()
+            ));
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "注册失败，请稍后重试");
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * API端点：用户名密码登录
+     */
+    @PostMapping("/api/login")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String username = request.get("username");
+            String password = request.get("password");
+            
+            if (username == null || password == null) {
+                response.put("success", false);
+                response.put("message", "用户名和密码不能为空");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            User user = userRegistrationService.authenticate(username, password);
+            
+            if (user != null) {
+                response.put("success", true);
+                response.put("message", "登录成功");
+                response.put("user", Map.of(
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "displayName", user.getDisplayName()
+                ));
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "用户名或密码错误");
+                return ResponseEntity.status(401).body(response);
+            }
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "登录失败，请稍后重试");
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * API端点：检查用户名是否可用
+     */
+    @GetMapping("/api/check-username")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkUsernameAvailability(@org.springframework.web.bind.annotation.RequestParam String username) {
+        Map<String, Object> response = new HashMap<>();
+        
+        if (username == null) {
+            response.put("success", false);
+            response.put("message", "用户名不能为空");
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        boolean available = userRegistrationService.isUsernameAvailable(username);
+        response.put("success", true);
+        response.put("available", available);
+        response.put("message", available ? "用户名可用" : "用户名已存在");
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * API端点：检查邮箱是否可用
+     */
+    @GetMapping("/api/check-email")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkEmailAvailability(@org.springframework.web.bind.annotation.RequestParam(required = false) String email) {
+        Map<String, Object> response = new HashMap<>();
+        
+        if (email == null || email.trim().isEmpty()) {
+            response.put("success", true);
+            response.put("available", true);
+            response.put("message", "邮箱可用");
+            return ResponseEntity.ok(response);
+        }
+        
+        boolean available = userRegistrationService.isEmailAvailable(email);
+        response.put("success", true);
+        response.put("available", available);
+        response.put("message", available ? "邮箱可用" : "邮箱已存在");
+        
+        return ResponseEntity.ok(response);
     }
 
     /**

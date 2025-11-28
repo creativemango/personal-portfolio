@@ -84,12 +84,22 @@ public class User {
      * 关注数量
      */
     private Integer following = 0;
-    
+
+    /**
+     * 密码，用于本地账户登录
+     */
+    private String password;
+
+    /**
+     * 是否为本地注册账户
+     */
+    private Boolean isLocalAccount = false;
+
     /**
      * 创建时间，必填
      */
     private LocalDateTime createdAt;
-    
+
     /**
      * 更新时间，必填
      */

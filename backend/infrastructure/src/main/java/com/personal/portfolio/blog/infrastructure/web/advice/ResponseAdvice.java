@@ -25,17 +25,17 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
     @SneakyThrows
     @Override
     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class<? extends HttpMessageConverter<?>> aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
-        // 如果已经是ResponseEntity，则不进行封装，避免双重封装
-        if (o instanceof org.springframework.http.ResponseEntity) {
+        // 如果已经是ResultData，则不进行封装
+        if (o instanceof ResultData) {
             return o;
         }
         
-        if(o instanceof String){
+        // 如果返回类型是String，需要特殊处理
+        if (o instanceof String) {
             return objectMapper.writeValueAsString(ResultData.success(o));
         }
-        if(o instanceof ResultData){
-            return o;
-        }
+        
+        // 对于其他类型，统一封装为ResultData
         return ResultData.success(o);
     }
 

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import BlogHome from './pages/BlogHome'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -18,6 +19,21 @@ function App() {
     // 检查用户是否已登录
     const checkUserAuth = async () => {
       try {
+        // 首先检查localStorage中是否有用户信息
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser)
+            setUser(userData)
+            setLoading(false)
+            return
+          } catch (e) {
+            console.error('Error parsing stored user:', e)
+            localStorage.removeItem('user')
+          }
+        }
+        
+        // 如果没有本地存储的用户信息，则调用API检查
         const userData = await checkAuth()
         setUser(userData)
       } catch (error) {
@@ -45,6 +61,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home user={user} />} />
           <Route path="/login" element={<Login user={user} setUser={setUser} />} />
+          <Route path="/register" element={<Register user={user} setUser={setUser} />} />
           <Route 
             path="/home" 
             element={

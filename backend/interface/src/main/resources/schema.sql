@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS users (
     public_repos INT DEFAULT 0,
     followers INT DEFAULT 0,
     following INT DEFAULT 0,
+    -- 密码字段，用于本地账户登录
+    password VARCHAR(255),
+    -- 标识是否为本地注册账户
+    is_local_account BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );

@@ -20,9 +20,15 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authorize -> authorize
                 // 允许公开访问的端点
-                .requestMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", "/api/user/profile", "/api/logout").permitAll()
+                .requestMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", 
+                               "/api/user/profile", "/api/logout", "/api/register", "/api/login", 
+                               "/api/check-username", "/api/check-email", "/user/profile").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .permitAll()
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")

@@ -1,0 +1,110 @@
+package com.personal.portfolio.blog.application.service;
+
+import com.personal.portfolio.blog.domain.entity.User;
+import com.personal.portfolio.blog.domain.repository.UserRepository;
+import com.personal.portfolio.blog.application.util.PasswordUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+/**
+ * 用户注册服务 - 处理用户注册和本地账户认证
+ */
+@Service
+@RequiredArgsConstructor
+public class UserRegistrationService {
+    
+    private final UserRepository userRepository;
+    
+    /**
+     * 注册新用户
+     * @param username 用户名
+     * @param password 密码
+     * @param email 邮箱（可选）
+     * @return 注册成功的用户
+     */
+    public User registerUser(String username, String password, String email) {
+        // 验证用户名格式
+        if (!PasswordUtil.isValidUsername(username)) {
+            throw new IllegalArgumentException("用户名格式无效：必须是50位以内的字母和数字组合");
+        }
+        
+        // 验证密码强度
+        if (!PasswordUtil.isValidPassword(password)) {
+            throw new IllegalArgumentException("密码格式无效：必须是8-16位");
+        }
+        
+        // 检查用户名是否已存在
+        if (userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("用户名已存在：" + username);
+        }
+        
+        // 如果提供了邮箱，检查邮箱是否已存在
+        if (email != null && !email.trim().isEmpty()) {
+            if (userRepository.existsByEmail(email)) {
+                throw new IllegalArgumentException("邮箱已存在：" + email);
+            }
+        }
+        
+        // 创建新用户
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(PasswordUtil.encodePassword(password));
+        user.setEmail(email);
+        user.setIsLocalAccount(true);
+        user.setDisplayName(username); // 默认显示名与用户名相同
+        
+        return userRepository.save(user);
+    }
+    
+    /**
+     * 验证用户名和密码
+     * @param username 用户名
+     * @param password 密码
+     * @return 验证成功的用户，如果验证失败返回null
+     */
+    public User authenticate(String username, String password) {
+        // 查找用户
+        User user = userRepository.findByUsername(username)
+                .orElse(null);
+        
+        if (user == null) {
+            return null;
+        }
+        
+        // 检查是否为本地账户
+        if (!Boolean.TRUE.equals(user.getIsLocalAccount())) {
+            return null;
+        }
+        
+        // 验证密码
+        if (user.getPassword() == null || !PasswordUtil.matches(password, user.getPassword())) {
+            return null;
+        }
+        
+        return user;
+    }
+    
+    /**
+     * 检查用户名是否可用
+     * @param username 用户名
+     * @return 是否可用
+     */
+    public boolean isUsernameAvailable(String username) {
+        if (!PasswordUtil.isValidUsername(username)) {
+            return false;
+        }
+        return !userRepository.existsByUsername(username);
+    }
+    
+    /**
+     * 检查邮箱是否可用
+     * @param email 邮箱
+     * @return 是否可用
+     */
+    public boolean isEmailAvailable(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return true;
+        }
+        return !userRepository.existsByEmail(email);
+    }
+}
