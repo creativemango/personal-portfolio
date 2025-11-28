@@ -2,6 +2,7 @@ package com.personal.portfolio.blog.interfaces.controller;
 
 import com.personal.portfolio.blog.application.service.UserRegistrationService;
 import com.personal.portfolio.blog.domain.entity.User;
+import com.personal.portfolio.blog.interfaces.util.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,9 +28,11 @@ import java.util.Map;
 public class AuthController {
 
     private final UserRegistrationService userRegistrationService;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(UserRegistrationService userRegistrationService) {
+    public AuthController(UserRegistrationService userRegistrationService, JwtUtil jwtUtil) {
         this.userRegistrationService = userRegistrationService;
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -166,12 +169,12 @@ public class AuthController {
             
             response.put("success", true);
             response.put("message", "注册成功");
-            response.put("user", Map.of(
-                "id", user.getId(),
-                "username", user.getUsername(),
-                "email", user.getEmail(),
-                "displayName", user.getDisplayName()
-            ));
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("username", user.getUsername());
+            userInfo.put("email", user.getEmail());
+            userInfo.put("displayName", user.getDisplayName());
+            response.put("user", userInfo);
             
             return ResponseEntity.ok(response);
             
@@ -207,14 +210,18 @@ public class AuthController {
             User user = userRegistrationService.authenticate(username, password);
             
             if (user != null) {
+                // 生成 JWT Token
+                String token = jwtUtil.generateToken(user.getUsername(), user.getId());
+                
                 response.put("success", true);
                 response.put("message", "登录成功");
-                response.put("user", Map.of(
-                    "id", user.getId(),
-                    "username", user.getUsername(),
-                    "email", user.getEmail(),
-                    "displayName", user.getDisplayName()
-                ));
+                response.put("token", token);
+                Map<String, Object> userInfo = new HashMap<>();
+                userInfo.put("id", user.getId());
+                userInfo.put("username", user.getUsername());
+                userInfo.put("email", user.getEmail());
+                userInfo.put("displayName", user.getDisplayName());
+                response.put("user", userInfo);
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);

@@ -58,7 +58,7 @@ const Navbar = ({ user, setUser }) => {
               border: '1px solid rgba(255, 255, 255, 0.3)'
             }}>
               <img 
-                src={user.avatar_url} 
+                src={user.avatar_url || `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`} 
                 alt="用户头像" 
                 className="user-avatar"
                 style={{
@@ -68,7 +68,7 @@ const Navbar = ({ user, setUser }) => {
                   border: '2px solid white'
                 }}
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/35x35/667eea/ffffff?text=U'
+                  e.target.src = `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`
                 }}
               />
               <span style={{ 
@@ -76,7 +76,7 @@ const Navbar = ({ user, setUser }) => {
                 fontWeight: '500',
                 fontSize: '0.95rem'
               }}>
-                {user.login}
+                {user.login || user.username}
               </span>
               <div style={{ 
                 width: '8px', 

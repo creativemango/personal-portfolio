@@ -1,10 +1,14 @@
 package com.personal.portfolio.blog.interfaces.config;
 
+import com.personal.portfolio.blog.interfaces.filter.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import jakarta.servlet.http.Cookie;
 
@@ -13,11 +17,18 @@ import jakarta.servlet.http.Cookie;
  */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // 配置会话管理为无状态
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
             .authorizeHttpRequests(authorize -> authorize
                 // 允许公开访问的端点
                 .requestMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", 
@@ -26,15 +37,9 @@ public class SecurityConfig {
                 // 其他请求需要认证
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                .loginPage("/login")
-                .defaultSuccessUrl("http://localhost:3001/home", true)
-                .failureUrl("http://localhost:3001/login?error=true")
-            )
+            // 禁用表单登录和 OAuth2 登录（使用 JWT）
+            .formLogin(form -> form.disable())
+            .oauth2Login(oauth2 -> oauth2.disable())
             .logout(logout -> logout
                 .logoutUrl("/api/logout")
                 .logoutSuccessUrl("http://localhost:3001/")
@@ -76,6 +81,9 @@ public class SecurityConfig {
             .csrf().disable()
             // 允许H2控制台访问
             .headers().frameOptions().disable();
+
+        // 添加 JWT 认证过滤器
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

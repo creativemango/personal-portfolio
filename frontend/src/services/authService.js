@@ -10,6 +10,12 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config) => {
+    // 自动添加 JWT Token 到请求头
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.baseURL}${config.url}`)
     console.log('Full request config:', config)
     return config
@@ -33,12 +39,22 @@ api.interceptors.response.use(
 // 检查用户认证状态
 export const checkAuth = async () => {
   try {
+    // 检查本地存储中是否有 token
+    const token = localStorage.getItem('token')
+    if (!token) {
+      return null
+    }
+    
+    // 使用全局拦截器自动添加 token
     const response = await api.get('/user/profile')
+    
     // 解析响应数据结构
     const responseData = response.data
     
     // 如果返回的数据包含错误信息，说明未登录
     if (responseData && responseData.data && responseData.data.error) {
+      // 清除无效的 token
+      localStorage.removeItem('token')
       return null
     }
     
@@ -50,6 +66,8 @@ export const checkAuth = async () => {
     return null
   } catch (error) {
     if (error.response?.status === 401) {
+      // 清除无效的 token
+      localStorage.removeItem('token')
       return null
     }
     throw error
@@ -192,6 +210,12 @@ export const login = async (username, password) => {
       username,
       password
     })
+    
+    // 如果登录成功，存储 token
+    if (response.data && response.data.success && response.data.token) {
+      localStorage.setItem('token', response.data.token)
+    }
+    
     return response.data
   } catch (error) {
     console.error('Error logging in:', error)

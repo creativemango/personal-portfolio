@@ -65,16 +65,19 @@ const Login = ({ user, setUser }) => {
     try {
       const result = await login(formData.username, formData.password)
       console.log('Login result:', result)
-      if (result.success) {
+      
+      // 解析响应数据结构
+      const responseData = result.data
+      if (responseData && responseData.success) {
         // 登录成功，更新用户状态
-        setUser(result.user)
+        setUser(responseData.user)
         // 存储用户信息到localStorage，确保页面刷新后仍保持登录状态
-        localStorage.setItem('user', JSON.stringify(result.user))
+        localStorage.setItem('user', JSON.stringify(responseData.user))
         console.log('User stored in localStorage, navigating to /home')
         // 使用React Router导航，保持状态
         navigate('/home', { replace: true })
       } else {
-        setErrors({ submit: result.message })
+        setErrors({ submit: responseData?.message || '登录失败' })
       }
     } catch (error) {
       setErrors({ submit: error.message })
