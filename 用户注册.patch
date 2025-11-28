@@ -1,0 +1,1627 @@
+Subject: [PATCH] 用户注册
+---
+Index: frontend/src/pages/Register.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/Register.jsx b/frontend/src/pages/Register.jsx
+new file mode 100644
+--- /dev/null	(date 1764321141249)
++++ b/frontend/src/pages/Register.jsx	(date 1764321141249)
+@@ -0,0 +1,330 @@
++import React, { useState } from 'react'
++import { Navigate, Link, useNavigate } from 'react-router-dom'
++import { register, checkUsernameAvailability } from '../services/authService'
++
++const Register = ({ user, setUser }) => {
++  const navigate = useNavigate()
++  
++  // 如果用户已经登录，重定向到博客主页
++  if (user) {
++    return <Navigate to="/home" replace />
++  }
++
++  const [formData, setFormData] = useState({
++    username: '',
++    email: '',
++    password: '',
++    confirmPassword: ''
++  })
++  const [errors, setErrors] = useState({})
++  const [isLoading, setIsLoading] = useState(false)
++  const [usernameAvailable, setUsernameAvailable] = useState(null)
++  const [checkingUsername, setCheckingUsername] = useState(false)
++
++  const handleChange = (e) => {
++    const { name, value } = e.target
++    setFormData(prev => ({
++      ...prev,
++      [name]: value
++    }))
++
++    // 清除对应字段的错误
++    if (errors[name]) {
++      setErrors(prev => ({
++        ...prev,
++        [name]: ''
++      }))
++    }
++
++    // 实时检查用户名可用性
++    if (name === 'username') {
++      if (value) {
++        // 先验证用户名格式
++        if (!/^[a-zA-Z0-9]+$/.test(value) || value.length > 50) {
++          setUsernameAvailable(false)
++          return
++        }
++        
++        // 设置检查状态
++        setCheckingUsername(true)
++        
++        // 调用后端接口检查用户名可用性
++        checkUsernameAvailability(value)
++          .then(result => {
++            if (result.success) {
++              setUsernameAvailable(result.available)
++            } else {
++              setUsernameAvailable(null)
++            }
++          })
++          .catch(error => {
++            console.error('检查用户名可用性失败:', error)
++            setUsernameAvailable(null)
++          })
++          .finally(() => {
++            setCheckingUsername(false)
++          })
++      } else {
++        // 用户名为空时重置状态
++        setUsernameAvailable(null)
++        setCheckingUsername(false)
++      }
++    }
++  }
++
++  const validateForm = () => {
++    const newErrors = {}
++
++    // 用户名验证
++    if (!formData.username) {
++      newErrors.username = '用户名不能为空'
++    } else if (formData.username.length > 50) {
++      newErrors.username = '用户名不能超过50位'
++    } else if (!/^[a-zA-Z0-9]+$/.test(formData.username)) {
++      newErrors.username = '用户名只能包含字母和数字'
++    } else if (usernameAvailable === false) {
++      newErrors.username = '用户名已存在'
++    }
++
++    // 邮箱验证（可选）- 只验证格式，不检查是否已存在
++    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
++      newErrors.email = '邮箱格式不正确'
++    }
++
++    // 密码验证
++    if (!formData.password) {
++      newErrors.password = '密码不能为空'
++    } else if (formData.password.length < 8 || formData.password.length > 16) {
++      newErrors.password = '密码长度必须为8-16位'
++    }
++
++    // 确认密码验证
++    if (!formData.confirmPassword) {
++      newErrors.confirmPassword = '请确认密码'
++    } else if (formData.password !== formData.confirmPassword) {
++      newErrors.confirmPassword = '两次输入的密码不一致'
++    }
++
++    setErrors(newErrors)
++    return Object.keys(newErrors).length === 0
++  }
++
++  const handleRegister = async (e) => {
++    e.preventDefault()
++    
++    if (!validateForm()) {
++      return
++    }
++
++    setIsLoading(true)
++    try {
++      const result = await register(formData.username, formData.password, formData.email)
++      console.log('Register result:', result)
++      if (result.success) {
++        // 注册成功，更新用户状态
++        setUser(result.user)
++        // 存储用户信息到localStorage，确保页面刷新后仍保持登录状态
++        localStorage.setItem('user', JSON.stringify(result.user))
++        console.log('User stored in localStorage, navigating to /home')
++        // 使用React Router导航，保持状态
++        navigate('/home', { replace: true })
++      } else {
++        setErrors({ submit: result.message })
++      }
++    } catch (error) {
++      setErrors({ submit: error.message || '注册失败，请稍后重试' })
++    } finally {
++      setIsLoading(false)
++    }
++  }
++
++  return (
++    <div className="page">
++      <div className="container">
++        <div style={{ 
++          maxWidth: '400px', 
++          margin: '2rem auto', 
++          textAlign: 'center' 
++        }}>
++          <div className="card">
++            <h1 style={{ color: '#667eea', marginBottom: '1rem' }}>
++              注册新账户
++            </h1>
++
++            <form onSubmit={handleRegister}>
++              {/* 用户名 */}
++              <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
++                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
++                  用户名 *
++                </label>
++                <input
++                  type="text"
++                  name="username"
++                  value={formData.username}
++                  onChange={handleChange}
++                  className="input"
++                  style={{ 
++                    width: '100%',
++                    border: errors.username ? '1px solid #e74c3c' : '1px solid #ddd'
++                  }}
++                  placeholder="请输入用户名（字母和数字，最多50位）"
++                />
++                {checkingUsername && (
++                  <div style={{ 
++                    color: '#667eea', 
++                    fontSize: '0.8rem', 
++                    marginTop: '0.25rem' 
++                  }}>
++                    检查用户名中...
++                  </div>
++                )}
++                {!checkingUsername && usernameAvailable !== null && formData.username && (
++                  <div style={{ 
++                    color: usernameAvailable ? '#27ae60' : '#e74c3c', 
++                    fontSize: '0.8rem', 
++                    marginTop: '0.25rem' 
++                  }}>
++                    {usernameAvailable ? '✓ 用户名可用' : '✗ 用户名已存在'}
++                  </div>
++                )}
++                {errors.username && (
++                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
++                    {errors.username}
++                  </div>
++                )}
++              </div>
++
++              {/* 邮箱 */}
++              <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
++                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
++                  邮箱
++                </label>
++                <input
++                  type="email"
++                  name="email"
++                  value={formData.email}
++                  onChange={handleChange}
++                  className="input"
++                  style={{ 
++                    width: '100%',
++                    border: errors.email ? '1px solid #e74c3c' : '1px solid #ddd'
++                  }}
++                  placeholder="请输入邮箱（可选）"
++                />
++                {errors.email && (
++                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
++                    {errors.email}
++                  </div>
++                )}
++              </div>
++
++              {/* 密码 */}
++              <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
++                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
++                  密码 *
++                </label>
++                <input
++                  type="password"
++                  name="password"
++                  value={formData.password}
++                  onChange={handleChange}
++                  className="input"
++                  style={{ 
++                    width: '100%',
++                    border: errors.password ? '1px solid #e74c3c' : '1px solid #ddd'
++                  }}
++                  placeholder="请输入密码（8-16位）"
++                />
++                {errors.password && (
++                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
++                    {errors.password}
++                  </div>
++                )}
++              </div>
++
++              {/* 确认密码 */}
++              <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
++                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
++                  确认密码 *
++                </label>
++                <input
++                  type="password"
++                  name="confirmPassword"
++                  value={formData.confirmPassword}
++                  onChange={handleChange}
++                  className="input"
++                  style={{ 
++                    width: '100%',
++                    border: errors.confirmPassword ? '1px solid #e74c3c' : '1px solid #ddd'
++                  }}
++                  placeholder="请再次输入密码"
++                />
++                {errors.confirmPassword && (
++                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
++                    {errors.confirmPassword}
++                  </div>
++                )}
++              </div>
++
++              <button 
++                type="submit"
++                disabled={isLoading}
++                className="btn"
++                style={{
++                  width: '100%',
++                  padding: '1rem',
++                  fontSize: '1.1rem',
++                  backgroundColor: isLoading ? '#95a5a6' : '#667eea',
++                  border: 'none',
++                  cursor: isLoading ? 'not-allowed' : 'pointer'
++                }}
++              >
++                {isLoading ? '注册中...' : '注册'}
++              </button>
++
++              {errors.submit && (
++                <div style={{ 
++                  color: '#e74c3c', 
++                  fontSize: '0.9rem', 
++                  marginTop: '1rem',
++                  padding: '0.5rem',
++                  backgroundColor: '#fdf2f2',
++                  borderRadius: '5px'
++                }}>
++                  {errors.submit}
++                </div>
++              )}
++
++              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
++                <p style={{ color: '#666', margin: 0 }}>
++                  已有账户？{' '}
++                  <Link to="/login" style={{ color: '#667eea', textDecoration: 'none' }}>
++                    立即登录
++                  </Link>
++                </p>
++              </div>
++            </form>
++          </div>
++
++          <div style={{ 
++            marginTop: '1rem', 
++            padding: '1rem', 
++            background: '#f8f9fa', 
++            borderRadius: '5px',
++            fontSize: '0.9rem',
++            color: '#666'
++          }}>
++            <p><strong>注册说明：</strong></p>
++            <ul style={{ textAlign: 'left', marginTop: '0.5rem' }}>
++              <li>用户名：50位以内的字母和数字组合</li>
++              <li>密码：8-16位字符</li>
++              <li>邮箱为可选字段，可用于找回密码</li>
++            </ul>
++          </div>
++        </div>
++      </div>
++    </div>
++  )
++}
++
++export default Register
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/entity/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/entity/User.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/entity/User.java
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/entity/User.java	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/entity/User.java	(date 1764291591403)
+@@ -84,12 +84,22 @@
+      * 关注数量
+      */
+     private Integer following = 0;
+-    
++
++    /**
++     * 密码，用于本地账户登录
++     */
++    private String password;
++
++    /**
++     * 是否为本地注册账户
++     */
++    private Boolean isLocalAccount = false;
++
+     /**
+      * 创建时间，必填
+      */
+     private LocalDateTime createdAt;
+-    
++
+     /**
+      * 更新时间，必填
+      */
+Index: backend/application/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/pom.xml b/backend/application/pom.xml
+--- a/backend/application/pom.xml	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/backend/application/pom.xml	(date 1764292261356)
+@@ -46,5 +46,9 @@
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter</artifactId>
+         </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-security</artifactId>
++        </dependency>
+     </dependencies>
+ </project>
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/web/advice/ResponseAdvice.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/web/advice/ResponseAdvice.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/web/advice/ResponseAdvice.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/web/advice/ResponseAdvice.java	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/web/advice/ResponseAdvice.java	(date 1764319446688)
+@@ -25,17 +25,17 @@
+     @SneakyThrows
+     @Override
+     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class<? extends HttpMessageConverter<?>> aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
+-        // 如果已经是ResponseEntity，则不进行封装，避免双重封装
+-        if (o instanceof org.springframework.http.ResponseEntity) {
++        // 如果已经是ResultData，则不进行封装
++        if (o instanceof ResultData) {
+             return o;
+         }
+         
+-        if(o instanceof String){
++        // 如果返回类型是String，需要特殊处理
++        if (o instanceof String) {
+             return objectMapper.writeValueAsString(ResultData.success(o));
+         }
+-        if(o instanceof ResultData){
+-            return o;
+-        }
++        
++        // 对于其他类型，统一封装为ResultData
+         return ResultData.success(o);
+     }
+ 
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/UserMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/UserMapper.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/UserMapper.java
+new file mode 100644
+--- /dev/null	(date 1764291923983)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/UserMapper.java	(date 1764291923983)
+@@ -0,0 +1,44 @@
++package com.personal.portfolio.blog.infrastructure.persistence.mapper;
++
++import com.baomidou.mybatisplus.core.mapper.BaseMapper;
++import com.personal.portfolio.blog.domain.entity.User;
++import org.apache.ibatis.annotations.Mapper;
++import org.apache.ibatis.annotations.Param;
++import org.apache.ibatis.annotations.Select;
++
++/**
++ * 用户数据访问接口 - MyBatis Plus Mapper
++ */
++@Mapper
++public interface UserMapper extends BaseMapper<User> {
++    
++    /**
++     * 根据GitHub ID查找用户
++     */
++    @Select("SELECT * FROM users WHERE github_id = #{githubId}")
++    User selectByGithubId(@Param("githubId") String githubId);
++    
++    /**
++     * 根据用户名查找用户
++     */
++    @Select("SELECT * FROM users WHERE username = #{username}")
++    User selectByUsername(@Param("username") String username);
++    
++    /**
++     * 根据邮箱查找用户
++     */
++    @Select("SELECT * FROM users WHERE email = #{email}")
++    User selectByEmail(@Param("email") String email);
++    
++    /**
++     * 检查用户名是否已存在
++     */
++    @Select("SELECT COUNT(*) FROM users WHERE username = #{username}")
++    int countByUsername(@Param("username") String username);
++    
++    /**
++     * 检查邮箱是否已存在
++     */
++    @Select("SELECT COUNT(*) FROM users WHERE email = #{email}")
++    int countByEmail(@Param("email") String email);
++}
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/repository/UserRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/repository/UserRepository.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/repository/UserRepository.java
+new file mode 100644
+--- /dev/null	(date 1764291884049)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/repository/UserRepository.java	(date 1764291884049)
+@@ -0,0 +1,58 @@
++package com.personal.portfolio.blog.domain.repository;
++
++import com.personal.portfolio.blog.domain.entity.User;
++
++import java.util.List;
++import java.util.Optional;
++
++/**
++ * 用户仓储接口 - 领域层定义，基础设施层实现
++ * 采用依赖倒置原则
++ */
++public interface UserRepository {
++    
++    /**
++     * 保存用户
++     */
++    User save(User user);
++    
++    /**
++     * 根据ID查找用户
++     */
++    Optional<User> findById(Long id);
++    
++    /**
++     * 根据GitHub ID查找用户
++     */
++    Optional<User> findByGithubId(String githubId);
++    
++    /**
++     * 根据用户名查找用户
++     */
++    Optional<User> findByUsername(String username);
++    
++    /**
++     * 根据邮箱查找用户
++     */
++    Optional<User> findByEmail(String email);
++    
++    /**
++     * 查找所有用户
++     */
++    List<User> findAll();
++    
++    /**
++     * 删除用户
++     */
++    void delete(Long id);
++    
++    /**
++     * 检查用户名是否已存在
++     */
++    boolean existsByUsername(String username);
++    
++    /**
++     * 检查邮箱是否已存在
++     */
++    boolean existsByEmail(String email);
++}
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserRegistrationService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserRegistrationService.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserRegistrationService.java
+new file mode 100644
+--- /dev/null	(date 1764292060955)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserRegistrationService.java	(date 1764292060955)
+@@ -0,0 +1,110 @@
++package com.personal.portfolio.blog.application.service;
++
++import com.personal.portfolio.blog.domain.entity.User;
++import com.personal.portfolio.blog.domain.repository.UserRepository;
++import com.personal.portfolio.blog.application.util.PasswordUtil;
++import lombok.RequiredArgsConstructor;
++import org.springframework.stereotype.Service;
++
++/**
++ * 用户注册服务 - 处理用户注册和本地账户认证
++ */
++@Service
++@RequiredArgsConstructor
++public class UserRegistrationService {
++    
++    private final UserRepository userRepository;
++    
++    /**
++     * 注册新用户
++     * @param username 用户名
++     * @param password 密码
++     * @param email 邮箱（可选）
++     * @return 注册成功的用户
++     */
++    public User registerUser(String username, String password, String email) {
++        // 验证用户名格式
++        if (!PasswordUtil.isValidUsername(username)) {
++            throw new IllegalArgumentException("用户名格式无效：必须是50位以内的字母和数字组合");
++        }
++        
++        // 验证密码强度
++        if (!PasswordUtil.isValidPassword(password)) {
++            throw new IllegalArgumentException("密码格式无效：必须是8-16位");
++        }
++        
++        // 检查用户名是否已存在
++        if (userRepository.existsByUsername(username)) {
++            throw new IllegalArgumentException("用户名已存在：" + username);
++        }
++        
++        // 如果提供了邮箱，检查邮箱是否已存在
++        if (email != null && !email.trim().isEmpty()) {
++            if (userRepository.existsByEmail(email)) {
++                throw new IllegalArgumentException("邮箱已存在：" + email);
++            }
++        }
++        
++        // 创建新用户
++        User user = new User();
++        user.setUsername(username);
++        user.setPassword(PasswordUtil.encodePassword(password));
++        user.setEmail(email);
++        user.setIsLocalAccount(true);
++        user.setDisplayName(username); // 默认显示名与用户名相同
++        
++        return userRepository.save(user);
++    }
++    
++    /**
++     * 验证用户名和密码
++     * @param username 用户名
++     * @param password 密码
++     * @return 验证成功的用户，如果验证失败返回null
++     */
++    public User authenticate(String username, String password) {
++        // 查找用户
++        User user = userRepository.findByUsername(username)
++                .orElse(null);
++        
++        if (user == null) {
++            return null;
++        }
++        
++        // 检查是否为本地账户
++        if (!Boolean.TRUE.equals(user.getIsLocalAccount())) {
++            return null;
++        }
++        
++        // 验证密码
++        if (user.getPassword() == null || !PasswordUtil.matches(password, user.getPassword())) {
++            return null;
++        }
++        
++        return user;
++    }
++    
++    /**
++     * 检查用户名是否可用
++     * @param username 用户名
++     * @return 是否可用
++     */
++    public boolean isUsernameAvailable(String username) {
++        if (!PasswordUtil.isValidUsername(username)) {
++            return false;
++        }
++        return !userRepository.existsByUsername(username);
++    }
++    
++    /**
++     * 检查邮箱是否可用
++     * @param email 邮箱
++     * @return 是否可用
++     */
++    public boolean isEmailAvailable(String email) {
++        if (email == null || email.trim().isEmpty()) {
++            return true;
++        }
++        return !userRepository.existsByEmail(email);
++    }
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java
+new file mode 100644
+--- /dev/null	(date 1764291986596)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java	(date 1764291986596)
+@@ -0,0 +1,85 @@
++package com.personal.portfolio.blog.infrastructure.persistence;
++
++import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
++import com.personal.portfolio.blog.domain.entity.User;
++import com.personal.portfolio.blog.domain.repository.UserRepository;
++import com.personal.portfolio.blog.infrastructure.persistence.mapper.UserMapper;
++import org.springframework.stereotype.Repository;
++
++import java.util.List;
++import java.util.Optional;
++
++/**
++ * 用户仓储实现类 - 使用MyBatis Plus
++ */
++@Repository
++public class UserRepositoryImpl implements UserRepository {
++    
++    private final UserMapper userMapper;
++    
++    public UserRepositoryImpl(UserMapper userMapper) {
++        this.userMapper = userMapper;
++    }
++    
++    @Override
++    public User save(User user) {
++        if (user.getId() == null) {
++            // 新增
++            user.preUpdate();
++            userMapper.insert(user);
++        } else {
++            // 更新
++            user.preUpdate();
++            userMapper.updateById(user);
++        }
++        return user;
++    }
++    
++    @Override
++    public Optional<User> findById(Long id) {
++        User user = userMapper.selectById(id);
++        return Optional.ofNullable(user);
++    }
++    
++    @Override
++    public Optional<User> findByGithubId(String githubId) {
++        User user = userMapper.selectByGithubId(githubId);
++        return Optional.ofNullable(user);
++    }
++    
++    @Override
++    public Optional<User> findByUsername(String username) {
++        User user = userMapper.selectByUsername(username);
++        return Optional.ofNullable(user);
++    }
++    
++    @Override
++    public Optional<User> findByEmail(String email) {
++        User user = userMapper.selectByEmail(email);
++        return Optional.ofNullable(user);
++    }
++    
++    @Override
++    public List<User> findAll() {
++        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
++        queryWrapper.orderByDesc(User::getCreatedAt);
++        return userMapper.selectList(queryWrapper);
++    }
++    
++    @Override
++    public void delete(Long id) {
++        userMapper.deleteById(id);
++    }
++    
++    @Override
++    public boolean existsByUsername(String username) {
++        int count = userMapper.countByUsername(username);
++        return count > 0;
++    }
++    
++    @Override
++    public boolean existsByEmail(String email) {
++        int count = userMapper.countByEmail(email);
++        return count > 0;
++    }
++}
+Index: frontend/src/App.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/App.jsx b/frontend/src/App.jsx
+--- a/frontend/src/App.jsx	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/frontend/src/App.jsx	(date 1764321086804)
+@@ -3,6 +3,7 @@
+ import Navbar from './components/Navbar'
+ import Home from './pages/Home'
+ import Login from './pages/Login'
++import Register from './pages/Register'
+ import BlogHome from './pages/BlogHome'
+ import About from './pages/About'
+ import Contact from './pages/Contact'
+@@ -18,6 +19,21 @@
+     // 检查用户是否已登录
+     const checkUserAuth = async () => {
+       try {
++        // 首先检查localStorage中是否有用户信息
++        const storedUser = localStorage.getItem('user')
++        if (storedUser) {
++          try {
++            const userData = JSON.parse(storedUser)
++            setUser(userData)
++            setLoading(false)
++            return
++          } catch (e) {
++            console.error('Error parsing stored user:', e)
++            localStorage.removeItem('user')
++          }
++        }
++        
++        // 如果没有本地存储的用户信息，则调用API检查
+         const userData = await checkAuth()
+         setUser(userData)
+       } catch (error) {
+@@ -45,6 +61,7 @@
+         <Routes>
+           <Route path="/" element={<Home user={user} />} />
+           <Route path="/login" element={<Login user={user} setUser={setUser} />} />
++          <Route path="/register" element={<Register user={user} setUser={setUser} />} />
+           <Route 
+             path="/home" 
+             element={
+Index: backend/interface/src/main/resources/schema.sql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/resources/schema.sql b/backend/interface/src/main/resources/schema.sql
+--- a/backend/interface/src/main/resources/schema.sql	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/backend/interface/src/main/resources/schema.sql	(date 1764291555527)
+@@ -33,6 +33,10 @@
+     public_repos INT DEFAULT 0,
+     followers INT DEFAULT 0,
+     following INT DEFAULT 0,
++    -- 密码字段，用于本地账户登录
++    password VARCHAR(255),
++    -- 标识是否为本地注册账户
++    is_local_account BOOLEAN DEFAULT FALSE,
+     created_at TIMESTAMP NOT NULL,
+     updated_at TIMESTAMP NOT NULL
+ );
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/util/PasswordUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/util/PasswordUtil.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/util/PasswordUtil.java
+new file mode 100644
+--- /dev/null	(date 1764292205291)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/util/PasswordUtil.java	(date 1764292205291)
+@@ -0,0 +1,60 @@
++package com.personal.portfolio.blog.application.util;
++
++import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
++
++/**
++ * 密码工具类
++ * 用于密码加密和验证
++ */
++public class PasswordUtil {
++
++    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
++
++    /**
++     * 加密密码
++     * @param rawPassword 原始密码
++     * @return 加密后的密码
++     */
++    public static String encodePassword(String rawPassword) {
++        return passwordEncoder.encode(rawPassword);
++    }
++
++    /**
++     * 验证密码
++     * @param rawPassword 原始密码
++     * @param encodedPassword 加密后的密码
++     * @return 是否匹配
++     */
++    public static boolean matches(String rawPassword, String encodedPassword) {
++        return passwordEncoder.matches(rawPassword, encodedPassword);
++    }
++
++    /**
++     * 验证密码强度
++     * @param password 密码
++     * @return 是否满足要求（8-16位）
++     */
++    public static boolean isValidPassword(String password) {
++        if (password == null) {
++            return false;
++        }
++        int length = password.length();
++        return length >= 8 && length <= 16;
++    }
++
++    /**
++     * 验证用户名格式
++     * @param username 用户名
++     * @return 是否满足要求（50位以内，只包含字母和数字）
++     */
++    public static boolean isValidUsername(String username) {
++        if (username == null || username.isEmpty()) {
++            return false;
++        }
++        if (username.length() > 50) {
++            return false;
++        }
++        // 只允许字母和数字
++        return username.matches("^[a-zA-Z0-9]+$");
++    }
++}
+Index: frontend/src/pages/Login.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/frontend/src/pages/Login.jsx	(date 1764321062600)
+@@ -1,18 +1,88 @@
+-import React, { useEffect } from 'react'
+-import { Navigate } from 'react-router-dom'
+-import { getGitHubLoginUrl } from '../services/authService'
++import React, { useState } from 'react'
++import { Navigate, Link, useNavigate } from 'react-router-dom'
++import { getGitHubLoginUrl, login } from '../services/authService'
+ 
+ const Login = ({ user, setUser }) => {
++  const navigate = useNavigate()
++  
+   // 如果用户已经登录，重定向到博客主页
+   if (user) {
+     return <Navigate to="/home" replace />
+   }
+ 
++  const [formData, setFormData] = useState({
++    username: '',
++    password: ''
++  })
++  const [errors, setErrors] = useState({})
++  const [isLoading, setIsLoading] = useState(false)
++  const [activeTab, setActiveTab] = useState('local') // 'local' 或 'github'
++
+   const handleGitHubLogin = () => {
+     // 重定向到GitHub OAuth2授权页面
+     window.location.href = getGitHubLoginUrl()
+   }
+ 
++  const handleChange = (e) => {
++    const { name, value } = e.target
++    setFormData(prev => ({
++      ...prev,
++      [name]: value
++    }))
++
++    // 清除对应字段的错误
++    if (errors[name]) {
++      setErrors(prev => ({
++        ...prev,
++        [name]: ''
++      }))
++    }
++  }
++
++  const validateForm = () => {
++    const newErrors = {}
++
++    if (!formData.username) {
++      newErrors.username = '用户名不能为空'
++    }
++
++    if (!formData.password) {
++      newErrors.password = '密码不能为空'
++    }
++
++    setErrors(newErrors)
++    return Object.keys(newErrors).length === 0
++  }
++
++  const handleLocalLogin = async (e) => {
++    e.preventDefault()
++    
++    if (!validateForm()) {
++      return
++    }
++
++    setIsLoading(true)
++    try {
++      const result = await login(formData.username, formData.password)
++      console.log('Login result:', result)
++      if (result.success) {
++        // 登录成功，更新用户状态
++        setUser(result.user)
++        // 存储用户信息到localStorage，确保页面刷新后仍保持登录状态
++        localStorage.setItem('user', JSON.stringify(result.user))
++        console.log('User stored in localStorage, navigating to /home')
++        // 使用React Router导航，保持状态
++        navigate('/home', { replace: true })
++      } else {
++        setErrors({ submit: result.message })
++      }
++    } catch (error) {
++      setErrors({ submit: error.message })
++    } finally {
++      setIsLoading(false)
++    }
++  }
++
+   return (
+     <div className="page">
+       <div className="container">
+@@ -25,68 +95,198 @@
+             <h1 style={{ color: '#667eea', marginBottom: '1rem' }}>
+               登录到个人作品集
+             </h1>
+-            
+-            <p style={{ color: '#666', marginBottom: '2rem' }}>
+-              使用您的GitHub账户登录
+-            </p>
++
++            {/* 登录方式切换标签 */}
++            <div style={{ 
++              display: 'flex', 
++              borderBottom: '1px solid #eee',
++              marginBottom: '1.5rem'
++            }}>
++              <button
++                onClick={() => setActiveTab('local')}
++                style={{
++                  flex: 1,
++                  padding: '0.75rem',
++                  background: activeTab === 'local' ? '#667eea' : 'transparent',
++                  color: activeTab === 'local' ? 'white' : '#666',
++                  border: 'none',
++                  cursor: 'pointer',
++                  borderBottom: activeTab === 'local' ? '2px solid #667eea' : 'none'
++                }}
++              >
++                用户名密码登录
++              </button>
++              <button
++                onClick={() => setActiveTab('github')}
++                style={{
++                  flex: 1,
++                  padding: '0.75rem',
++                  background: activeTab === 'github' ? '#667eea' : 'transparent',
++                  color: activeTab === 'github' ? 'white' : '#666',
++                  border: 'none',
++                  cursor: 'pointer',
++                  borderBottom: activeTab === 'github' ? '2px solid #667eea' : 'none'
++                }}
++              >
++                GitHub 登录
++              </button>
++            </div>
++
++            {/* 用户名密码登录表单 */}
++            {activeTab === 'local' && (
++              <form onSubmit={handleLocalLogin}>
++                <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
++                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
++                    用户名
++                  </label>
++                  <input
++                    type="text"
++                    name="username"
++                    value={formData.username}
++                    onChange={handleChange}
++                    className="input"
++                    style={{ 
++                      width: '100%',
++                      border: errors.username ? '1px solid #e74c3c' : '1px solid #ddd'
++                    }}
++                    placeholder="请输入用户名"
++                  />
++                  {errors.username && (
++                    <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
++                      {errors.username}
++                    </div>
++                  )}
++                </div>
++
++                <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
++                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
++                    密码
++                  </label>
++                  <input
++                    type="password"
++                    name="password"
++                    value={formData.password}
++                    onChange={handleChange}
++                    className="input"
++                    style={{ 
++                      width: '100%',
++                      border: errors.password ? '1px solid #e74c3c' : '1px solid #ddd'
++                    }}
++                    placeholder="请输入密码"
++                  />
++                  {errors.password && (
++                    <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
++                      {errors.password}
++                    </div>
++                  )}
++                </div>
++
++                <button 
++                  type="submit"
++                  disabled={isLoading}
++                  className="btn"
++                  style={{
++                    width: '100%',
++                    padding: '1rem',
++                    fontSize: '1.1rem',
++                    backgroundColor: isLoading ? '#95a5a6' : '#667eea',
++                    border: 'none',
++                    cursor: isLoading ? 'not-allowed' : 'pointer'
++                  }}
++                >
++                  {isLoading ? '登录中...' : '登录'}
++                </button>
++
++                {errors.submit && (
++                  <div style={{ 
++                    color: '#e74c3c', 
++                    fontSize: '0.9rem', 
++                    marginTop: '1rem',
++                    padding: '0.5rem',
++                    backgroundColor: '#fdf2f2',
++                    borderRadius: '5px'
++                  }}>
++                    {errors.submit}
++                  </div>
++                )}
++
++                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
++                  <p style={{ color: '#666', margin: 0 }}>
++                    还没有账户？{' '}
++                    <Link to="/register" style={{ color: '#667eea', textDecoration: 'none' }}>
++                      立即注册
++                    </Link>
++                  </p>
++                </div>
++              </form>
++            )}
++
++            {/* GitHub 登录 */}
++            {activeTab === 'github' && (
++              <>
++                <p style={{ color: '#666', marginBottom: '2rem' }}>
++                  使用您的GitHub账户登录
++                </p>
+ 
+-            <button 
+-              onClick={handleGitHubLogin}
+-              className="btn"
+-              style={{
+-                width: '100%',
+-                padding: '1rem',
+-                fontSize: '1.1rem',
+-                display: 'flex',
+-                alignItems: 'center',
+-                justifyContent: 'center',
+-                gap: '0.5rem',
+-                backgroundColor: '#24292e',
+-                border: 'none'
+-              }}
+-            >
+-              <svg 
+-                width="20" 
+-                height="20" 
+-                viewBox="0 0 24 24" 
+-                fill="white"
+-                style={{ flexShrink: 0 }}
+-              >
+-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+-              </svg>
+-              使用 GitHub 登录
+-            </button>
++                <button 
++                  onClick={handleGitHubLogin}
++                  className="btn"
++                  style={{
++                    width: '100%',
++                    padding: '1rem',
++                    fontSize: '1.1rem',
++                    display: 'flex',
++                    alignItems: 'center',
++                    justifyContent: 'center',
++                    gap: '0.5rem',
++                    backgroundColor: '#24292e',
++                    border: 'none'
++                  }}
++                >
++                  <svg 
++                    width="20" 
++                    height="20" 
++                    viewBox="0 0 24 24" 
++                    fill="white"
++                    style={{ flexShrink: 0 }}
++                  >
++                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
++                  </svg>
++                  使用 GitHub 登录
++                </button>
+ 
+-            <div style={{ 
+-              marginTop: '2rem', 
+-              padding: '1rem', 
+-              background: '#f8f9fa', 
+-              borderRadius: '5px',
+-              fontSize: '0.9rem',
+-              color: '#666'
+-            }}>
+-              <p>登录后，您将能够：</p>
+-              <ul style={{ textAlign: 'left', marginTop: '0.5rem' }}>
+-                <li>访问个人博客主页</li>
+-                <li>查看和管理博客文章</li>
+-                <li>查看您的GitHub信息</li>
+-              </ul>
+-            </div>
+-          </div>
++                <div style={{ 
++                  marginTop: '2rem', 
++                  padding: '1rem', 
++                  background: '#f8f9fa', 
++                  borderRadius: '5px',
++                  fontSize: '0.9rem',
++                  color: '#666'
++                }}>
++                  <p>登录后，您将能够：</p>
++                  <ul style={{ textAlign: 'left', marginTop: '0.5rem' }}>
++                    <li>访问个人博客主页</li>
++                    <li>查看和管理博客文章</li>
++                    <li>查看您的GitHub信息</li>
++                  </ul>
++                </div>
+ 
+-          <div style={{ 
+-            marginTop: '1rem', 
+-            padding: '1rem', 
+-            background: '#e7f3ff', 
+-            borderRadius: '5px',
+-            border: '1px solid #b3d9ff',
+-            fontSize: '0.9rem',
+-            color: '#0066cc'
+-          }}>
+-            <p>
+-              <strong>注意：</strong> 您将被重定向到GitHub进行授权。
+-              我们只会获取您的基本信息和公开仓库信息。
+-            </p>
++                <div style={{ 
++                  marginTop: '1rem', 
++                  padding: '1rem', 
++                  background: '#e7f3ff', 
++                  borderRadius: '5px',
++                  border: '1px solid #b3d9ff',
++                  fontSize: '0.9rem',
++                  color: '#0066cc'
++                }}>
++                  <p>
++                    <strong>注意：</strong> 您将被重定向到GitHub进行授权。
++                    我们只会获取您的基本信息和公开仓库信息。
++                  </p>
++                </div>
++              </>
++            )}
+           </div>
+         </div>
+       </div>
+Index: frontend/src/services/authService.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/services/authService.js b/frontend/src/services/authService.js
+--- a/frontend/src/services/authService.js	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/frontend/src/services/authService.js	(date 1764323783793)
+@@ -35,7 +35,7 @@
+   try {
+     const response = await api.get('/user/profile')
+     // 如果返回的数据包含错误信息，说明未登录
+-    if (response.data && response.data.data && response.data.data.error) {
++    if (response.data && response.data.error) {
+       return null
+     }
+     return response.data
+@@ -160,5 +160,68 @@
+     throw error
+   }
+ }
++
++// 用户注册
++export const register = async (username, password, email) => {
++  try {
++    const response = await api.post('/register', {
++      username,
++      password,
++      email: email || ''
++    })
++    return response.data
++  } catch (error) {
++    console.error('Error registering user:', error)
++    throw error
++  }
++}
++
++// 用户名密码登录
++export const login = async (username, password) => {
++  try {
++    const response = await api.post('/login', {
++      username,
++      password
++    })
++    return response.data
++  } catch (error) {
++    console.error('Error logging in:', error)
++    // 处理401错误，返回后端的具体错误信息
++    if (error.response && error.response.status === 401) {
++      // 如果后端返回了错误信息，使用后端的信息
++      if (error.response.data && error.response.data.message) {
++        throw new Error(error.response.data.message)
++      }
++      throw new Error('用户名或密码错误')
++    }
++    // 处理其他错误
++    if (error.response && error.response.data && error.response.data.message) {
++      throw new Error(error.response.data.message)
++    }
++    throw new Error('登录失败，请稍后重试')
++  }
++}
++
++// 检查用户名是否可用
++export const checkUsernameAvailability = async (username) => {
++  try {
++    const response = await api.get(`/check-username?username=${encodeURIComponent(username)}`)
++    return response.data
++  } catch (error) {
++    console.error('Error checking username availability:', error)
++    throw error
++  }
++}
++
++// 检查邮箱是否可用
++export const checkEmailAvailability = async (email) => {
++  try {
++    const response = await api.get(`/check-email?email=${encodeURIComponent(email)}`)
++    return response.data
++  } catch (error) {
++    console.error('Error checking email availability:', error)
++    throw error
++  }
++}
+ 
+ export default api
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java	(date 1764323882698)
+@@ -20,10 +20,28 @@
+         http
+             .authorizeHttpRequests(authorize -> authorize
+                 // 允许公开访问的端点
+-                .requestMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", "/api/user/profile", "/api/logout").permitAll()
++                .requestMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", 
++                               "/api/user/profile", "/api/logout", "/api/register", "/api/login", 
++                               "/api/check-username", "/api/check-email", "/user/profile").permitAll()
+                 // 其他请求需要认证
+                 .anyRequest().authenticated()
+             )
++            .formLogin(form -> form
++                .loginPage("/login")
++                .loginProcessingUrl("/api/login")
++                .successHandler((request, response, authentication) -> {
++                    // 登录成功，返回JSON响应而不是重定向
++                    response.setContentType("application/json;charset=UTF-8");
++                    response.getWriter().write("{\"success\": true, \"message\": \"登录成功\"}");
++                })
++                .failureHandler((request, response, exception) -> {
++                    // 登录失败，返回JSON响应
++                    response.setContentType("application/json;charset=UTF-8");
++                    response.setStatus(401);
++                    response.getWriter().write("{\"success\": false, \"message\": \"用户名或密码错误\"}");
++                })
++                .permitAll()
++            )
+             .oauth2Login(oauth2 -> oauth2
+                 .loginPage("/login")
+                 .defaultSuccessUrl("http://localhost:3001/home", true)
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java	(revision 5bbfd275d651b08ed76db6e00412361ec3f1ab96)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java	(date 1764323806132)
+@@ -1,5 +1,7 @@
+ package com.personal.portfolio.blog.interfaces.controller;
+ 
++import com.personal.portfolio.blog.application.service.UserRegistrationService;
++import com.personal.portfolio.blog.domain.entity.User;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.security.core.annotation.AuthenticationPrincipal;
+ import org.springframework.security.core.context.SecurityContextHolder;
+@@ -8,6 +10,7 @@
+ import org.springframework.ui.Model;
+ import org.springframework.web.bind.annotation.GetMapping;
+ import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.ResponseBody;
+ 
+ import jakarta.servlet.http.Cookie;
+@@ -23,6 +26,12 @@
+ @Controller
+ public class AuthController {
+ 
++    private final UserRegistrationService userRegistrationService;
++
++    public AuthController(UserRegistrationService userRegistrationService) {
++        this.userRegistrationService = userRegistrationService;
++    }
++
+     /**
+      * 登录页面
+      */
+@@ -36,25 +45,47 @@
+      */
+     @GetMapping("/user/profile")
+     @ResponseBody
+-    public Map<String, Object> getUserProfile(@AuthenticationPrincipal OAuth2User principal) {
++    public Map<String, Object> getUserProfile(@AuthenticationPrincipal Object principal) {
+         Map<String, Object> userInfo = new HashMap<>();
+         
+         if (principal != null) {
+-            userInfo.put("id", principal.getAttribute("id"));
+-            userInfo.put("login", principal.getAttribute("login"));
+-            userInfo.put("name", principal.getAttribute("name"));
+-            userInfo.put("email", principal.getAttribute("email"));
+-            userInfo.put("avatar_url", principal.getAttribute("avatar_url"));
+-            userInfo.put("bio", principal.getAttribute("bio"));
+-            userInfo.put("location", principal.getAttribute("location"));
+-            userInfo.put("company", principal.getAttribute("company"));
+-            userInfo.put("blog", principal.getAttribute("blog"));
+-            userInfo.put("twitter_username", principal.getAttribute("twitter_username"));
+-            userInfo.put("public_repos", principal.getAttribute("public_repos"));
+-            userInfo.put("followers", principal.getAttribute("followers"));
+-            userInfo.put("following", principal.getAttribute("following"));
+-            userInfo.put("created_at", principal.getAttribute("created_at"));
+-            userInfo.put("updated_at", principal.getAttribute("updated_at"));
++            // 处理 OAuth2 用户
++            if (principal instanceof OAuth2User) {
++                OAuth2User oauth2User = (OAuth2User) principal;
++                userInfo.put("id", oauth2User.getAttribute("id"));
++                userInfo.put("login", oauth2User.getAttribute("login"));
++                userInfo.put("name", oauth2User.getAttribute("name"));
++                userInfo.put("email", oauth2User.getAttribute("email"));
++                userInfo.put("avatar_url", oauth2User.getAttribute("avatar_url"));
++                userInfo.put("bio", oauth2User.getAttribute("bio"));
++                userInfo.put("location", oauth2User.getAttribute("location"));
++                userInfo.put("company", oauth2User.getAttribute("company"));
++                userInfo.put("blog", oauth2User.getAttribute("blog"));
++                userInfo.put("twitter_username", oauth2User.getAttribute("twitter_username"));
++                userInfo.put("public_repos", oauth2User.getAttribute("public_repos"));
++                userInfo.put("followers", oauth2User.getAttribute("followers"));
++                userInfo.put("following", oauth2User.getAttribute("following"));
++                userInfo.put("created_at", oauth2User.getAttribute("created_at"));
++                userInfo.put("updated_at", oauth2User.getAttribute("updated_at"));
++            } 
++            // 处理本地用户（从 Spring Security 上下文获取）
++            else {
++                org.springframework.security.core.Authentication authentication = 
++                    SecurityContextHolder.getContext().getAuthentication();
++                if (authentication != null && authentication.isAuthenticated() && 
++                    !(authentication.getPrincipal() instanceof String)) {
++                    
++                    // 这里假设认证主体包含用户信息，实际需要根据你的认证配置调整
++                    String username = authentication.getName();
++                    userInfo.put("login", username);
++                    userInfo.put("username", username);
++                    userInfo.put("name", username);
++                    userInfo.put("avatar_url", "https://via.placeholder.com/35x35/667eea/ffffff?text=" + 
++                        username.substring(0, 1).toUpperCase());
++                } else {
++                    userInfo.put("error", "用户未登录");
++                }
++            }
+         } else {
+             userInfo.put("error", "用户未登录");
+         }
+@@ -67,7 +98,7 @@
+      */
+     @GetMapping("/api/user/profile")
+     @ResponseBody
+-    public Map<String, Object> getApiUserProfile(@AuthenticationPrincipal OAuth2User principal) {
++    public Map<String, Object> getApiUserProfile(@AuthenticationPrincipal Object principal) {
+         return getUserProfile(principal);
+     }
+ 
+@@ -112,6 +143,137 @@
+                 .body(result);
+     }
+ 
++    /**
++     * API端点：用户注册
++     */
++    @PostMapping("/api/register")
++    @ResponseBody
++    public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
++        Map<String, Object> response = new HashMap<>();
++        
++        try {
++            String username = request.get("username");
++            String password = request.get("password");
++            String email = request.get("email");
++            
++            if (username == null || password == null) {
++                response.put("success", false);
++                response.put("message", "用户名和密码不能为空");
++                return ResponseEntity.badRequest().body(response);
++            }
++            
++            User user = userRegistrationService.registerUser(username, password, email);
++            
++            response.put("success", true);
++            response.put("message", "注册成功");
++            response.put("user", Map.of(
++                "id", user.getId(),
++                "username", user.getUsername(),
++                "email", user.getEmail(),
++                "displayName", user.getDisplayName()
++            ));
++            
++            return ResponseEntity.ok(response);
++            
++        } catch (IllegalArgumentException e) {
++            response.put("success", false);
++            response.put("message", e.getMessage());
++            return ResponseEntity.badRequest().body(response);
++        } catch (Exception e) {
++            response.put("success", false);
++            response.put("message", "注册失败，请稍后重试");
++            return ResponseEntity.internalServerError().body(response);
++        }
++    }
++    
++    /**
++     * API端点：用户名密码登录
++     */
++    @PostMapping("/api/login")
++    @ResponseBody
++    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> request) {
++        Map<String, Object> response = new HashMap<>();
++        
++        try {
++            String username = request.get("username");
++            String password = request.get("password");
++            
++            if (username == null || password == null) {
++                response.put("success", false);
++                response.put("message", "用户名和密码不能为空");
++                return ResponseEntity.badRequest().body(response);
++            }
++            
++            User user = userRegistrationService.authenticate(username, password);
++            
++            if (user != null) {
++                response.put("success", true);
++                response.put("message", "登录成功");
++                response.put("user", Map.of(
++                    "id", user.getId(),
++                    "username", user.getUsername(),
++                    "email", user.getEmail(),
++                    "displayName", user.getDisplayName()
++                ));
++                return ResponseEntity.ok(response);
++            } else {
++                response.put("success", false);
++                response.put("message", "用户名或密码错误");
++                return ResponseEntity.status(401).body(response);
++            }
++            
++        } catch (Exception e) {
++            response.put("success", false);
++            response.put("message", "登录失败，请稍后重试");
++            return ResponseEntity.internalServerError().body(response);
++        }
++    }
++    
++    /**
++     * API端点：检查用户名是否可用
++     */
++    @GetMapping("/api/check-username")
++    @ResponseBody
++    public ResponseEntity<Map<String, Object>> checkUsernameAvailability(@org.springframework.web.bind.annotation.RequestParam String username) {
++        Map<String, Object> response = new HashMap<>();
++        
++        if (username == null) {
++            response.put("success", false);
++            response.put("message", "用户名不能为空");
++            return ResponseEntity.badRequest().body(response);
++        }
++        
++        boolean available = userRegistrationService.isUsernameAvailable(username);
++        response.put("success", true);
++        response.put("available", available);
++        response.put("message", available ? "用户名可用" : "用户名已存在");
++        
++        return ResponseEntity.ok(response);
++    }
++    
++    /**
++     * API端点：检查邮箱是否可用
++     */
++    @GetMapping("/api/check-email")
++    @ResponseBody
++    public ResponseEntity<Map<String, Object>> checkEmailAvailability(@org.springframework.web.bind.annotation.RequestParam(required = false) String email) {
++        Map<String, Object> response = new HashMap<>();
++        
++        if (email == null || email.trim().isEmpty()) {
++            response.put("success", true);
++            response.put("available", true);
++            response.put("message", "邮箱可用");
++            return ResponseEntity.ok(response);
++        }
++        
++        boolean available = userRegistrationService.isEmailAvailable(email);
++        response.put("success", true);
++        response.put("available", available);
++        response.put("message", available ? "邮箱可用" : "邮箱已存在");
++        
++        return ResponseEntity.ok(response);
++    }
++
+     /**
+      * 首页
+      */
