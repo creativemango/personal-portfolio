@@ -39,13 +39,10 @@ api.interceptors.response.use(
 // 检查用户认证状态
 export const checkAuth = async () => {
   try {
-    // 检查本地存储中是否有 token
+    // 首先检查本地存储中是否有 token
     const token = localStorage.getItem('token')
-    if (!token) {
-      return null
-    }
     
-    // 使用全局拦截器自动添加 token
+    // 使用全局拦截器自动添加 token（如果有的话）
     const response = await api.get('/user/profile')
     
     // 解析响应数据结构
@@ -60,7 +57,13 @@ export const checkAuth = async () => {
     
     // 如果返回了用户数据，说明已登录
     if (responseData && responseData.data) {
-      return responseData.data
+      // 如果是 OAuth2 用户，确保存储用户信息
+      const userData = responseData.data
+      if (!token && userData.login) {
+        // OAuth2 用户，存储用户信息到 localStorage
+        localStorage.setItem('user', JSON.stringify(userData))
+      }
+      return userData
     }
     
     return null

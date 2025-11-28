@@ -68,7 +68,10 @@ const Navbar = ({ user, setUser }) => {
                   border: '2px solid white'
                 }}
                 onError={(e) => {
-                  e.target.src = `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`
+                  // 防止无限循环：如果已经是占位符图片，就不再设置
+                  if (!e.target.src.includes('via.placeholder.com')) {
+                    e.target.src = `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`
+                  }
                 }}
               />
               <span style={{ 

@@ -21,25 +21,39 @@ import jakarta.servlet.http.Cookie;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final OAuth2SuccessHandler oauth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 配置会话管理为无状态
+            // 配置 CORS
+            .cors(cors -> cors.configurationSource(request -> {
+                org.springframework.web.cors.CorsConfiguration corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+                corsConfiguration.setAllowedOriginPatterns(java.util.Arrays.asList("http://localhost:3000", "http://localhost:3001"));
+                corsConfiguration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                corsConfiguration.setAllowedHeaders(java.util.Arrays.asList("*"));
+                corsConfiguration.setAllowCredentials(true);
+                return corsConfiguration;
+            }))
+            // 配置会话管理为有状态（OAuth2 需要会话）
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
             .authorizeHttpRequests(authorize -> authorize
                 // 允许公开访问的端点
-                .requestMatchers("/", "/login", "/oauth2/**", "/blog/**", "/h2-console/**", 
+                .requestMatchers("/", "/login", "/login/oauth2/**", "/oauth2/**", "/blog/**", "/h2-console/**", 
                                "/api/user/profile", "/api/logout", "/api/register", "/api/login", 
                                "/api/check-username", "/api/check-email", "/user/profile").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
             )
-            // 禁用表单登录和 OAuth2 登录（使用 JWT）
+            // 禁用表单登录（使用 JWT），但保留 OAuth2 登录
             .formLogin(form -> form.disable())
-            .oauth2Login(oauth2 -> oauth2.disable())
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
+                .successHandler(oauth2SuccessHandler)
+                .failureUrl("http://localhost:3001/login?error=true")
+            )
             .logout(logout -> logout
                 .logoutUrl("/api/logout")
                 .logoutSuccessUrl("http://localhost:3001/")
