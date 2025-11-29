@@ -214,12 +214,24 @@ export const login = async (username, password) => {
       password
     })
     
-    // 如果登录成功，存储 token
-    if (response.data && response.data.success && response.data.token) {
-      localStorage.setItem('token', response.data.token)
+    // 解析嵌套的响应数据结构
+    const responseData = response.data
+    const loginData = responseData.data
+    
+    // 新的响应结构：如果登录成功，直接返回用户数据和token
+    // 不再使用success字段，而是通过HTTP状态码判断
+    if (loginData && loginData.token) {
+      // 存储 token
+      localStorage.setItem('token', loginData.token)
+      // 存储用户信息
+      if (loginData.user) {
+        localStorage.setItem('user', JSON.stringify(loginData.user))
+      }
+      // 返回实际的登录数据，而不是整个响应
+      return loginData
     }
     
-    return response.data
+    return loginData
   } catch (error) {
     console.error('Error logging in:', error)
     // 处理401错误，返回后端的具体错误信息
@@ -229,6 +241,13 @@ export const login = async (username, password) => {
         throw new Error(error.response.data.message)
       }
       throw new Error('用户名或密码错误')
+    }
+    // 处理400错误（参数错误）
+    if (error.response && error.response.status === 400) {
+      if (error.response.data && error.response.data.message) {
+        throw new Error(error.response.data.message)
+      }
+      throw new Error('请求参数错误')
     }
     // 处理其他错误
     if (error.response && error.response.data && error.response.data.message) {

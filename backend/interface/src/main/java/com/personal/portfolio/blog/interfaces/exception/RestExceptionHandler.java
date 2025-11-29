@@ -23,5 +23,28 @@ public class RestExceptionHandler {
         return ResultData.fail(ReturnCode.RC500.getCode(),e.getMessage());
     }
 
-}
+    /**
+     * 认证异常处理
+     * @param e the e
+     * @return ResultData
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResultData<String> handleAuthenticationException(AuthenticationException e) {
+        log.warn("认证异常: {}", e.getMessage());
+        return ResultData.fail(ReturnCode.USERNAME_OR_PASSWORD_ERROR.getCode(), e.getMessage());
+    }
 
+    /**
+     * 参数异常处理
+     * @param e the e
+     * @return ResultData
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResultData<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("参数异常: {}", e.getMessage());
+        return ResultData.fail(ReturnCode.RC999.getCode(), e.getMessage());
+    }
+
+}

@@ -46,7 +46,21 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 System.out.println("Extracted user info - username: " + username + ", name: " + name + ", email: " + email);
                 
                 // 使用 GitHub ID 作为用户ID，如果没有则使用 username 的哈希值
-                Long userId = oauth2User.getAttribute("id");
+                Long userId = null;
+                Object idAttribute = oauth2User.getAttribute("id");
+                if (idAttribute instanceof Integer) {
+                    userId = ((Integer) idAttribute).longValue();
+                } else if (idAttribute instanceof Long) {
+                    userId = (Long) idAttribute;
+                } else if (idAttribute != null) {
+                    // 尝试转换为Long
+                    try {
+                        userId = Long.valueOf(idAttribute.toString());
+                    } catch (NumberFormatException e) {
+                        System.err.println("Failed to parse user ID: " + idAttribute);
+                    }
+                }
+                
                 if (userId == null) {
                     userId = (long) Math.abs(username.hashCode());
                 }
@@ -57,14 +71,19 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 String token = jwtUtil.generateToken(username, userId);
                 System.out.println("Generated JWT Token: " + token);
                 
-                // 构建用户信息
+                // 确保用户名不为空
+                if (username == null || username.trim().isEmpty()) {
+                    throw new IllegalArgumentException("GitHub用户名不能为空");
+                }
+                
+                // 构建用户信息，确保所有字段都有值
                 Map<String, Object> userInfo = new HashMap<>();
-                userInfo.put("id", userId);
-                userInfo.put("username", username);
-                userInfo.put("login", username);
-                userInfo.put("name", name);
-                userInfo.put("email", email);
-                userInfo.put("avatar_url", avatarUrl);
+                userInfo.put("id", userId != null ? userId : 0L);
+                userInfo.put("username", username != null ? username : "github_user");
+                userInfo.put("login", username != null ? username : "github_user");
+                userInfo.put("name", name != null ? name : username);
+                userInfo.put("email", email != null ? email : "");
+                userInfo.put("avatar_url", avatarUrl != null ? avatarUrl : "");
                 userInfo.put("displayName", name != null ? name : username);
                 
                 // 构建响应数据
@@ -74,15 +93,28 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 responseData.put("token", token);
                 responseData.put("user", userInfo);
                 
-                // 重定向到前端 OAuth2 成功页面，携带 Token 和用户信息
-                String redirectUrl = String.format(
-                    "http://localhost:3001/oauth2/success?token=%s&user=%s",
-                    token,
-                    java.net.URLEncoder.encode(userInfo.toString(), "UTF-8")
-                );
+                System.out.println("Final user info: " + userInfo);
                 
-                System.out.println("Redirecting to: " + redirectUrl);
-                response.sendRedirect(redirectUrl);
+                // 重定向到前端 OAuth2 成功页面，携带 Token 和用户信息
+                try {
+                    String userInfoJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(userInfo);
+                    String redirectUrl = String.format(
+                        "http://localhost:3001/oauth2/success?token=%s&user=%s",
+                        java.net.URLEncoder.encode(token, "UTF-8"),
+                        java.net.URLEncoder.encode(userInfoJson, "UTF-8")
+                    );
+                    
+                    System.out.println("Redirecting to: " + redirectUrl);
+                    response.sendRedirect(redirectUrl);
+                } catch (Exception jsonError) {
+                    System.err.println("JSON encoding error: " + jsonError.getMessage());
+                    // 使用更简单的重定向作为备用方案
+                    String redirectUrl = String.format(
+                        "http://localhost:3001/oauth2/success?token=%s",
+                        java.net.URLEncoder.encode(token, "UTF-8")
+                    );
+                    response.sendRedirect(redirectUrl);
+                }
             } else {
                 // 如果不是 OAuth2 用户，重定向到主页
                 System.out.println("Not an OAuth2 user, redirecting to home");

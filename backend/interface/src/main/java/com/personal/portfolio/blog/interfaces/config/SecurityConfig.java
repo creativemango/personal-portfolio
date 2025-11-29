@@ -29,7 +29,7 @@ public class SecurityConfig {
             // 配置 CORS
             .cors(cors -> cors.configurationSource(request -> {
                 org.springframework.web.cors.CorsConfiguration corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
-                corsConfiguration.setAllowedOriginPatterns(java.util.Arrays.asList("http://localhost:3000", "http://localhost:3001"));
+                corsConfiguration.setAllowedOriginPatterns(java.util.Arrays.asList("http://localhost:3000", "http://localhost:3001", "http://localhost:3002"));
                 corsConfiguration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 corsConfiguration.setAllowedHeaders(java.util.Arrays.asList("*"));
                 corsConfiguration.setAllowCredentials(true);
