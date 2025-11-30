@@ -7,7 +7,5 @@ import lombok.Data;
  */
 @Data
 public class LogoutResponse {
-    private Boolean success;
-    private String message;
     private String redirectUrl;
 }

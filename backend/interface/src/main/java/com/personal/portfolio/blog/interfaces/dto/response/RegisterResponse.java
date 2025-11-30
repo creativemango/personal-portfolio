@@ -7,8 +7,6 @@ import lombok.Data;
  */
 @Data
 public class RegisterResponse {
-    private Boolean success;
-    private String message;
     private UserInfo user;
     
     /**

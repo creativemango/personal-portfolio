@@ -143,8 +143,6 @@ public class AuthController {
         }
         
         LogoutResponse result = new LogoutResponse();
-        result.setSuccess(true);
-        result.setMessage("退出登录成功");
         result.setRedirectUrl("/");
         
         return result;
@@ -156,42 +154,25 @@ public class AuthController {
     @PostMapping("/api/register")
     @ResponseBody
     public RegisterResponse register(@RequestBody RegisterRequest request) {
-        RegisterResponse response = new RegisterResponse();
+        String username = request.getUsername();
+        String password = request.getPassword();
+        String email = request.getEmail();
         
-        try {
-            String username = request.getUsername();
-            String password = request.getPassword();
-            String email = request.getEmail();
-            
-            if (username == null || password == null) {
-                response.setSuccess(false);
-                response.setMessage("用户名和密码不能为空");
-                return response;
-            }
-            
-            User user = userRegistrationService.registerUser(username, password, email);
-            
-            response.setSuccess(true);
-            response.setMessage("注册成功");
-            
-            RegisterResponse.UserInfo userInfo = new RegisterResponse.UserInfo();
-            userInfo.setId(user.getId());
-            userInfo.setUsername(user.getUsername());
-            userInfo.setEmail(user.getEmail());
-            userInfo.setDisplayName(user.getDisplayName());
-            response.setUser(userInfo);
-            
-            return response;
-            
-        } catch (IllegalArgumentException e) {
-            response.setSuccess(false);
-            response.setMessage(e.getMessage());
-            return response;
-        } catch (Exception e) {
-            response.setSuccess(false);
-            response.setMessage("注册失败，请稍后重试");
-            return response;
+        if (username == null || password == null) {
+            throw new IllegalArgumentException("用户名和密码不能为空");
         }
+        
+        User user = userRegistrationService.registerUser(username, password, email);
+        
+        RegisterResponse response = new RegisterResponse();
+        RegisterResponse.UserInfo userInfo = new RegisterResponse.UserInfo();
+        userInfo.setId(user.getId());
+        userInfo.setUsername(user.getUsername());
+        userInfo.setEmail(user.getEmail());
+        userInfo.setDisplayName(user.getDisplayName());
+        response.setUser(userInfo);
+        
+        return response;
     }
     
     /**
@@ -217,7 +198,6 @@ public class AuthController {
         String token = jwtUtil.generateToken(user.getUsername(), user.getId());
         
         LoginResponse response = new LoginResponse();
-        response.setMessage("登录成功");
         response.setToken(token);
         
         LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo();
@@ -236,18 +216,13 @@ public class AuthController {
     @GetMapping("/api/check-username")
     @ResponseBody
     public CheckUsernameResponse checkUsernameAvailability(@RequestParam String username) {
-        CheckUsernameResponse response = new CheckUsernameResponse();
-        
         if (username == null) {
-            response.setSuccess(false);
-            response.setMessage("用户名不能为空");
-            return response;
+            throw new IllegalArgumentException("用户名不能为空");
         }
         
         boolean available = userRegistrationService.isUsernameAvailable(username);
-        response.setSuccess(true);
+        CheckUsernameResponse response = new CheckUsernameResponse();
         response.setAvailable(available);
-        response.setMessage(available ? "用户名可用" : "用户名已存在");
         
         return response;
     }
@@ -258,19 +233,15 @@ public class AuthController {
     @GetMapping("/api/check-email")
     @ResponseBody
     public CheckEmailResponse checkEmailAvailability(@RequestParam(required = false) String email) {
-        CheckEmailResponse response = new CheckEmailResponse();
-        
         if (email == null || email.trim().isEmpty()) {
-            response.setSuccess(true);
+            CheckEmailResponse response = new CheckEmailResponse();
             response.setAvailable(true);
-            response.setMessage("邮箱可用");
             return response;
         }
         
         boolean available = userRegistrationService.isEmailAvailable(email);
-        response.setSuccess(true);
+        CheckEmailResponse response = new CheckEmailResponse();
         response.setAvailable(available);
-        response.setMessage(available ? "邮箱可用" : "邮箱已存在");
         
         return response;
     }
@@ -282,7 +253,6 @@ public class AuthController {
     @ResponseBody
     public HomeResponse home() {
         HomeResponse response = new HomeResponse();
-        response.setMessage("欢迎访问个人作品集网站");
         response.setLoginUrl("/login");
         return response;
     }

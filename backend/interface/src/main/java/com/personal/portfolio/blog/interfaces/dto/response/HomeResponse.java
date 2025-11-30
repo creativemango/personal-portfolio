@@ -7,6 +7,5 @@ import lombok.Data;
  */
 @Data
 public class HomeResponse {
-    private String message;
     private String loginUrl;
 }

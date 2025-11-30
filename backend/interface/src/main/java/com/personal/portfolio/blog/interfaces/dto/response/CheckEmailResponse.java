@@ -7,7 +7,5 @@ import lombok.Data;
  */
 @Data
 public class CheckEmailResponse {
-    private Boolean success;
     private Boolean available;
-    private String message;
 }
