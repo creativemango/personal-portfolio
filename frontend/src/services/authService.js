@@ -42,14 +42,19 @@ export const checkAuth = async () => {
     // 首先检查本地存储中是否有 token
     const token = localStorage.getItem('token')
     
+    console.log('checkAuth called, token in localStorage:', token)
+    
     // 使用全局拦截器自动添加 token（如果有的话）
     const response = await api.get('/user/profile')
     
     // 解析响应数据结构
     const responseData = response.data
     
+    console.log('checkAuth response data:', responseData)
+    
     // 如果返回的数据包含错误信息，说明未登录
     if (responseData && responseData.data && responseData.data.error) {
+      console.log('User not logged in:', responseData.data.error)
       // 清除无效的 token
       localStorage.removeItem('token')
       return null
@@ -57,17 +62,23 @@ export const checkAuth = async () => {
     
     // 如果返回了用户数据，说明已登录
     if (responseData && responseData.data) {
-      // 如果是 OAuth2 用户，确保存储用户信息
       const userData = responseData.data
-      if (!token && userData.login) {
+      console.log('User data received:', userData)
+      
+      // 如果是 OAuth2 用户，确保存储用户信息
+      if (userData.login && userData.id) {
         // OAuth2 用户，存储用户信息到 localStorage
         localStorage.setItem('user', JSON.stringify(userData))
+        console.log('OAuth2 user info stored in localStorage')
       }
+      
       return userData
     }
     
+    console.log('No user data found')
     return null
   } catch (error) {
+    console.error('checkAuth error:', error)
     if (error.response?.status === 401) {
       // 清除无效的 token
       localStorage.removeItem('token')

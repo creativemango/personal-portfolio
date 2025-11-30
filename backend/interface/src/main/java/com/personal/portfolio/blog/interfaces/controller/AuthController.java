@@ -49,10 +49,14 @@ public class AuthController {
     public UserProfileResponse getUserProfile(@AuthenticationPrincipal Object principal) {
         UserProfileResponse userInfo = new UserProfileResponse();
         
+        System.out.println("getUserProfile called, principal type: " + (principal != null ? principal.getClass().getName() : "null"));
+        
         if (principal != null) {
             // 处理 OAuth2 用户
             if (principal instanceof OAuth2User) {
                 OAuth2User oauth2User = (OAuth2User) principal;
+                System.out.println("OAuth2 User attributes: " + oauth2User.getAttributes());
+                
                 userInfo.setId(oauth2User.getAttribute("id") != null ? oauth2User.getAttribute("id").toString() : null);
                 userInfo.setLogin(oauth2User.getAttribute("login"));
                 userInfo.setUsername(oauth2User.getAttribute("login"));
@@ -74,6 +78,9 @@ public class AuthController {
             else {
                 Authentication authentication =
                     SecurityContextHolder.getContext().getAuthentication();
+                System.out.println("Authentication: " + authentication);
+                System.out.println("Is authenticated: " + (authentication != null ? authentication.isAuthenticated() : "null"));
+                
                 if (authentication != null && authentication.isAuthenticated() && 
                     !(authentication.getPrincipal() instanceof String)) {
                     
@@ -92,6 +99,7 @@ public class AuthController {
             userInfo.setError("用户未登录");
         }
         
+        System.out.println("Returning user info: " + userInfo);
         return userInfo;
     }
 
