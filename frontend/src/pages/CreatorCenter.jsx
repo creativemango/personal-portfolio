@@ -25,7 +25,21 @@ const CreatorCenter = ({ user }) => {
     setLoading(true)
     try {
       const response = await getBlogPosts()
-      setArticles(response || [])
+      console.log('文章列表响应:', response)
+      
+      // 确保 articles 始终是一个数组
+      let articlesData = []
+      
+      if (Array.isArray(response)) {
+        articlesData = response
+      } else if (response && Array.isArray(response.data)) {
+        articlesData = response.data
+      } else if (response && response.data) {
+        // 如果 data 不是数组，尝试将其转换为数组
+        articlesData = [response.data]
+      }
+      
+      setArticles(articlesData)
     } catch (error) {
       console.error('加载文章失败:', error)
       setArticles([])

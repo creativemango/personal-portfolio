@@ -1,10 +1,12 @@
 package com.personal.portfolio.blog.domain.entity;
 
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Getter;
 import lombok.Setter;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 博客文章实体类
@@ -90,6 +92,17 @@ public class BlogPost {
      */
     private Long categoryId;
     
+    /**
+     * 分类名称，可选
+     */
+    private String category;
+    
+    /**
+     * 标签列表，可选
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> tags;
+    
     public BlogPost() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
@@ -124,12 +137,14 @@ public class BlogPost {
     /**
      * 更新博客内容
      */
-    public void updateContent(String title, String slug, String content, String summary, String coverImage) {
+    public void updateContent(String title, String slug, String content, String summary, String coverImage, String category, List<String> tags) {
         this.title = title;
         this.slug = slug;
         this.content = content;
         this.summary = summary;
         this.coverImage = coverImage;
+        this.category = category;
+        this.tags = tags;
         this.updatedAt = LocalDateTime.now();
     }
     

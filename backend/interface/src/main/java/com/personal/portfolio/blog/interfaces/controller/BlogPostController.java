@@ -83,7 +83,9 @@ public class BlogPostController {
             request.getSlug(), 
             request.getContent(),
             request.getSummary(),
-            request.getCoverImage()
+            request.getCoverImage(),
+            request.getCategory(),
+            request.getTags()
         );
     }
     
@@ -108,7 +110,7 @@ public class BlogPostController {
         private String coverImage;
         private String category;
         private List<String> tags;
-        private com.personal.portfolio.blog.domain.entity.User author;
+        private User author;
     }
     
     /**
@@ -122,5 +124,7 @@ public class BlogPostController {
         private String content;
         private String summary;
         private String coverImage;
+        private String category;
+        private List<String> tags;
     }
 }

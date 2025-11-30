@@ -72,7 +72,7 @@ public class BlogPostService {
     /**
      * 更新博客文章
      */
-    public BlogPost updateBlogPost(Long id, String title, String slug, String content, String summary, String coverImage) {
+    public BlogPost updateBlogPost(Long id, String title, String slug, String content, String summary, String coverImage, String category, List<String> tags) {
         BlogPost blogPost = blogPostRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
         
@@ -81,7 +81,7 @@ public class BlogPostService {
             throw new IllegalArgumentException("博客标题已存在: " + title);
         }
         
-        blogPost.updateContent(title, slug, content, summary, coverImage);
+        blogPost.updateContent(title, slug, content, summary, coverImage, category, tags);
         return blogPostRepository.save(blogPost);
     }
     

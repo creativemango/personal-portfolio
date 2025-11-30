@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     comment_count INT DEFAULT 0,
     author_id BIGINT NOT NULL,
     category_id BIGINT,
+    category VARCHAR(100),
+    tags VARCHAR(500),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
