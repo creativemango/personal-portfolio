@@ -47,22 +47,21 @@ export const checkAuth = async () => {
     // 使用全局拦截器自动添加 token（如果有的话）
     const response = await api.get('/user/profile')
     
-    // 解析响应数据结构
-    const responseData = response.data
+    // 解析响应数据结构 - 后端直接返回用户信息，没有嵌套的 data 字段
+    const userData = response.data
     
-    console.log('checkAuth response data:', responseData)
+    console.log('checkAuth response data:', userData)
     
     // 如果返回的数据包含错误信息，说明未登录
-    if (responseData && responseData.data && responseData.data.error) {
-      console.log('User not logged in:', responseData.data.error)
+    if (userData && userData.error) {
+      console.log('User not logged in:', userData.error)
       // 清除无效的 token
       localStorage.removeItem('token')
       return null
     }
     
     // 如果返回了用户数据，说明已登录
-    if (responseData && responseData.data) {
-      const userData = responseData.data
+    if (userData && (userData.login || userData.username)) {
       console.log('User data received:', userData)
       
       // 如果是 OAuth2 用户，确保存储用户信息
