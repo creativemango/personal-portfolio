@@ -1,0 +1,359 @@
+Subject: [PATCH] 用户注册
+---
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/security/JwtUtils.java
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/security/JwtUtils.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/security/JwtUtils.java
+deleted file mode 100644
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/security/JwtUtils.java	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ /dev/null	(revision cb31a17aeea37a7932663507c2effafe981de07b)
+@@ -1,4 +0,0 @@
+-package com.personal.portfolio.blog.infrastructure.security;
+-
+-public class JwtUtils {
+-}
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/filter/JwtAuthenticationFilter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/filter/JwtAuthenticationFilter.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java
+rename from backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/filter/JwtAuthenticationFilter.java
+rename to backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/filter/JwtAuthenticationFilter.java	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java	(date 1764594002631)
+@@ -1,7 +1,7 @@
+-package com.personal.portfolio.blog.interfaces.filter;
++package com.personal.portfolio.blog.infrastructure.filter;
+ 
+-import com.personal.portfolio.blog.interfaces.config.JwtProperties;
+-import com.personal.portfolio.blog.interfaces.util.JwtUtil;
++import com.personal.portfolio.blog.infrastructure.config.JwtProperties;
++import com.personal.portfolio.blog.infrastructure.util.JwtUtil;
+ import jakarta.servlet.FilterChain;
+ import jakarta.servlet.ServletException;
+ import jakarta.servlet.http.HttpServletRequest;
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/util/JwtUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/util/JwtUtil.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java
+rename from backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/util/JwtUtil.java
+rename to backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/util/JwtUtil.java	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java	(date 1764594101989)
+@@ -1,11 +1,12 @@
+-package com.personal.portfolio.blog.interfaces.util;
++package com.personal.portfolio.blog.infrastructure.util;
++
++import com.personal.portfolio.blog.infrastructure.config.JwtProperties;
+ 
+ import cn.hutool.jwt.JWT;
+ import cn.hutool.jwt.JWTUtil;
+ import cn.hutool.jwt.JWTValidator;
+ import cn.hutool.jwt.signers.JWTSigner;
+ import cn.hutool.jwt.signers.JWTSignerUtil;
+-import com.personal.portfolio.blog.interfaces.config.JwtProperties;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.stereotype.Component;
+ 
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/interceptor/ProfileInterceptor.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/interceptor/ProfileInterceptor.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/interceptor/ProfileInterceptor.java
+new file mode 100644
+--- /dev/null	(date 1764593186148)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/interceptor/ProfileInterceptor.java	(date 1764593186148)
+@@ -0,0 +1,43 @@
++package com.personal.portfolio.blog.infrastructure.interceptor;
++
++import static com.personal.portfolio.blog.infrastructure.context.ContextConstants.*;
++
++import com.personal.portfolio.blog.infrastructure.util.ProfileUtil;
++
++import org.springframework.stereotype.Component;
++import org.springframework.web.servlet.HandlerInterceptor;
++
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.servlet.http.HttpServletResponse;
++import lombok.extern.slf4j.Slf4j;
++
++@Component
++@Slf4j
++public class ProfileInterceptor implements HandlerInterceptor {
++
++    @Override
++    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
++        String username = getUserName(request);
++        String host = getRemoteHost(request);
++        log.info("request header username:{}", username);
++        ProfileUtil.put(USERNAME, username);
++        ProfileUtil.put(HOST, host);
++        return true;
++    }
++
++    /* Started by AICoder, pid:8e44ay2f813d9d714687095970254d0372c7f5b7 */
++    private String getRemoteHost(HttpServletRequest request) {
++        return request.getRemoteHost();
++    }
++
++    private String getUserName(HttpServletRequest request) {
++        return request.getHeader("username");
++    }
++    /* Ended by AICoder, pid:8e44ay2f813d9d714687095970254d0372c7f5b7 */
++
++    @Override
++    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)  {
++        ProfileUtil.remove();
++    }
++
++}
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/JwtProperties.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/JwtProperties.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/JwtProperties.java
+rename from backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/JwtProperties.java
+rename to backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/JwtProperties.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/JwtProperties.java	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/JwtProperties.java	(date 1764593449836)
+@@ -1,4 +1,4 @@
+-package com.personal.portfolio.blog.interfaces.config;
++package com.personal.portfolio.blog.infrastructure.config;
+ 
+ import lombok.Data;
+ import org.springframework.boot.context.properties.ConfigurationProperties;
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/OAuth2SuccessHandler.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/OAuth2SuccessHandler.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java
+rename from backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/OAuth2SuccessHandler.java
+rename to backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/OAuth2SuccessHandler.java	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java	(date 1764593916271)
+@@ -1,13 +1,8 @@
+-package com.personal.portfolio.blog.interfaces.config;
++package com.personal.portfolio.blog.infrastructure.config;
+ 
+-import com.personal.portfolio.blog.interfaces.util.JwtUtil;
+-import jakarta.servlet.ServletException;
+-import jakarta.servlet.http.HttpServletRequest;
+-import jakarta.servlet.http.HttpServletResponse;
+-import lombok.RequiredArgsConstructor;
++import com.personal.portfolio.blog.infrastructure.util.JwtUtil;
++
+ import org.springframework.security.core.Authentication;
+-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+-import org.springframework.security.core.context.SecurityContextHolder;
+ import org.springframework.security.oauth2.core.user.OAuth2User;
+ import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+ import org.springframework.stereotype.Component;
+@@ -15,7 +10,11 @@
+ import java.io.IOException;
+ import java.util.HashMap;
+ import java.util.Map;
+-import java.util.Collections;
++
++import jakarta.servlet.ServletException;
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.servlet.http.HttpServletResponse;
++import lombok.RequiredArgsConstructor;
+ 
+ /**
+  * OAuth2 登录成功处理器
+Index: backend/infrastructure/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/pom.xml b/backend/infrastructure/pom.xml
+--- a/backend/infrastructure/pom.xml	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ b/backend/infrastructure/pom.xml	(date 1764594002654)
+@@ -48,5 +48,23 @@
+             <groupId>com.fasterxml.jackson.datatype</groupId>
+             <artifactId>jackson-datatype-jsr310</artifactId>
+         </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-security</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>com.alibaba</groupId>
++            <artifactId>transmittable-thread-local</artifactId>
++            <version>2.14.5</version>
++        </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-oauth2-client</artifactId>
++        </dependency>
++        <!-- Hutool -->
++        <dependency>
++            <groupId>cn.hutool</groupId>
++            <artifactId>hutool-all</artifactId>
++        </dependency>
+     </dependencies>
+ </project>
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/context/ContextConstants.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/context/ContextConstants.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/context/ContextConstants.java
+new file mode 100644
+--- /dev/null	(date 1764593038435)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/context/ContextConstants.java	(date 1764593038435)
+@@ -0,0 +1,8 @@
++package com.personal.portfolio.blog.infrastructure.context;
++
++public class ContextConstants {
++    public static final String USERNAME = "username";
++    public static final String HOST = "host";
++    public static final String LANGUAGE = "language";
++    public static final String NULL_USER = "[empty_user]";
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/ProfileUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/ProfileUtil.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/ProfileUtil.java
+new file mode 100644
+--- /dev/null	(date 1764593038415)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/ProfileUtil.java	(date 1764593038415)
+@@ -0,0 +1,61 @@
++package com.personal.portfolio.blog.infrastructure.util;
++
++import static com.personal.portfolio.blog.infrastructure.context.ContextConstants.*;
++
++import com.alibaba.ttl.TransmittableThreadLocal;
++
++import java.util.HashMap;
++import java.util.Map;
++import java.util.Objects;
++
++public class ProfileUtil {
++
++    private static final String OPERATOR_DESCRIBE = "X-Operator-Describe";
++
++    private static final ThreadLocal<Map<String, String>> PROFILES;
++
++    static {
++        PROFILES = new TransmittableThreadLocal<>();
++        PROFILES.set(new HashMap<>());
++    }
++
++    public ProfileUtil() {
++    }
++
++    private static Map<String, String> getProfiles() {
++        if (null == PROFILES.get()) {
++            PROFILES.set(new HashMap<>());
++        }
++        return PROFILES.get();
++    }
++
++    public static void put(String key, String value) {
++        getProfiles().put(key, value);
++    }
++
++    public static String get(String key) {
++        return getProfiles().get(key);
++    }
++
++    public static String getUsername() {
++        String userId = get(USERNAME);
++        return userId == null ? NULL_USER : userId;
++    }
++
++    public static String getHost() {
++        return get(HOST);
++    }
++
++    public static String getLanguage() {
++        return get(LANGUAGE);
++    }
++
++    public static void remove() {
++        if (Objects.nonNull(PROFILES)) {
++            PROFILES.remove();
++        }
++    }
++
++
++
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java
+new file mode 100644
+--- /dev/null	(date 1764594282680)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java	(date 1764594282680)
+@@ -0,0 +1,23 @@
++package com.personal.portfolio.blog.infrastructure.config;
++
++import com.personal.portfolio.blog.infrastructure.interceptor.ProfileInterceptor;
++
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
++import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
++
++@Configuration
++public class WebMvcConfig implements WebMvcConfigurer {
++
++    @Autowired
++    private ProfileInterceptor profileInterceptor;
++
++    @Override
++    public void addInterceptors(InterceptorRegistry registry) {
++        String patternsAll = "/**";
++
++        registry.addInterceptor(profileInterceptor).addPathPatterns(patternsAll);
++
++    }
++}
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java
+rename from backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java
+rename to backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/config/SecurityConfig.java	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java	(date 1764594050633)
+@@ -1,6 +1,7 @@
+-package com.personal.portfolio.blog.interfaces.config;
++package com.personal.portfolio.blog.infrastructure.config;
+ 
+-import com.personal.portfolio.blog.interfaces.filter.JwtAuthenticationFilter;
++import com.personal.portfolio.blog.infrastructure.filter.JwtAuthenticationFilter;
++
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Configuration;
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java	(revision cb31a17aeea37a7932663507c2effafe981de07b)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java	(date 1764593449937)
+@@ -6,7 +6,7 @@
+ import com.personal.portfolio.blog.interfaces.dto.request.RegisterRequest;
+ import com.personal.portfolio.blog.interfaces.dto.response.*;
+ import com.personal.portfolio.blog.interfaces.exception.InvalidCredentialsException;
+-import com.personal.portfolio.blog.interfaces.util.JwtUtil;
++import com.personal.portfolio.blog.infrastructure.util.JwtUtil;
+ import org.springframework.security.core.Authentication;
+ import org.springframework.security.core.annotation.AuthenticationPrincipal;
+ import org.springframework.security.core.context.SecurityContextHolder;
