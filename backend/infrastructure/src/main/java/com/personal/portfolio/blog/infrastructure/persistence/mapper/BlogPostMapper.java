@@ -1,7 +1,7 @@
 package com.personal.portfolio.blog.infrastructure.persistence.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.personal.portfolio.blog.domain.entity.BlogPost;
+import com.personal.portfolio.blog.domain.model.BlogPost;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 

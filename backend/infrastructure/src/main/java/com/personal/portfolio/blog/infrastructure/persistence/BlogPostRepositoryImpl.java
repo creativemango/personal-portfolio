@@ -1,9 +1,11 @@
 package com.personal.portfolio.blog.infrastructure.persistence;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.personal.portfolio.blog.domain.entity.BlogPost;
+import com.personal.portfolio.blog.domain.model.BlogPost;
+import com.personal.portfolio.blog.domain.event.BlogPostCreatedEvent;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
 import com.personal.portfolio.blog.infrastructure.persistence.mapper.BlogPostMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,28 +18,64 @@ import java.util.Optional;
 public class BlogPostRepositoryImpl implements BlogPostRepository {
     
     private final BlogPostMapper blogPostMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     
-    public BlogPostRepositoryImpl(BlogPostMapper blogPostMapper) {
+    public BlogPostRepositoryImpl(BlogPostMapper blogPostMapper, ApplicationEventPublisher applicationEventPublisher) {
         this.blogPostMapper = blogPostMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
     
     @Override
     public BlogPost save(BlogPost blogPost) {
-        if (blogPost.getId() == null) {
+        boolean isNew = blogPost.getId() == null;
+        
+        // 确保在保存前调用preUpdate同步值对象
+        blogPost.preUpdate();
+        
+        if (isNew) {
             // 新增
-            blogPost.preUpdate();
             blogPostMapper.insert(blogPost);
         } else {
             // 更新
-            blogPost.preUpdate();
             blogPostMapper.updateById(blogPost);
         }
+        
+        // 发布领域事件
+        publishDomainEvents(blogPost, isNew);
+        
         return blogPost;
+    }
+    
+    /**
+     * 发布领域事件
+     */
+    private void publishDomainEvents(BlogPost blogPost, boolean isNew) {
+        List<Object> domainEvents = blogPost.getAndClearDomainEvents();
+        
+        for (Object event : domainEvents) {
+            // 如果是BlogPostCreatedEvent且是新增操作，需要设置ID
+            if (event instanceof BlogPostCreatedEvent createdEvent && isNew) {
+                // 创建新的事件对象，设置正确的ID
+                BlogPostCreatedEvent updatedEvent = new BlogPostCreatedEvent(
+                    blogPost.getId(),
+                    createdEvent.title(),
+                    createdEvent.authorId(),
+                    createdEvent.createdAt()
+                );
+                applicationEventPublisher.publishEvent(updatedEvent);
+            } else {
+                applicationEventPublisher.publishEvent(event);
+            }
+        }
     }
     
     @Override
     public Optional<BlogPost> findById(Long id) {
         BlogPost blogPost = blogPostMapper.selectById(id);
+        if (blogPost != null) {
+            // 加载后初始化值对象
+            blogPost.postLoad();
+        }
         return Optional.ofNullable(blogPost);
     }
     
@@ -45,12 +83,18 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
     public List<BlogPost> findAll() {
         LambdaQueryWrapper<BlogPost> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByDesc(BlogPost::getCreatedAt);
-        return blogPostMapper.selectList(queryWrapper);
+        List<BlogPost> blogPosts = blogPostMapper.selectList(queryWrapper);
+        // 初始化值对象
+        blogPosts.forEach(BlogPost::postLoad);
+        return blogPosts;
     }
     
     @Override
     public List<BlogPost> findPublishedPosts() {
-        return blogPostMapper.selectPublishedPosts();
+        List<BlogPost> blogPosts = blogPostMapper.selectPublishedPosts();
+        // 初始化值对象
+        blogPosts.forEach(BlogPost::postLoad);
+        return blogPosts;
     }
     
     @Override

@@ -1,12 +1,13 @@
 package com.personal.portfolio.blog.interfaces.controller;
 
 import com.personal.portfolio.blog.application.service.UserRegistrationService;
-import com.personal.portfolio.blog.domain.entity.User;
+import com.personal.portfolio.blog.domain.model.User;
+import com.personal.portfolio.blog.domain.repository.UserRepository;
+import com.personal.portfolio.blog.domain.service.AuthenticationService;
 import com.personal.portfolio.blog.interfaces.dto.request.LoginRequest;
 import com.personal.portfolio.blog.interfaces.dto.request.RegisterRequest;
 import com.personal.portfolio.blog.interfaces.dto.response.*;
 import com.personal.portfolio.blog.interfaces.exception.InvalidCredentialsException;
-import com.personal.portfolio.blog.interfaces.util.JwtUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,19 +19,25 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 认证控制器
  */
 @Controller
+@Slf4j
 public class AuthController {
 
     private final UserRegistrationService userRegistrationService;
-    private final JwtUtil jwtUtil;
+    private final AuthenticationService authenticationService;
+    private final UserRepository userRepository;
 
-    public AuthController(UserRegistrationService userRegistrationService, JwtUtil jwtUtil) {
+    public AuthController(UserRegistrationService userRegistrationService, 
+                         AuthenticationService authenticationService,
+                         UserRepository userRepository) {
         this.userRegistrationService = userRegistrationService;
-        this.jwtUtil = jwtUtil;
+        this.authenticationService = authenticationService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -46,16 +53,17 @@ public class AuthController {
      */
     @GetMapping("/user/profile")
     @ResponseBody
-    public UserProfileResponse getUserProfile(@AuthenticationPrincipal Object principal) {
+    public UserProfileResponse getUserProfile(@AuthenticationPrincipal Object principal,
+                                            HttpServletRequest request) {
         UserProfileResponse userInfo = new UserProfileResponse();
         
-        System.out.println("getUserProfile called, principal type: " + (principal != null ? principal.getClass().getName() : "null"));
+        log.info("getUserProfile called, principal type: " + (principal != null ? principal.getClass().getName() : "null"));
         
         if (principal != null) {
             // 处理 OAuth2 用户
             if (principal instanceof OAuth2User) {
                 OAuth2User oauth2User = (OAuth2User) principal;
-                System.out.println("OAuth2 User attributes: " + oauth2User.getAttributes());
+                log.info("OAuth2 User attributes: " + oauth2User.getAttributes());
                 
                 userInfo.setId(oauth2User.getAttribute("id") != null ? oauth2User.getAttribute("id").toString() : null);
                 userInfo.setLogin(oauth2User.getAttribute("login"));
@@ -74,23 +82,48 @@ public class AuthController {
                 userInfo.setCreatedAt(oauth2User.getAttribute("created_at"));
                 userInfo.setUpdatedAt(oauth2User.getAttribute("updated_at"));
             } 
-            // 处理本地用户（从 Spring Security 上下文获取）
+            // 处理本地用户（JWT 认证）
             else {
-                Authentication authentication =
-                    SecurityContextHolder.getContext().getAuthentication();
-                System.out.println("Authentication: " + authentication);
-                System.out.println("Is authenticated: " + (authentication != null ? authentication.isAuthenticated() : "null"));
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                log.info("Authentication: " + authentication);
+                log.info("Principal class: " + (authentication != null && authentication.getPrincipal() != null ? 
+                    authentication.getPrincipal().getClass().getName() : "null"));
+                log.info("Is authenticated: " + (authentication != null ? authentication.isAuthenticated() : "null"));
                 
-                if (authentication != null && authentication.isAuthenticated() && 
-                    !(authentication.getPrincipal() instanceof String)) {
-                    
-                    // 这里假设认证主体包含用户信息，实际需要根据你的认证配置调整
+                if (authentication != null && authentication.isAuthenticated()) {
                     String username = authentication.getName();
-                    userInfo.setLogin(username);
-                    userInfo.setUsername(username);
-                    userInfo.setName(username);
-                    userInfo.setAvatarUrl("https://via.placeholder.com/35x35/667eea/ffffff?text=" + 
-                        username.substring(0, 1).toUpperCase());
+                    log.info("Username from authentication: " + username);
+                    
+                    // 从请求属性中获取用户ID（由 JWT 过滤器设置）
+                    Long userId = (Long) request.getAttribute("USER_ID");
+                    log.info("User ID from request attribute: " + userId);
+                    
+                    if (username != null && !username.equals("anonymousUser")) {
+                        userInfo.setId(userId != null ? userId.toString() : null);
+                        userInfo.setLogin(username);
+                        userInfo.setUsername(username);
+                        userInfo.setName(username);
+                        userInfo.setAvatarUrl("https://via.placeholder.com/35x35/667eea/ffffff?text=" + 
+                            username.substring(0, 1).toUpperCase());
+                        
+                        // 尝试从数据库获取更多用户信息
+                        try {
+                            // 直接使用 UserRepository 查找用户
+                            User user = userRepository.findByUsername(username).orElse(null);
+                            if (user != null) {
+                                userInfo.setEmail(user.getEmail());
+                                userInfo.setBio(user.getBio());
+                                // 确保 ID 正确设置（优先使用数据库中的 ID）
+                                if (user.getId() != null) {
+                                    userInfo.setId(user.getId().toString());
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.info("Could not fetch user details from database: " + e.getMessage());
+                        }
+                    } else {
+                        userInfo.setError("用户未登录或匿名用户");
+                    }
                 } else {
                     userInfo.setError("用户未登录");
                 }
@@ -99,7 +132,7 @@ public class AuthController {
             userInfo.setError("用户未登录");
         }
         
-        System.out.println("Returning user info: " + userInfo);
+        log.info("Returning user info: " + userInfo);
         return userInfo;
     }
 
@@ -108,8 +141,9 @@ public class AuthController {
      */
     @GetMapping("/api/user/profile")
     @ResponseBody
-    public UserProfileResponse getApiUserProfile(@AuthenticationPrincipal Object principal) {
-        return getUserProfile(principal);
+    public UserProfileResponse getApiUserProfile(@AuthenticationPrincipal Object principal,
+                                               HttpServletRequest request) {
+        return getUserProfile(principal, request);
     }
 
     /**
@@ -195,7 +229,7 @@ public class AuthController {
         }
         
         // 生成 JWT Token
-        String token = jwtUtil.generateToken(user.getUsername(), user.getId());
+        String token = authenticationService.generateToken(user.getUsername(), user.getId());
         
         LoginResponse response = new LoginResponse();
         response.setToken(token);

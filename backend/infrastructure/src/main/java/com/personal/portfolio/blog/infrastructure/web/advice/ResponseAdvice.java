@@ -1,7 +1,7 @@
 package com.personal.portfolio.blog.infrastructure.web.advice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.personal.portfolio.blog.infrastructure.common.response.ResultData;
+import com.personal.portfolio.blog.domain.common.ApiResponse;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
@@ -25,18 +25,18 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
     @SneakyThrows
     @Override
     public Object beforeBodyWrite(Object o, MethodParameter methodParameter, MediaType mediaType, Class<? extends HttpMessageConverter<?>> aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
-        // 如果已经是ResultData，则不进行封装
-        if (o instanceof ResultData) {
+        // 如果已经是ApiResponse，则不进行封装
+        if (o instanceof ApiResponse) {
             return o;
         }
         
         // 如果返回类型是String，需要特殊处理
         if (o instanceof String) {
-            return objectMapper.writeValueAsString(ResultData.success(o));
+            return objectMapper.writeValueAsString(ApiResponse.success(o));
         }
         
-        // 对于其他类型，统一封装为ResultData
-        return ResultData.success(o);
+        // 对于其他类型，统一封装为ApiResponse
+        return ApiResponse.success(o);
     }
 
 

@@ -1,6 +1,6 @@
 package com.personal.portfolio.blog.application.service;
 
-import com.personal.portfolio.blog.domain.entity.User;
+import com.personal.portfolio.blog.domain.model.User;
 import com.personal.portfolio.blog.domain.repository.UserRepository;
 import com.personal.portfolio.blog.application.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
@@ -45,13 +45,8 @@ public class UserRegistrationService {
             }
         }
         
-        // 创建新用户
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(PasswordUtil.encodePassword(password));
-        user.setEmail(email);
-        user.setIsLocalAccount(true);
-        user.setDisplayName(username); // 默认显示名与用户名相同
+        // 创建新用户 - 使用User实体的工厂方法
+        User user = User.createLocalUser(username, email, PasswordUtil.encodePassword(password));
         
         return userRepository.save(user);
     }
@@ -76,8 +71,8 @@ public class UserRegistrationService {
             return null;
         }
         
-        // 验证密码
-        if (user.getPassword() == null || !PasswordUtil.matches(password, user.getPassword())) {
+        // 验证密码 - 使用User实体的验证方法
+        if (!user.validatePassword(password)) {
             return null;
         }
         

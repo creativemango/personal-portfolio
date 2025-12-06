@@ -1,6 +1,7 @@
-package com.personal.portfolio.blog.interfaces.config;
+package com.personal.portfolio.blog.infrastructure.config;
 
-import com.personal.portfolio.blog.interfaces.filter.JwtAuthenticationFilter;
+import com.personal.portfolio.blog.infrastructure.filter.JwtAuthenticationFilter;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final OAuth2SuccessHandler oauth2SuccessHandler;
+    private final OAuth2FailureHandler oauth2FailureHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,8 +44,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 // 允许公开访问的端点
                 .requestMatchers("/", "/login", "/login/oauth2/**", "/oauth2/**", "/blog/**", "/h2-console/**", 
-                               "/api/user/profile", "/api/logout", "/api/register", "/api/login", 
-                               "/api/check-username", "/api/check-email", "/user/profile").permitAll()
+                               "/api/logout", "/api/register", "/api/login", 
+                               "/api/check-username", "/api/check-email").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
             )
@@ -52,7 +54,7 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
                 .successHandler(oauth2SuccessHandler)
-                .failureUrl("http://localhost:3001/login?error=true")
+                .failureHandler(oauth2FailureHandler)
             )
             .logout(logout -> logout
                 .logoutUrl("/api/logout")

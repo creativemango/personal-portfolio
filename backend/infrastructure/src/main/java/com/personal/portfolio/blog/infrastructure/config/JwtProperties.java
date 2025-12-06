@@ -1,4 +1,4 @@
-package com.personal.portfolio.blog.interfaces.config;
+package com.personal.portfolio.blog.infrastructure.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

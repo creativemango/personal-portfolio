@@ -1,6 +1,6 @@
 package com.personal.portfolio.blog.domain.repository;
 
-import com.personal.portfolio.blog.domain.entity.BlogPost;
+import com.personal.portfolio.blog.domain.model.BlogPost;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,7 +1,7 @@
 package com.personal.portfolio.blog.infrastructure.persistence;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.personal.portfolio.blog.domain.entity.User;
+import com.personal.portfolio.blog.domain.model.User;
 import com.personal.portfolio.blog.domain.repository.UserRepository;
 import com.personal.portfolio.blog.infrastructure.persistence.mapper.UserMapper;
 import org.springframework.stereotype.Repository;

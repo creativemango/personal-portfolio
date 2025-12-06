@@ -1,8 +1,10 @@
 package com.personal.portfolio.blog.interfaces.controller;
 
-import com.personal.portfolio.blog.application.service.BlogPostService;
-import com.personal.portfolio.blog.domain.entity.BlogPost;
-import com.personal.portfolio.blog.domain.entity.User;
+import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
+import com.personal.portfolio.blog.application.service.BlogPostAppService;
+import com.personal.portfolio.blog.domain.model.BlogPost;
+import com.personal.portfolio.blog.domain.model.User;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -18,24 +20,33 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BlogPostController {
     
-    private final BlogPostService blogPostService;
+    private final BlogPostAppService blogPostAppService;
     
     /**
      * 创建博客文章
      */
     @PostMapping
     public BlogPost createBlogPost(@RequestBody CreateBlogPostRequest request) {
-        // 注意：这里需要先获取用户ID，实际项目中可能需要用户认证
-        // 这里暂时简化处理，实际使用时需要根据认证信息获取当前用户ID
-        // 临时使用一个固定的用户ID用于测试
-        Long tempAuthorId = 1L; // 临时用户ID
+        // 用户ID应该从认证信息中获取，这里暂时使用请求中的authorId
+        // 在实际项目中，应该从JWT token或session中获取
+        Long authorId = request.getAuthor() != null ? request.getAuthor().getId() : null;
+        if (authorId == null) {
+            throw new IllegalArgumentException("作者ID不能为空");
+        }
         
-        return blogPostService.createBlogPost(
-            request.getTitle(), 
-            request.getSlug(), 
-            request.getContent(), 
-            tempAuthorId
-        );
+        // 将请求DTO转换为命令对象
+        CreateBlogPostCommand command = new CreateBlogPostCommand();
+        command.setTitle(request.getTitle());
+        command.setSlug(request.getSlug());
+        command.setContent(request.getContent());
+        command.setSummary(request.getSummary());
+        command.setCoverImage(request.getCoverImage());
+        command.setCategory(request.getCategory());
+        command.setTags(request.getTags());
+        command.setAuthorId(authorId);
+        
+        // 使用命令对象调用应用服务
+        return blogPostAppService.createBlogPost(command);
     }
     
     /**
@@ -43,7 +54,7 @@ public class BlogPostController {
      */
     @GetMapping
     public List<BlogPost> getAllBlogPosts() {
-        return blogPostService.getAllBlogPosts();
+        return blogPostAppService.getAllBlogPosts();
     }
     
     /**
@@ -51,7 +62,7 @@ public class BlogPostController {
      */
     @GetMapping("/published")
     public List<BlogPost> getPublishedBlogPosts() {
-        return blogPostService.getPublishedBlogPosts();
+        return blogPostAppService.getPublishedBlogPosts();
     }
     
     /**
@@ -59,7 +70,7 @@ public class BlogPostController {
      */
     @GetMapping("/{id}")
     public BlogPost getBlogPostById(@PathVariable Long id) {
-        return blogPostService.getBlogPostById(id);
+        return blogPostAppService.getBlogPostById(id);
     }
     
     /**
@@ -67,7 +78,7 @@ public class BlogPostController {
      */
     @PutMapping("/{id}/publish")
     public BlogPost publishBlogPost(@PathVariable Long id) {
-        return blogPostService.publishBlogPost(id);
+        return blogPostAppService.publishBlogPost(id);
     }
     
     /**
@@ -77,7 +88,7 @@ public class BlogPostController {
     public BlogPost updateBlogPost(
             @PathVariable Long id, 
             @RequestBody UpdateBlogPostRequest request) {
-        return blogPostService.updateBlogPost(
+        return blogPostAppService.updateBlogPost(
             id, 
             request.getTitle(), 
             request.getSlug(), 
@@ -94,7 +105,7 @@ public class BlogPostController {
      */
     @DeleteMapping("/{id}")
     public void deleteBlogPost(@PathVariable Long id) {
-        blogPostService.deleteBlogPost(id);
+        blogPostAppService.deleteBlogPost(id);
     }
     
     /**

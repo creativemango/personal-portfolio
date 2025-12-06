@@ -1,13 +1,8 @@
-package com.personal.portfolio.blog.interfaces.config;
+package com.personal.portfolio.blog.infrastructure.config;
 
-import com.personal.portfolio.blog.interfaces.util.JwtUtil;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import com.personal.portfolio.blog.infrastructure.util.JwtUtil;
+
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -15,7 +10,12 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Collections;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * OAuth2 登录成功处理器
@@ -23,6 +23,7 @@ import java.util.Collections;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
@@ -30,15 +31,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
                                       Authentication authentication) throws IOException, ServletException {
-        
-        System.out.println("OAuth2 Success Handler called");
-        System.out.println("Authentication principal type: " + authentication.getPrincipal().getClass().getName());
+
+        log.info("OAuth2 Success Handler called");
+        log.info("Authentication principal type: " + authentication.getPrincipal().getClass().getName());
         
         try {
             if (authentication.getPrincipal() instanceof OAuth2User) {
                 OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
                 
-                System.out.println("OAuth2 User attributes: " + oauth2User.getAttributes());
+                log.info("OAuth2 User attributes: " + oauth2User.getAttributes());
                 
                 // 从 OAuth2 用户信息中提取必要字段
                 String username = oauth2User.getAttribute("login");
@@ -46,7 +47,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 String email = oauth2User.getAttribute("email");
                 String avatarUrl = oauth2User.getAttribute("avatar_url");
                 
-                System.out.println("Extracted user info - username: " + username + ", name: " + name + ", email: " + email);
+                log.info("Extracted user info - username: " + username + ", name: " + name + ", email: " + email);
                 
                 // 使用 GitHub ID 作为用户ID，如果没有则使用 username 的哈希值
                 Long userId = null;
@@ -60,7 +61,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     try {
                         userId = Long.valueOf(idAttribute.toString());
                     } catch (NumberFormatException e) {
-                        System.err.println("Failed to parse user ID: " + idAttribute);
+                        log.error("Failed to parse user ID: " + idAttribute);
                     }
                 }
                 
@@ -68,11 +69,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     userId = (long) Math.abs(username.hashCode());
                 }
                 
-                System.out.println("User ID: " + userId);
+                log.info("User ID: " + userId);
                 
                 // 生成 JWT Token
                 String token = jwtUtil.generateToken(username, userId);
-                System.out.println("Generated JWT Token: " + token);
+                log.info("Generated JWT Token: " + token);
                 
                 // 确保用户名不为空
                 if (username == null || username.trim().isEmpty()) {
@@ -96,7 +97,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 responseData.put("token", token);
                 responseData.put("user", userInfo);
                 
-                System.out.println("Final user info: " + userInfo);
+                log.info("Final user info: " + userInfo);
                 
                 // 重定向到前端 OAuth2 成功页面，携带 Token 和用户信息
                 try {
@@ -107,10 +108,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                         java.net.URLEncoder.encode(userInfoJson, "UTF-8")
                     );
                     
-                    System.out.println("Redirecting to: " + redirectUrl);
+                    log.info("Redirecting to: " + redirectUrl);
                     response.sendRedirect(redirectUrl);
                 } catch (Exception jsonError) {
-                    System.err.println("JSON encoding error: " + jsonError.getMessage());
+                    log.error("JSON encoding error: " + jsonError.getMessage());
                     // 使用更简单的重定向作为备用方案
                     String redirectUrl = String.format(
                         "http://localhost:3001/oauth2/success?token=%s",
@@ -120,11 +121,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 }
             } else {
                 // 如果不是 OAuth2 用户，重定向到主页
-                System.out.println("Not an OAuth2 user, redirecting to home");
+                log.info("Not an OAuth2 user, redirecting to home");
                 response.sendRedirect("http://localhost:3001/home");
             }
         } catch (Exception e) {
-            System.err.println("Error in OAuth2 success handler: " + e.getMessage());
+            log.error("Error in OAuth2 success handler: " + e.getMessage());
             e.printStackTrace();
             // 发生错误时重定向到登录页面
             response.sendRedirect("http://localhost:3001/login?error=oauth2_failed");

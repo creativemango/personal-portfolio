@@ -1,11 +1,13 @@
-package com.personal.portfolio.blog.interfaces.util;
+package com.personal.portfolio.blog.infrastructure.util;
+
+import com.personal.portfolio.blog.infrastructure.config.JwtProperties;
 
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.JWTValidator;
 import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
-import com.personal.portfolio.blog.interfaces.config.JwtProperties;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -130,5 +132,19 @@ public class JwtUtil {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 从请求头中解析 Token
+     *
+     * @param request HTTP 请求
+     * @return Token 字符串
+     */
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(jwtProperties.getTokenHeader());
+        if (bearerToken != null && bearerToken.startsWith(jwtProperties.getTokenPrefix())) {
+            return bearerToken.substring(jwtProperties.getTokenPrefix().length());
+        }
+        return null;
     }
 }

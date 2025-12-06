@@ -43,7 +43,7 @@ export const checkAuth = async () => {
     const token = localStorage.getItem('token')
     
     console.log('checkAuth called, token in localStorage:', token)
-    
+
     // 使用全局拦截器自动添加 token（如果有的话）
     const response = await api.get('/user/profile')
     
@@ -224,20 +224,22 @@ export const login = async (username, password) => {
       password
     })
     
-    // 解析嵌套的响应数据结构
-    const responseData = response.data
-    const loginData = responseData.data
+    console.log('Login response:', response.data)
     
-    // 新的响应结构：如果登录成功，直接返回用户数据和token
-    // 不再使用success字段，而是通过HTTP状态码判断
+    // 后端直接返回 LoginResponse 对象，没有嵌套的 data 字段
+    const loginData = response.data.data
+    
+    // 如果登录成功，直接返回用户数据和token
     if (loginData && loginData.token) {
       // 存储 token
       localStorage.setItem('token', loginData.token)
+
       // 存储用户信息
       if (loginData.user) {
         localStorage.setItem('user', JSON.stringify(loginData.user))
       }
-      // 返回实际的登录数据，而不是整个响应
+      
+      // 返回登录数据
       return loginData
     }
     
