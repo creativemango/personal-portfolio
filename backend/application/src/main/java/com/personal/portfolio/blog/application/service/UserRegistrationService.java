@@ -2,7 +2,7 @@ package com.personal.portfolio.blog.application.service;
 
 import com.personal.portfolio.blog.domain.model.User;
 import com.personal.portfolio.blog.domain.repository.UserRepository;
-import com.personal.portfolio.blog.application.util.PasswordUtil;
+import com.personal.portfolio.blog.domain.service.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class UserRegistrationService {
     
     private final UserRepository userRepository;
+    private final PasswordService passwordService;
     
     /**
      * 注册新用户
@@ -24,12 +25,12 @@ public class UserRegistrationService {
      */
     public User registerUser(String username, String password, String email) {
         // 验证用户名格式
-        if (!PasswordUtil.isValidUsername(username)) {
+        if (!passwordService.isValidUsername(username)) {
             throw new IllegalArgumentException("用户名格式无效：必须是50位以内的字母和数字组合");
         }
         
         // 验证密码强度
-        if (!PasswordUtil.isValidPassword(password)) {
+        if (!passwordService.isValidStrength(password)) {
             throw new IllegalArgumentException("密码格式无效：必须是8-16位");
         }
         
@@ -46,7 +47,7 @@ public class UserRegistrationService {
         }
         
         // 创建新用户 - 使用User实体的工厂方法
-        User user = User.createLocalUser(username, email, PasswordUtil.encodePassword(password));
+        User user = User.createLocalUser(username, email, passwordService.encode(password));
         
         return userRepository.save(user);
     }
@@ -67,12 +68,12 @@ public class UserRegistrationService {
         }
         
         // 检查是否为本地账户
-        if (!Boolean.TRUE.equals(user.getIsLocalAccount())) {
+        if (Boolean.FALSE.equals(user.getIsLocalAccount())) {
             return null;
         }
         
-        // 验证密码 - 使用User实体的验证方法
-        if (!user.validatePassword(password)) {
+        if (user.getPassword() == null ||
+            !passwordService.matches(password, user.getPassword())) {
             return null;
         }
         
@@ -85,7 +86,7 @@ public class UserRegistrationService {
      * @return 是否可用
      */
     public boolean isUsernameAvailable(String username) {
-        if (!PasswordUtil.isValidUsername(username)) {
+        if (!passwordService.isValidUsername(username)) {
             return false;
         }
         return !userRepository.existsByUsername(username);

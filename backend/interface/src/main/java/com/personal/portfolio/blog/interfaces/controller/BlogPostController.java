@@ -2,8 +2,9 @@ package com.personal.portfolio.blog.interfaces.controller;
 
 import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
 import com.personal.portfolio.blog.application.service.BlogPostAppService;
+import com.personal.portfolio.blog.domain.context.CurrentUserContext;
 import com.personal.portfolio.blog.domain.model.BlogPost;
-import com.personal.portfolio.blog.domain.model.User;
+import com.personal.portfolio.blog.interfaces.exception.AuthenticationException;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -21,17 +22,17 @@ import java.util.List;
 public class BlogPostController {
     
     private final BlogPostAppService blogPostAppService;
+    private final CurrentUserContext currentUserContext;
     
     /**
      * 创建博客文章
      */
     @PostMapping
     public BlogPost createBlogPost(@RequestBody CreateBlogPostRequest request) {
-        // 用户ID应该从认证信息中获取，这里暂时使用请求中的authorId
-        // 在实际项目中，应该从JWT token或session中获取
-        Long authorId = request.getAuthor() != null ? request.getAuthor().getId() : null;
+        // 从当前用户上下文获取authorId
+        Long authorId = currentUserContext.getCurrentUserId();
         if (authorId == null) {
-            throw new IllegalArgumentException("作者ID不能为空");
+            throw new AuthenticationException("用户未登录");
         }
         
         // 将请求DTO转换为命令对象
@@ -121,7 +122,6 @@ public class BlogPostController {
         private String coverImage;
         private String category;
         private List<String> tags;
-        private User author;
     }
     
     /**

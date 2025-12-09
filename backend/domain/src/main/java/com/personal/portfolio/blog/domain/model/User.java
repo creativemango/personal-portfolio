@@ -91,7 +91,7 @@ public class User {
     /**
      * 是否为本地注册账户
      */
-    private Boolean isLocalAccount = false;
+    private Boolean isLocalAccount = true;
 
     /**
      * 创建时间，必填
@@ -193,16 +193,16 @@ public class User {
     }
     
     /**
-     * 验证密码
+     * 验证密码 - 基础验证
+     * 只检查是否为本地账户和密码是否设置
+     * 具体的密码匹配验证在应用层使用PasswordService进行
      */
     public boolean validatePassword(String inputPassword) {
         if (!isLocalAccount) {
             throw new IllegalStateException("非本地账户没有密码");
         }
         
-        // 这里应该使用密码哈希验证
-        // 暂时简单比较
-        return this.password != null && this.password.equals(inputPassword);
+        return this.password != null && !this.password.trim().isEmpty();
     }
     
     /**
@@ -313,22 +313,17 @@ public class User {
     }
     
     /**
-     * 验证密码强度
+     * 验证密码强度 - 基础验证
+     * 注意：具体的密码强度验证应该在应用层使用PasswordService进行
+     * 这里只做最基本的长度检查
      */
     private static void validatePasswordStrength(String password) {
         if (password == null || password.length() < 8) {
             throw new IllegalArgumentException("密码长度至少8个字符");
         }
         
-        // 检查是否包含数字
-        if (!password.matches(".*\\d.*")) {
-            throw new IllegalArgumentException("密码必须包含至少一个数字");
-        }
-        
-        // 检查是否包含字母
-        if (!password.matches(".*[a-zA-Z].*")) {
-            throw new IllegalArgumentException("密码必须包含至少一个字母");
-        }
+        // 更宽松的验证，具体验证在应用层进行
+        // 这里只检查长度，不检查字符类型
     }
     
     // Setter方法（有限制的）
