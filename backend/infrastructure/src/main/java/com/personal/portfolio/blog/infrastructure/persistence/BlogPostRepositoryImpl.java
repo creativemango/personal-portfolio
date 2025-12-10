@@ -4,23 +4,30 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.event.BlogPostCreatedEvent;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
+import com.personal.portfolio.blog.infrastructure.persistence.entity.BlogPostEntity;
 import com.personal.portfolio.blog.infrastructure.persistence.mapper.BlogPostMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import io.github.linpeilie.Converter;
 
 /**
- * 博客文章仓储实现类 - 使用MyBatis Plus
+ * 博客文章仓储实现类 - 使用MyBatis Plus和持久化实体
  */
 @Repository
 public class BlogPostRepositoryImpl implements BlogPostRepository {
     
     private final BlogPostMapper blogPostMapper;
+    private static final Converter converter = new Converter();
     private final ApplicationEventPublisher applicationEventPublisher;
     
-    public BlogPostRepositoryImpl(BlogPostMapper blogPostMapper, ApplicationEventPublisher applicationEventPublisher) {
+    public BlogPostRepositoryImpl(
+            BlogPostMapper blogPostMapper,
+            ApplicationEventPublisher applicationEventPublisher) {
         this.blogPostMapper = blogPostMapper;
         this.applicationEventPublisher = applicationEventPublisher;
     }
@@ -29,15 +36,17 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
     public BlogPost save(BlogPost blogPost) {
         boolean isNew = blogPost.getId() == null;
         
-        // 确保在保存前调用preUpdate同步值对象
-        blogPost.preUpdate();
+        // 转换为持久化实体
+        BlogPostEntity entity = converter.convert(blogPost, BlogPostEntity.class);;
         
         if (isNew) {
             // 新增
-            blogPostMapper.insert(blogPost);
+            blogPostMapper.insert(entity);
+            // 设置生成的ID回领域对象
+            blogPost.setId(entity.getId());
         } else {
             // 更新
-            blogPostMapper.updateById(blogPost);
+            blogPostMapper.updateById(entity);
         }
         
         // 发布领域事件
@@ -71,30 +80,34 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
     
     @Override
     public Optional<BlogPost> findById(Long id) {
-        BlogPost blogPost = blogPostMapper.selectById(id);
-        if (blogPost != null) {
-            // 加载后初始化值对象
-            blogPost.postLoad();
+        BlogPostEntity entity = blogPostMapper.selectById(id);
+        if (entity == null) {
+            return Optional.empty();
         }
-        return Optional.ofNullable(blogPost);
+        BlogPost domain = converter.convert(entity, BlogPost.class);
+        return Optional.ofNullable(domain);
     }
     
     @Override
     public List<BlogPost> findAll() {
-        LambdaQueryWrapper<BlogPost> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.orderByDesc(BlogPost::getCreatedAt);
-        List<BlogPost> blogPosts = blogPostMapper.selectList(queryWrapper);
-        // 初始化值对象
-        blogPosts.forEach(BlogPost::postLoad);
-        return blogPosts;
+        LambdaQueryWrapper<BlogPostEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByDesc(BlogPostEntity::getCreatedAt);
+        List<BlogPostEntity> entities = blogPostMapper.selectList(queryWrapper);
+        
+        // 转换为领域对象
+        return entities.stream()
+                .map(entity -> converter.convert(entity, BlogPost.class))
+                .collect(Collectors.toList());
     }
     
     @Override
     public List<BlogPost> findPublishedPosts() {
-        List<BlogPost> blogPosts = blogPostMapper.selectPublishedPosts();
-        // 初始化值对象
-        blogPosts.forEach(BlogPost::postLoad);
-        return blogPosts;
+        List<BlogPostEntity> entities = blogPostMapper.selectPublishedPosts();
+        
+        // 转换为领域对象
+        return entities.stream()
+                .map(entity -> converter.convert(entity, BlogPost.class))
+                .collect(Collectors.toList());
     }
     
     @Override
