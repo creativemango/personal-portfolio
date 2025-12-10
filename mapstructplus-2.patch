@@ -1,0 +1,1075 @@
+Subject: [PATCH] mapstructplus-2
+---
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Content.java
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Content.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Content.java
+deleted file mode 100644
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Content.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ /dev/null	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
+@@ -1,75 +0,0 @@
+-package com.personal.portfolio.blog.domain.model.valueobject;
+-
+-import lombok.EqualsAndHashCode;
+-import lombok.Getter;
+-
+-/**
+- * 内容值对象
+- * 封装博客内容的业务规则和验证逻辑
+- */
+-@Getter
+-@EqualsAndHashCode
+-public class Content implements ValueObject {
+-
+-    /**
+-     * -- GETTER --
+-     *  获取内容值
+-     */
+-    private final String value;
+-
+-    /**
+-     * 私有构造函数，通过工厂方法创建
+-     */
+-    private Content(String value) {
+-        this.value = value.trim();
+-    }
+-    
+-    /**
+-     * 工厂方法：从字符串创建Content
+-     */
+-    public static Content of(String value) {
+-        return new Content(value);
+-    }
+-
+-    /**
+-     * 转换为字符串
+-     */
+-    @Override
+-    public String toString() {
+-        return value;
+-    }
+-    
+-    /**
+-     * 获取摘要（前100个字符）
+-     */
+-    public String getSummary() {
+-        if (value.length() <= 100) {
+-            return value;
+-        }
+-        return value.substring(0, 100) + "...";
+-    }
+-    
+-    /**
+-     * 获取纯文本内容（移除HTML标签）
+-     */
+-    public String getPlainText() {
+-        return value.replaceAll("<[^>]*>", "");
+-    }
+-    
+-    /**
+-     * 判断内容是否包含特定关键词
+-     */
+-    public boolean containsKeyword(String keyword) {
+-        return value.toLowerCase().contains(keyword.toLowerCase());
+-    }
+-    
+-    /**
+-     * 获取字数统计
+-     */
+-    public int getWordCount() {
+-        if (value.isEmpty()) {
+-            return 0;
+-        }
+-        return value.trim().split("\\s+").length;
+-    }
+-}
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Slug.java
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Slug.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Slug.java
+deleted file mode 100644
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Slug.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ /dev/null	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
+@@ -1,70 +0,0 @@
+-package com.personal.portfolio.blog.domain.model.valueobject;
+-
+-import lombok.EqualsAndHashCode;
+-import lombok.Getter;
+-
+-import java.util.regex.Pattern;
+-
+-/**
+- * Slug值对象
+- * 用于URL的友好标识，包含验证和格式化逻辑
+- */
+-@Getter
+-@EqualsAndHashCode
+-public class Slug implements ValueObject {
+-
+-    /**
+-     * -- GETTER --
+-     *  获取Slug值
+-     */
+-    private final String value;
+-    private static final int MAX_LENGTH = 200;
+-    private static final Pattern VALID_SLUG_PATTERN = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$");
+-    
+-    /**
+-     * 私有构造函数，通过工厂方法创建
+-     */
+-    private Slug(String value) {
+-        this.value = normalize(value);
+-    }
+-    
+-    /**
+-     * 工厂方法：从字符串创建Slug
+-     */
+-    public static Slug of(String value) {
+-        return new Slug(value);
+-    }
+-    
+-    /**
+-     * 从标题生成Slug
+-     */
+-    public static Slug fromTitle(String title) {
+-        if (title == null || title.trim().isEmpty()) {
+-            throw new IllegalArgumentException("标题不能为空");
+-        }
+-        
+-        String slug = title.toLowerCase()
+-                .replaceAll("[^a-z0-9\\s-]", "")
+-                .replaceAll("\\s+", "-")
+-                .replaceAll("-+", "-")
+-                .trim();
+-        
+-        return new Slug(slug);
+-    }
+-    
+-    /**
+-     * 规范化Slug
+-     */
+-    private String normalize(String value) {
+-        return value.toLowerCase().trim();
+-    }
+-
+-    /**
+-     * 转换为字符串
+-     */
+-    @Override
+-    public String toString() {
+-        return value;
+-    }
+-    
+-}
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Title.java
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Title.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Title.java
+deleted file mode 100644
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/Title.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ /dev/null	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
+@@ -1,48 +0,0 @@
+-package com.personal.portfolio.blog.domain.model.valueobject;
+-
+-import lombok.EqualsAndHashCode;
+-import lombok.Getter;
+-
+-/**
+- * 标题值对象
+- * 封装标题的业务规则和验证逻辑
+- */
+-@Getter
+-@EqualsAndHashCode
+-public class Title implements ValueObject {
+-
+-    /**
+-     * -- GETTER --
+-     *  获取标题值
+-     */
+-    private final String value;
+-
+-    /**
+-     * 私有构造函数，通过工厂方法创建
+-     */
+-    private Title(String value) {
+-        this.value = value.trim();
+-    }
+-    
+-    /**
+-     * 工厂方法：从字符串创建Title
+-     */
+-    public static Title of(String value) {
+-        return new Title(value);
+-    }
+-
+-    /**
+-     * 转换为字符串
+-     */
+-    @Override
+-    public String toString() {
+-        return value;
+-    }
+-    
+-    /**
+-     * 判断标题是否包含特定关键词
+-     */
+-    public boolean containsKeyword(String keyword) {
+-        return value.toLowerCase().contains(keyword.toLowerCase());
+-    }
+-}
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/ValueObject.java
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/ValueObject.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/ValueObject.java
+deleted file mode 100644
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/valueobject/ValueObject.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ /dev/null	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
+@@ -1,12 +0,0 @@
+-package com.personal.portfolio.blog.domain.model.valueobject;
+-
+-/**
+- * 值对象标记接口
+- * 所有值对象都应该实现此接口
+- */
+-public interface ValueObject {
+-    /**
+-     * 值对象应该实现equals和hashCode方法
+-     * 通过Lombok的@EqualsAndHashCode注解实现
+-     */
+-}
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/BlogManagementService.java
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/BlogManagementService.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/BlogManagementService.java
+deleted file mode 100644
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/BlogManagementService.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ /dev/null	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
+@@ -1,113 +0,0 @@
+-package com.personal.portfolio.blog.domain.service;
+-
+-import com.personal.portfolio.blog.domain.model.BlogPost;
+-import com.personal.portfolio.blog.domain.model.User;
+-import com.personal.portfolio.blog.domain.model.valueobject.Title;
+-import com.personal.portfolio.blog.domain.model.valueobject.Slug;
+-import com.personal.portfolio.blog.domain.model.valueobject.Content;
+-
+-import java.util.List;
+-
+-/**
+- * 博客管理领域服务
+- * 处理跨BlogPost和User实体的复杂业务逻辑
+- */
+-public interface BlogManagementService {
+-    
+-    /**
+-     * 创建博客文章（包含完整的业务验证）
+-     */
+-    BlogPost createBlogPost(Title title, Slug slug, Content content, User author, 
+-                           String summary, String coverImage, String category, List<String> tags);
+-    
+-    /**
+-     * 发布博客文章（包含状态验证和事件发布）
+-     */
+-    BlogPost publishBlogPost(BlogPost blogPost, User publisher);
+-    
+-    /**
+-     * 批量发布博客文章
+-     */
+-    List<BlogPost> publishBlogPosts(List<BlogPost> blogPosts, User publisher);
+-    
+-    /**
+-     * 转移博客文章所有权
+-     */
+-    BlogPost transferBlogPostOwnership(BlogPost blogPost, User currentOwner, User newOwner);
+-    
+-    /**
+-     * 验证用户是否有权限编辑博客文章
+-     */
+-    boolean canUserEditBlogPost(User user, BlogPost blogPost);
+-    
+-    /**
+-     * 验证用户是否有权限发布博客文章
+-     */
+-    boolean canUserPublishBlogPost(User user, BlogPost blogPost);
+-    
+-    /**
+-     * 获取用户的博客统计信息
+-     */
+-    UserBlogStatistics getUserBlogStatistics(User user);
+-    
+-    /**
+-     * 推荐相关博客文章
+-     */
+-    List<BlogPost> recommendRelatedBlogPosts(BlogPost blogPost, int limit);
+-    
+-    /**
+-     * 检查博客标题是否唯一
+-     */
+-    boolean isBlogTitleUnique(Title title, User author);
+-    
+-    /**
+-     * 检查博客Slug是否唯一
+-     */
+-    boolean isBlogSlugUnique(Slug slug);
+-    
+-    /**
+-     * 博客文章统计信息
+-     */
+-    class UserBlogStatistics {
+-        private final long totalPosts;
+-        private final long publishedPosts;
+-        private final long totalViews;
+-        private final long totalLikes;
+-        
+-        public UserBlogStatistics(long totalPosts, long publishedPosts, 
+-                                 long totalViews, long totalLikes) {
+-            this.totalPosts = totalPosts;
+-            this.publishedPosts = publishedPosts;
+-            this.totalViews = totalViews;
+-            this.totalLikes = totalLikes;
+-        }
+-        
+-        public long getTotalPosts() {
+-            return totalPosts;
+-        }
+-        
+-        public long getPublishedPosts() {
+-            return publishedPosts;
+-        }
+-        
+-        public long getTotalViews() {
+-            return totalViews;
+-        }
+-        
+-        public long getTotalLikes() {
+-            return totalLikes;
+-        }
+-        
+-        public double getPublishRate() {
+-            return totalPosts > 0 ? (double) publishedPosts / totalPosts : 0.0;
+-        }
+-        
+-        public double getAverageViewsPerPost() {
+-            return publishedPosts > 0 ? (double) totalViews / publishedPosts : 0.0;
+-        }
+-        
+-        public double getAverageLikesPerPost() {
+-            return publishedPosts > 0 ? (double) totalLikes / publishedPosts : 0.0;
+-        }
+-    }
+-}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/BlogPostMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/BlogPostMapper.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/BlogPostMapper.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/BlogPostMapper.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/mapper/BlogPostMapper.java	(date 1765352847722)
+@@ -1,29 +1,29 @@
+ package com.personal.portfolio.blog.infrastructure.persistence.mapper;
+ 
+ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+-import com.personal.portfolio.blog.domain.model.BlogPost;
++import com.personal.portfolio.blog.infrastructure.persistence.entity.BlogPostEntity;
+ import org.apache.ibatis.annotations.Mapper;
+ import org.apache.ibatis.annotations.Select;
+ 
+ import java.util.List;
+ 
+ /**
+- * 博客文章MyBatis Plus Mapper接口
++ * 博客文章MyBatis Plus Mapper接口 - 使用持久化实体
+  */
+ @Mapper
+-public interface BlogPostMapper extends BaseMapper<BlogPost> {
++public interface BlogPostMapper extends BaseMapper<BlogPostEntity> {
+     
+     /**
+      * 查找已发布的博客文章
+      */
+     @Select("SELECT * FROM blog_posts WHERE is_published = true ORDER BY published_at DESC")
+-    List<BlogPost> selectPublishedPosts();
++    List<BlogPostEntity> selectPublishedPosts();
+     
+     /**
+      * 根据作者ID查找博客文章
+      */
+     @Select("SELECT * FROM blog_posts WHERE author_id = #{authorId} ORDER BY created_at DESC")
+-    List<BlogPost> selectByAuthorId(Long authorId);
++    List<BlogPostEntity> selectByAuthorId(Long authorId);
+     
+     /**
+      * 检查标题是否已存在
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java
+new file mode 100644
+--- /dev/null	(date 1765358250801)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java	(date 1765358250801)
+@@ -0,0 +1,84 @@
++package com.personal.portfolio.blog.infrastructure.persistence.entity;
++
++import com.baomidou.mybatisplus.annotation.*;
++import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
++import com.personal.portfolio.blog.domain.model.BlogPost;
++
++import io.github.linpeilie.annotations.AutoMapper;
++import lombok.Getter;
++import lombok.Setter;
++
++import java.time.LocalDateTime;
++import java.util.List;
++
++/**
++ * 博客文章持久化实体
++ * 包含MyBatis Plus注解，专注于数据存储
++ */
++@Getter
++@Setter
++@TableName("blog_posts")
++@AutoMapper(target = BlogPost.class)
++public class BlogPostEntity {
++    
++    @TableId(type = IdType.AUTO)
++    private Long id;
++
++    @TableField("title")
++    private String title;
++
++    @TableField("slug")
++    private String slug;
++
++    @TableField("content")
++    private String content;
++    
++    @TableField("summary")
++    private String summary;
++    
++    @TableField("cover_image")
++    private String coverImage;
++    
++    @TableField("category")
++    private String category;
++    
++    @TableField("is_published")
++    private Boolean isPublished;
++    
++    @TableField("view_count")
++    private Integer viewCount;
++    
++    @TableField("like_count")
++    private Integer likeCount;
++    
++    @TableField("comment_count")
++    private Integer commentCount;
++    
++    @TableField("created_at")
++    private LocalDateTime createdAt;
++    
++    @TableField("updated_at")
++    private LocalDateTime updatedAt;
++    
++    @TableField("published_at")
++    private LocalDateTime publishedAt;
++    
++    @TableField("author_id")
++    private Long authorId;
++    
++    @TableField("category_id")
++    private Long categoryId;
++    
++    @TableField(typeHandler = JacksonTypeHandler.class)
++    private List<String> tags;
++    
++    /**
++     * 默认构造函数
++     */
++    public BlogPostEntity() {
++        this.isPublished = false;
++        this.viewCount = 0;
++        this.likeCount = 0;
++        this.commentCount = 0;
++    }
++}
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java
+--- a/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java	(date 1765360793177)
+@@ -4,10 +4,9 @@
+ import com.personal.portfolio.blog.application.event.BlogPostCreatedApplicationEvent;
+ import com.personal.portfolio.blog.application.exception.BusinessException;
+ import com.personal.portfolio.blog.domain.model.BlogPost;
+-import com.personal.portfolio.blog.domain.model.valueobject.Title;
+-import com.personal.portfolio.blog.domain.model.valueobject.Slug;
+-import com.personal.portfolio.blog.domain.model.valueobject.Content;
+ import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
++
++import io.github.linpeilie.Converter;
+ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.context.ApplicationEventPublisher;
+@@ -26,38 +25,19 @@
+     
+     private final BlogPostRepository blogPostRepository;
+     private final ApplicationEventPublisher applicationEventPublisher;
+-    
++    private static final Converter converter = new Converter();
++
+     /**
+      * 创建博客文章（使用命令对象）
+      */
+     public BlogPost createBlogPost(@Valid CreateBlogPostCommand command) {
+-        // 使用值对象创建博客文章
+-        Title title = Title.of(command.getTitle());
+-        Slug slug = Slug.of(command.getSlug());
+-        Content content = Content.of(command.getContent());
+-        
+-        // 检查标题是否已存在（使用值对象）- 业务规则校验
+-        if (blogPostRepository.existsByTitle(title.getValue())) {
++        // 检查标题是否已存在 - 业务规则校验
++        if (blogPostRepository.existsByTitle(command.getTitle())) {
+             throw new BusinessException("博客标题已存在: " + command.getTitle());
+         }
+         
+-        // 使用工厂方法创建博客文章
+-        BlogPost blogPost = BlogPost.create(title, slug, content, command.getAuthorId());
+-        
+-        // 设置可选字段
+-        if (command.getSummary() != null) {
+-            blogPost.setSummary(command.getSummary());
+-        }
+-        if (command.getCoverImage() != null) {
+-            blogPost.setCoverImage(command.getCoverImage());
+-        }
+-        if (command.getCategory() != null) {
+-            blogPost.setCategory(command.getCategory());
+-        }
+-        if (command.getTags() != null) {
+-            command.getTags().forEach(blogPost::addTag);
+-        }
+-        
++        BlogPost blogPost = converter.convert(command, BlogPost.class);
++        blogPost.registerCreateEvent();
+         // 验证博客文章是否有效
+         if (!blogPost.isValid()) {
+             throw new BusinessException("博客文章内容无效");
+@@ -78,7 +58,7 @@
+     private void publishBlogPostCreatedEvent(BlogPost blogPost) {
+         BlogPostCreatedApplicationEvent event = new BlogPostCreatedApplicationEvent(
+             blogPost.getId(),
+-            blogPost.getTitleValue(),
++            blogPost.getTitle(),
+             blogPost.getAuthorId(),
+             blogPost.getCreatedAt()
+         );
+@@ -126,11 +106,12 @@
+                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
+         
+         // 检查新标题是否与其他文章冲突
+-        if (!blogPost.getTitleValue().equals(title) && blogPostRepository.existsByTitle(title)) {
++        String currentTitle = blogPost.getTitle();
++        if (currentTitle != null && !currentTitle.equals(title) && blogPostRepository.existsByTitle(title)) {
+             throw new IllegalArgumentException("博客标题已存在: " + title);
+         }
+         
+-        // 使用值对象更新内容
++        // 更新内容
+         blogPost.updateContent(title, slug, content, summary, coverImage, category, tags);
+         return blogPostRepository.save(blogPost);
+     }
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java	(date 1765360793219)
+@@ -1,13 +1,9 @@
+ package com.personal.portfolio.blog.domain.model;
+ 
+-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+ import com.personal.portfolio.blog.domain.event.BlogPostCreatedEvent;
+ import com.personal.portfolio.blog.domain.event.BlogPostPublishedEvent;
+-import com.personal.portfolio.blog.domain.model.valueobject.Title;
+-import com.personal.portfolio.blog.domain.model.valueobject.Slug;
+-import com.personal.portfolio.blog.domain.model.valueobject.Content;
+ import lombok.Getter;
+-import com.baomidou.mybatisplus.annotation.*;
++import lombok.Setter;
+ 
+ import java.time.LocalDateTime;
+ import java.util.ArrayList;
+@@ -15,159 +11,50 @@
+ import java.util.List;
+ 
+ /**
+- * 博客文章实体类 - 充血模型实现
++ * 博客文章领域实体 - 纯充血模型实现
++ * 不包含任何持久化注解，专注于业务逻辑
+  */
+-@TableName("blog_posts")
++@Setter
+ @Getter
+ public class BlogPost {
+     
+-    /**
+-     * 文章ID，主键，自增
+-     */
+-    @TableId(type = IdType.AUTO)
+     private Long id;
+-    
+-    /**
+-     * 文章标题值对象
+-     */
+-    @TableField(exist = false)
+-    private Title title;
+-    
+-    /**
+-     * 文章别名值对象，用于URL
+-     */
+-    @TableField(exist = false)
+-    private Slug slug;
+-    
+-    /**
+-     * 文章内容值对象
+-     */
+-    @TableField(exist = false)
+-    private Content content;
+-    
+-    /**
+-     * 文章摘要，可选，最大长度500字符
+-     */
++    private String title;
++    private String slug;
++    private String content;
+     private String summary;
+-    
+-    /**
+-     * 封面图片URL，可选，最大长度255字符
+-     */
+     private String coverImage;
+-    
+-    /**
+-     * 分类名称，可选
+-     */
+     private String category;
+-    
+-    /**
+-     * 是否已发布，默认未发布
+-     */
+-    private Boolean isPublished = false;
+-    
+-    /**
+-     * 浏览量，默认0
+-     */
+-    private Integer viewCount = 0;
+-    
+-    /**
+-     * 点赞数，默认0
+-     */
+-    private Integer likeCount = 0;
+-    
+-    /**
+-     * 评论数，默认0
+-     */
+-    private Integer commentCount = 0;
+-    
+-    /**
+-     * 创建时间，必填
+-     */
++    private Boolean isPublished;
++    private Integer viewCount;
++    private Integer likeCount;
++    private Integer commentCount;
+     private LocalDateTime createdAt;
+-    
+-    /**
+-     * 更新时间，必填
+-     */
+     private LocalDateTime updatedAt;
+-    
+-    /**
+-     * 发布时间，可选
+-     */
+     private LocalDateTime publishedAt;
+-    
+-    /**
+-     * 作者ID，必填
+-     */
+     private Long authorId;
+-    
+-    /**
+-     * 分类ID，可选
+-     */
+     private Long categoryId;
+-    
+-    
+-    /**
+-     * 标签列表，可选
+-     */
+-    @TableField(typeHandler = JacksonTypeHandler.class)
+     private List<String> tags;
+     
+-    /**
+-     * 领域事件列表（非持久化）
+-     */
+-    @TableField(exist = false)
+     private transient List<Object> domainEvents = new ArrayList<>();
+     
+-    // MyBatis Plus需要的持久化字段
+-    @TableField("title")
+-    private String titleValue;
+-    
+-    @TableField("slug")
+-    private String slugValue;
+-    
+-    @TableField("content")
+-    private String contentValue;
+-    
+     /**
+-     * 保护性构造函数（JPA/MyBatis需要）
++     * 保护性构造函数（用于重建）
+      */
+-    protected BlogPost() {
+-        this.createdAt = LocalDateTime.now();
+-        this.updatedAt = LocalDateTime.now();
++    public BlogPost() {
++        this.isPublished = false;
++        this.viewCount = 0;
++        this.likeCount = 0;
++        this.commentCount = 0;
+         this.tags = new ArrayList<>();
++        this.domainEvents = new ArrayList<>();
+     }
+     
+     /**
+      * 工厂方法：创建新的博客文章
+      */
+-    public static BlogPost create(Title title, Slug slug, Content content, Long authorId) {
+-        BlogPost blogPost = new BlogPost();
+-        blogPost.title = title;
+-        blogPost.slug = slug;
+-        blogPost.content = content;
+-        blogPost.authorId = authorId;
+-        
+-        // 同步持久化字段
+-        blogPost.titleValue = title.getValue();
+-        blogPost.slugValue = slug.getValue();
+-        blogPost.contentValue = content.getValue();
+-        
+-        // 注册博客创建领域事件（ID将在保存后设置）
+-        blogPost.registerEvent(new BlogPostCreatedEvent(null, title.getValue(), authorId, blogPost.createdAt));
+-        
+-        return blogPost;
+-    }
+-    
+-    /**
+-     * 工厂方法：从基本类型创建（用于兼容旧代码）
+-     */
+-    public static BlogPost create(String title, String slug, String content, Long authorId) {
+-        return create(
+-            Title.of(title),
+-            Slug.of(slug),
+-            Content.of(content),
+-            authorId
+-        );
++    public void registerCreateEvent() {
++        this.registerEvent(new BlogPostCreatedEvent(null, this.title, this.authorId, this.createdAt));
+     }
+     
+     /**
+@@ -207,7 +94,7 @@
+         this.updatedAt = LocalDateTime.now();
+         
+         // 注册博客发布领域事件
+-        registerEvent(new BlogPostPublishedEvent(this.id, this.title.getValue(), this.authorId, this.publishedAt));
++        registerEvent(new BlogPostPublishedEvent(this.id, this.title, this.authorId, this.publishedAt));
+     }
+     
+     /**
+@@ -222,39 +109,18 @@
+     /**
+      * 更新博客内容
+      */
+-    public void updateContent(Title newTitle, Slug newSlug, Content newContent, String summary, 
++    public void updateContent(String title, String slug, String content, String summary, 
+                              String coverImage, String category, List<String> tags) {
+         validateCanUpdate();
+         
+-        this.title = newTitle;
+-        this.slug = newSlug;
+-        this.content = newContent;
++        this.title = title;
++        this.slug = slug;
++        this.content = content;
+         this.summary = summary;
+         this.coverImage = coverImage;
+         this.category = category;
+         this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
+         this.updatedAt = LocalDateTime.now();
+-        
+-        // 同步持久化字段
+-        this.titleValue = newTitle.getValue();
+-        this.slugValue = newSlug.getValue();
+-        this.contentValue = newContent.getValue();
+-    }
+-    
+-    /**
+-     * 更新博客内容（从基本类型）
+-     */
+-    public void updateContent(String title, String slug, String content, String summary, 
+-                             String coverImage, String category, List<String> tags) {
+-        updateContent(
+-            Title.of(title),
+-            Slug.of(slug),
+-            Content.of(content),
+-            summary,
+-            coverImage,
+-            category,
+-            tags
+-        );
+     }
+     
+     /**
+@@ -372,42 +238,6 @@
+         return java.time.Duration.between(createdAt, LocalDateTime.now()).toDays();
+     }
+     
+-    /**
+-     * 更新前自动设置更新时间并同步值对象
+-     */
+-    public void preUpdate() {
+-        this.updatedAt = LocalDateTime.now();
+-        
+-        // 同步值对象到持久化字段
+-        if (this.title != null) {
+-            this.titleValue = this.title.getValue();
+-        }
+-        if (this.slug != null) {
+-            this.slugValue = this.slug.getValue();
+-        }
+-        if (this.content != null) {
+-            this.contentValue = this.content.getValue();
+-        }
+-    }
+-    
+-    /**
+-     * 加载后从持久化字段初始化值对象
+-     */
+-    public void postLoad() {
+-        if (this.titleValue != null) {
+-            this.title = Title.of(this.titleValue);
+-        }
+-        if (this.slugValue != null) {
+-            this.slug = Slug.of(this.slugValue);
+-        }
+-        if (this.contentValue != null) {
+-            this.content = Content.of(this.contentValue);
+-        }
+-        if (this.tags == null) {
+-            this.tags = new ArrayList<>();
+-        }
+-    }
+-    
+     // 私有验证方法
+     private void validateCanPublish() {
+         if (!isValid()) {
+@@ -421,56 +251,4 @@
+         }
+     }
+     
+-    // Getter方法（值对象）
+-    public Title getTitle() {
+-        return title;
+-    }
+-    
+-    public Slug getSlug() {
+-        return slug;
+-    }
+-    
+-    public Content getContent() {
+-        return content;
+-    }
+-    
+-    // 基本类型getter（用于兼容性）
+-    public String getTitleValue() {
+-        return title != null ? title.getValue() : titleValue;
+-    }
+-    
+-    public String getSlugValue() {
+-        return slug != null ? slug.getValue() : slugValue;
+-    }
+-    
+-    public String getContentValue() {
+-        return content != null ? content.getValue() : contentValue;
+-    }
+-    
+-    // Setter方法（有限制的）
+-    public void setSummary(String summary) {
+-        if (summary != null && summary.length() > 500) {
+-            throw new IllegalArgumentException("摘要长度不能超过500个字符");
+-        }
+-        this.summary = summary;
+-        this.updatedAt = LocalDateTime.now();
+-    }
+-    
+-    public void setCoverImage(String coverImage) {
+-        if (coverImage != null && coverImage.length() > 255) {
+-            throw new IllegalArgumentException("封面图片URL长度不能超过255个字符");
+-        }
+-        this.coverImage = coverImage;
+-        this.updatedAt = LocalDateTime.now();
+-    }
+-    
+-    public void setCategory(String category) {
+-        this.category = category;
+-        this.updatedAt = LocalDateTime.now();
+-    }
+-    
+-    public void setCategoryId(Long categoryId) {
+-        this.categoryId = categoryId;
+-        this.updatedAt = LocalDateTime.now();
+-    }
+ }
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java
+--- a/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java	(date 1765360007155)
+@@ -1,5 +1,8 @@
+ package com.personal.portfolio.blog.application.dto;
+ 
++import com.personal.portfolio.blog.domain.model.BlogPost;
++
++import io.github.linpeilie.annotations.AutoMapper;
+ import jakarta.validation.constraints.NotNull;
+ import lombok.Data;
+ 
+@@ -10,6 +13,7 @@
+  * 用于封装创建博客文章的参数，减少方法参数数量
+  */
+ @Data
++@AutoMapper(target = BlogPost.class)
+ public class CreateBlogPostCommand {
+     
+     private String title;
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/BlogPostRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/BlogPostRepositoryImpl.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/BlogPostRepositoryImpl.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/BlogPostRepositoryImpl.java	(revision a85c6bb855c5549be552cd3f5b3f1eaf9f6ecbba)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/BlogPostRepositoryImpl.java	(date 1765354722727)
+@@ -4,23 +4,30 @@
+ import com.personal.portfolio.blog.domain.model.BlogPost;
+ import com.personal.portfolio.blog.domain.event.BlogPostCreatedEvent;
+ import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
++import com.personal.portfolio.blog.infrastructure.persistence.entity.BlogPostEntity;
+ import com.personal.portfolio.blog.infrastructure.persistence.mapper.BlogPostMapper;
+ import org.springframework.context.ApplicationEventPublisher;
+ import org.springframework.stereotype.Repository;
+ 
+ import java.util.List;
+ import java.util.Optional;
++import java.util.stream.Collectors;
++
++import io.github.linpeilie.Converter;
+ 
+ /**
+- * 博客文章仓储实现类 - 使用MyBatis Plus
++ * 博客文章仓储实现类 - 使用MyBatis Plus和持久化实体
+  */
+ @Repository
+ public class BlogPostRepositoryImpl implements BlogPostRepository {
+     
+     private final BlogPostMapper blogPostMapper;
++    private static final Converter converter = new Converter();
+     private final ApplicationEventPublisher applicationEventPublisher;
+     
+-    public BlogPostRepositoryImpl(BlogPostMapper blogPostMapper, ApplicationEventPublisher applicationEventPublisher) {
++    public BlogPostRepositoryImpl(
++            BlogPostMapper blogPostMapper,
++            ApplicationEventPublisher applicationEventPublisher) {
+         this.blogPostMapper = blogPostMapper;
+         this.applicationEventPublisher = applicationEventPublisher;
+     }
+@@ -29,15 +36,17 @@
+     public BlogPost save(BlogPost blogPost) {
+         boolean isNew = blogPost.getId() == null;
+         
+-        // 确保在保存前调用preUpdate同步值对象
+-        blogPost.preUpdate();
++        // 转换为持久化实体
++        BlogPostEntity entity = converter.convert(blogPost, BlogPostEntity.class);;
+         
+         if (isNew) {
+             // 新增
+-            blogPostMapper.insert(blogPost);
++            blogPostMapper.insert(entity);
++            // 设置生成的ID回领域对象
++            blogPost.setId(entity.getId());
+         } else {
+             // 更新
+-            blogPostMapper.updateById(blogPost);
++            blogPostMapper.updateById(entity);
+         }
+         
+         // 发布领域事件
+@@ -71,30 +80,34 @@
+     
+     @Override
+     public Optional<BlogPost> findById(Long id) {
+-        BlogPost blogPost = blogPostMapper.selectById(id);
+-        if (blogPost != null) {
+-            // 加载后初始化值对象
+-            blogPost.postLoad();
++        BlogPostEntity entity = blogPostMapper.selectById(id);
++        if (entity == null) {
++            return Optional.empty();
+         }
+-        return Optional.ofNullable(blogPost);
++        BlogPost domain = converter.convert(entity, BlogPost.class);
++        return Optional.ofNullable(domain);
+     }
+     
+     @Override
+     public List<BlogPost> findAll() {
+-        LambdaQueryWrapper<BlogPost> queryWrapper = new LambdaQueryWrapper<>();
+-        queryWrapper.orderByDesc(BlogPost::getCreatedAt);
+-        List<BlogPost> blogPosts = blogPostMapper.selectList(queryWrapper);
+-        // 初始化值对象
+-        blogPosts.forEach(BlogPost::postLoad);
+-        return blogPosts;
++        LambdaQueryWrapper<BlogPostEntity> queryWrapper = new LambdaQueryWrapper<>();
++        queryWrapper.orderByDesc(BlogPostEntity::getCreatedAt);
++        List<BlogPostEntity> entities = blogPostMapper.selectList(queryWrapper);
++        
++        // 转换为领域对象
++        return entities.stream()
++                .map(entity -> converter.convert(entity, BlogPost.class))
++                .collect(Collectors.toList());
+     }
+     
+     @Override
+     public List<BlogPost> findPublishedPosts() {
+-        List<BlogPost> blogPosts = blogPostMapper.selectPublishedPosts();
+-        // 初始化值对象
+-        blogPosts.forEach(BlogPost::postLoad);
+-        return blogPosts;
++        List<BlogPostEntity> entities = blogPostMapper.selectPublishedPosts();
++        
++        // 转换为领域对象
++        return entities.stream()
++                .map(entity -> converter.convert(entity, BlogPost.class))
++                .collect(Collectors.toList());
+     }
+     
+     @Override
