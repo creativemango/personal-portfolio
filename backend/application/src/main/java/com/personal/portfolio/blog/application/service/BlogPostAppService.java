@@ -2,14 +2,17 @@ package com.personal.portfolio.blog.application.service;
 
 import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
 import com.personal.portfolio.blog.application.event.BlogPostCreatedApplicationEvent;
+import com.personal.portfolio.blog.application.exception.BusinessException;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.model.valueobject.Title;
 import com.personal.portfolio.blog.domain.model.valueobject.Slug;
 import com.personal.portfolio.blog.domain.model.valueobject.Content;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
@@ -17,6 +20,7 @@ import java.util.List;
  * 博客文章应用服务 - 协调领域对象和基础设施
  */
 @Service
+@Validated
 @RequiredArgsConstructor
 public class BlogPostAppService {
     
@@ -26,20 +30,15 @@ public class BlogPostAppService {
     /**
      * 创建博客文章（使用命令对象）
      */
-    public BlogPost createBlogPost(CreateBlogPostCommand command) {
-        // 验证命令对象
-        if (!command.isValid()) {
-            throw new IllegalArgumentException(command.getValidationError());
-        }
-        
+    public BlogPost createBlogPost(@Valid CreateBlogPostCommand command) {
         // 使用值对象创建博客文章
         Title title = Title.of(command.getTitle());
         Slug slug = Slug.of(command.getSlug());
         Content content = Content.of(command.getContent());
         
-        // 检查标题是否已存在（使用值对象）
+        // 检查标题是否已存在（使用值对象）- 业务规则校验
         if (blogPostRepository.existsByTitle(title.getValue())) {
-            throw new IllegalArgumentException("博客标题已存在: " + command.getTitle());
+            throw new BusinessException("博客标题已存在: " + command.getTitle());
         }
         
         // 使用工厂方法创建博客文章
@@ -61,7 +60,7 @@ public class BlogPostAppService {
         
         // 验证博客文章是否有效
         if (!blogPost.isValid()) {
-            throw new IllegalArgumentException("博客文章内容无效");
+            throw new BusinessException("博客文章内容无效");
         }
         
         // 保存博客文章

@@ -10,16 +10,17 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode
 public class Content implements ValueObject {
-    
+
+    /**
+     * -- GETTER --
+     *  获取内容值
+     */
     private final String value;
-    private static final int MAX_LENGTH = 10000; // 假设最大长度为10000字符
-    private static final int MIN_LENGTH = 10;    // 最小长度为10字符
-    
+
     /**
      * 私有构造函数，通过工厂方法创建
      */
     private Content(String value) {
-        validate(value);
         this.value = value.trim();
     }
     
@@ -29,45 +30,13 @@ public class Content implements ValueObject {
     public static Content of(String value) {
         return new Content(value);
     }
-    
-    /**
-     * 验证内容
-     */
-    private void validate(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException("内容不能为空");
-        }
-        
-        String trimmed = value.trim();
-        if (trimmed.length() < MIN_LENGTH) {
-            throw new IllegalArgumentException("内容长度不能小于" + MIN_LENGTH + "个字符");
-        }
-        
-        if (trimmed.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("内容长度不能超过" + MAX_LENGTH + "个字符");
-        }
-    }
-    
-    /**
-     * 获取内容值
-     */
-    public String getValue() {
-        return value;
-    }
-    
+
     /**
      * 转换为字符串
      */
     @Override
     public String toString() {
         return value;
-    }
-    
-    /**
-     * 获取内容长度
-     */
-    public int length() {
-        return value.length();
     }
     
     /**
@@ -92,23 +61,6 @@ public class Content implements ValueObject {
      */
     public boolean containsKeyword(String keyword) {
         return value.toLowerCase().contains(keyword.toLowerCase());
-    }
-    
-    /**
-     * 获取段落数量（按换行符分割）
-     */
-    public int getParagraphCount() {
-        if (value.isEmpty()) {
-            return 0;
-        }
-        return value.split("\\n\\s*\\n").length;
-    }
-    
-    /**
-     * 判断内容是否为空（仅包含空白字符）
-     */
-    public boolean isBlank() {
-        return value.trim().isEmpty();
     }
     
     /**
