@@ -37,7 +37,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         boolean isNew = blogPost.getId() == null;
         
         // 转换为持久化实体
-        BlogPostEntity entity = converter.convert(blogPost, BlogPostEntity.class);;
+        BlogPostEntity entity = converter.convert(blogPost, BlogPostEntity.class);
         
         if (isNew) {
             // 新增

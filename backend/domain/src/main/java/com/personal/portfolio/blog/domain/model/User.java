@@ -1,21 +1,21 @@
 package com.personal.portfolio.blog.domain.model;
 
 import lombok.Getter;
-import com.baomidou.mybatisplus.annotation.*;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 /**
  * 用户实体类 - 充血模型实现
+ * 纯领域模型，不包含任何持久化注解
  */
-@TableName("users")
 @Getter
+@Setter
 public class User {
     
     /**
      * 用户ID，主键，自增
      */
-    @TableId(type = IdType.AUTO)
     private Long id;
     
     /**
@@ -105,8 +105,9 @@ public class User {
     
     /**
      * 保护性构造函数（JPA/MyBatis需要）
+     * 改为public以支持MapStruct映射
      */
-    protected User() {
+    public User() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

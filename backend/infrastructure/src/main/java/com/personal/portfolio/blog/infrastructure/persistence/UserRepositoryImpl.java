@@ -3,11 +3,16 @@ package com.personal.portfolio.blog.infrastructure.persistence;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.personal.portfolio.blog.domain.model.User;
 import com.personal.portfolio.blog.domain.repository.UserRepository;
+import com.personal.portfolio.blog.infrastructure.persistence.entity.UserEntity;
 import com.personal.portfolio.blog.infrastructure.persistence.mapper.UserMapper;
+
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import io.github.linpeilie.Converter;
 
 /**
  * 用户仓储实现类 - 使用MyBatis Plus
@@ -16,54 +21,62 @@ import java.util.Optional;
 public class UserRepositoryImpl implements UserRepository {
     
     private final UserMapper userMapper;
-    
+
+    private static final Converter converter = new Converter();
+
     public UserRepositoryImpl(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
     
     @Override
     public User save(User user) {
-        if (user.getId() == null) {
+        UserEntity userEntity = converter.convert(user, UserEntity.class);;
+
+        if (userEntity.getId() == null) {
             // 新增
-            user.preUpdate();
-            userMapper.insert(user);
+            userEntity.setUpdatedAt(java.time.LocalDateTime.now());
+            userMapper.insert(userEntity);
         } else {
             // 更新
-            user.preUpdate();
-            userMapper.updateById(user);
+            userEntity.setUpdatedAt(java.time.LocalDateTime.now());
+            userMapper.updateById(userEntity);
         }
-        return user;
+        // 更新ID（如果是新增）
+        return converter.convert(userEntity, User.class);
     }
     
     @Override
     public Optional<User> findById(Long id) {
-        User user = userMapper.selectById(id);
-        return Optional.ofNullable(user);
+        UserEntity userEntity = userMapper.selectById(id);
+        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
     }
     
     @Override
     public Optional<User> findByGithubId(String githubId) {
-        User user = userMapper.selectByGithubId(githubId);
-        return Optional.ofNullable(user);
+        UserEntity userEntity = userMapper.selectByGithubId(githubId);
+        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
     }
     
     @Override
     public Optional<User> findByUsername(String username) {
-        User user = userMapper.selectByUsername(username);
-        return Optional.ofNullable(user);
+        UserEntity userEntity = userMapper.selectByUsername(username);
+        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
     }
     
     @Override
     public Optional<User> findByEmail(String email) {
-        User user = userMapper.selectByEmail(email);
-        return Optional.ofNullable(user);
+        UserEntity userEntity = userMapper.selectByEmail(email);
+        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
     }
     
     @Override
     public List<User> findAll() {
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.orderByDesc(User::getCreatedAt);
-        return userMapper.selectList(queryWrapper);
+        LambdaQueryWrapper<UserEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByDesc(UserEntity::getCreatedAt);
+        List<UserEntity> entities = userMapper.selectList(queryWrapper);
+        return entities.stream()
+                .map(entity -> converter.convert(entity, User.class))
+                .collect(Collectors.toList());
     }
     
     @Override

@@ -1,9 +1,11 @@
 package com.personal.portfolio;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+@MapperScan("com.personal.portfolio.blog.infrastructure.persistence.mapper")
 public class PersonalPortfolioApplication {
 
     public static void main(String[] args) {

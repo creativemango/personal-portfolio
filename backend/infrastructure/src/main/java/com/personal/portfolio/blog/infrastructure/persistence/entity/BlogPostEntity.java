@@ -53,11 +53,11 @@ public class BlogPostEntity {
     
     @TableField("comment_count")
     private Integer commentCount;
-    
-    @TableField("created_at")
+
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
-    
-    @TableField("updated_at")
+
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;
     
     @TableField("published_at")
