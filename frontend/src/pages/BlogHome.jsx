@@ -57,9 +57,9 @@ const BlogHome = ({ user }) => {
               marginBottom: '2rem',
               flexWrap: 'wrap'
             }}>
-              <img 
-                src={user.avatar_url} 
-                alt="用户头像" 
+              <img
+                src={user.avatar_url || "/images/default-avatar.png"}
+                alt="用户头像"
                 style={{
                   width: '100px',
                   height: '100px',
@@ -67,7 +67,7 @@ const BlogHome = ({ user }) => {
                   border: '4px solid #667eea'
                 }}
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/100x100/667eea/ffffff?text=U'
+                  e.target.src = '/images/default-avatar.png'
                 }}
               />
               <div style={{ flex: 1 }}>

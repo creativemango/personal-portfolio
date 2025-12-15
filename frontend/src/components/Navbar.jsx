@@ -57,9 +57,9 @@ const Navbar = ({ user, setUser }) => {
               borderRadius: '25px',
               border: '1px solid rgba(255, 255, 255, 0.3)'
             }}>
-              <img 
-                src={user.avatar_url || `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`} 
-                alt="用户头像" 
+              <img
+                  src={user.avatar_url || "/images/default-avatar.png"}
+                  alt="用户头像"
                 className="user-avatar"
                 style={{
                   width: '35px',

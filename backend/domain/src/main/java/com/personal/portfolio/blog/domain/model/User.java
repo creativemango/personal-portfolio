@@ -140,7 +140,8 @@ public class User {
         user.password = password;
         user.displayName = username;
         user.isLocalAccount = true;
-        
+        user.avatarUrl = "/images/default-avatar.png";
+
         return user;
     }
     
