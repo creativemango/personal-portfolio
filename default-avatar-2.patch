@@ -1,0 +1,1328 @@
+Subject: [PATCH] default-avatar-2
+---
+Index: ENTITY_VALIDATION.md
+===================================================================
+diff --git a/ENTITY_VALIDATION.md b/ENTITY_VALIDATION.md
+deleted file mode 100644
+--- a/ENTITY_VALIDATION.md	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ /dev/null	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
+@@ -1,99 +0,0 @@
+-# 实体类验证文档
+-
+-## 实体类创建完成
+-
+-已成功创建以下JPA实体类：
+-
+-### 1. User (用户实体)
+-- **表名**: `users`
+-- **主键**: `id` (自增)
+-- **关键字段**: 
+-  - `username` (唯一，非空)
+-  - `email` (唯一，非空)
+-  - `password` (非空)
+-  - `role` (默认"USER")
+-- **关系**: 
+-  - 一对多: `blogPosts` (用户写的文章)
+-  - 一对多: `comments` (用户发表的评论)
+-
+-### 2. Category (分类实体)
+-- **表名**: `categories`
+-- **主键**: `id` (自增)
+-- **关键字段**:
+-  - `name` (唯一，非空)
+-  - `slug` (唯一，非空)
+-  - `is_active` (默认true)
+-- **关系**:
+-  - 一对多: `blogPosts` (分类下的文章)
+-
+-### 3. BlogPost (博客文章实体)
+-- **表名**: `blog_posts`
+-- **主键**: `id` (自增)
+-- **关键字段**:
+-  - `title` (非空)
+-  - `slug` (唯一，非空)
+-  - `content` (TEXT类型，非空)
+-  - `is_published` (默认false)
+-- **关系**:
+-  - 多对一: `author` (文章作者)
+-  - 多对一: `category` (文章分类)
+-  - 一对多: `comments` (文章评论)
+-
+-### 4. Comment (评论实体)
+-- **表名**: `comments`
+-- **主键**: `id` (自增)
+-- **关键字段**:
+-  - `content` (TEXT类型，非空)
+-  - `is_approved` (默认false)
+-- **关系**:
+-  - 多对一: `author` (评论作者)
+-  - 多对一: `blogPost` (所属文章)
+-  - 多对一: `parentComment` (父评论，支持嵌套评论)
+-
+-## 数据库配置
+-
+-### H2数据库配置
+-- **数据库URL**: `jdbc:h2:mem:portfolio;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`
+-- **用户名**: `sa`
+-- **密码**: 空
+-- **DDL策略**: `create-drop` (开发环境)
+-- **H2控制台**: 启用，路径 `/h2-console`
+-
+-### JPA配置
+-- **方言**: `H2Dialect`
+-- **显示SQL**: 启用
+-- **格式化SQL**: 启用
+-
+-## 依赖配置
+-
+-### Domain模块依赖
+-- **Lombok**: 用于简化getter/setter
+-- **JPA API**: 用于实体类注解
+-
+-## 验证结果
+-
+-✅ **实体类设计完成** - 所有4个实体类已创建
+-✅ **数据库关系设计完成** - 一对多、多对一关系已配置
+-✅ **JPA注解配置完成** - 所有实体类都使用了正确的JPA注解
+-✅ **数据库配置完成** - H2内存数据库配置已设置
+-✅ **依赖配置完成** - 必要的依赖已添加到pom.xml
+-
+-## 下一步建议
+-
+-1. **编译项目**: 需要正确配置JAVA_HOME环境变量
+-2. **创建Repository接口**: 为每个实体类创建对应的Repository
+-3. **创建Service层**: 实现业务逻辑
+-4. **创建Controller层**: 提供REST API
+-5. **测试数据库连接**: 启动应用并访问H2控制台验证表结构
+-
+-## H2控制台访问
+-
+-应用启动后，可以通过以下URL访问H2控制台：
+-```
+-http://localhost:8080/api/h2-console
+-```
+-
+-连接信息:
+-- JDBC URL: `jdbc:h2:mem:portfolio`
+-- 用户名: `sa`
+-- 密码: (空)
+Index: GITHUB_OAUTH2_SETUP.md
+===================================================================
+diff --git a/GITHUB_OAUTH2_SETUP.md b/GITHUB_OAUTH2_SETUP.md
+deleted file mode 100644
+--- a/GITHUB_OAUTH2_SETUP.md	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ /dev/null	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
+@@ -1,180 +0,0 @@
+-# GitHub OAuth2 登录集成指南
+-
+-## 概述
+-
+-本项目已成功集成了Spring Security OAuth2，支持通过GitHub账户登录。以下是完整的配置和使用说明。
+-
+-## 已实现的功能
+-
+-1. ✅ Spring Security OAuth2 依赖配置
+-2. ✅ GitHub OAuth2 应用配置
+-3. ✅ 安全配置类
+-4. ✅ 登录控制器
+-5. ✅ 用户实体扩展
+-6. ✅ 登录页面模板
+-
+-## 配置步骤
+-
+-### 1. 设置JAVA_HOME环境变量
+-
+-由于Maven需要正确的JAVA_HOME环境变量，请按以下步骤设置：
+-
+-**Windows:**
+-```cmd
+-# 设置JAVA_HOME环境变量
+-setx JAVA_HOME "C:\Program Files\Java\jdk-21"
+-# 重启命令行或重新加载环境变量
+-```
+-
+-**验证设置:**
+-```cmd
+-echo %JAVA_HOME%
+-java -version
+-mvn -version
+-```
+-
+-### 2. 配置GitHub OAuth2应用
+-
+-1. 访问 [GitHub Developer Settings](https://github.com/settings/developers)
+-2. 点击 "New OAuth App"
+-3. 填写应用信息：
+-   - **Application name**: Personal Portfolio
+-   - **Homepage URL**: http://localhost:8080
+-   - **Authorization callback URL**: http://localhost:8080/login/oauth2/code/github
+-4. 点击 "Register application"
+-5. 复制生成的 Client ID 和 Client Secret
+-
+-**重要提示**: 回调URL必须是 `http://localhost:8080/login/oauth2/code/github`，这是Spring Security OAuth2的默认重定向URL。
+-
+-### 3. 更新配置文件
+-
+-在 `backend/interface/src/main/resources/application.properties` 中更新您的GitHub OAuth2凭据：
+-
+-```properties
+-# Spring Security OAuth2 GitHub Configuration
+-spring.security.oauth2.client.registration.github.client-id=您的实际Client ID
+-spring.security.oauth2.client.registration.github.client-secret=您的实际Client Secret
+-spring.security.oauth2.client.registration.github.scope=user:email,read:user
+-spring.security.oauth2.client.registration.github.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
+-```
+-
+-### 4. 运行应用程序
+-
+-```bash
+-# 在项目根目录执行
+-mvn -f backend/interface/pom.xml spring-boot:run
+-```
+-
+-或者：
+-
+-```bash
+-# 先编译整个项目
+-mvn clean install
+-# 然后运行
+-mvn -f backend/interface/pom.xml spring-boot:run
+-```
+-
+-## 使用说明
+-
+-### 访问应用
+-
+-1. 启动应用后，访问: http://localhost:8080/
+-2. 点击登录链接或直接访问: http://localhost:8080/login
+-3. 点击 "使用 GitHub 登录" 按钮
+-4. 授权应用访问您的GitHub账户
+-5. 登录成功后，您将被重定向到用户信息页面
+-
+-### API端点
+-
+-- `GET /` - 首页
+-- `GET /login` - 登录页面
+-- `GET /user/profile` - 获取当前用户信息（需要登录）
+-- `POST /logout` - 退出登录
+-
+-### 获取用户信息
+-
+-登录成功后，访问 `/user/profile` 将返回类似以下格式的用户信息：
+-
+-```json
+-{
+-  "id": 12345678,
+-  "login": "your-github-username",
+-  "name": "Your Name",
+-  "email": "your-email@example.com",
+-  "avatar_url": "https://avatars.githubusercontent.com/u/12345678?v=4",
+-  "bio": "Your bio",
+-  "location": "Your location",
+-  "company": "Your company",
+-  "blog": "https://your-blog.com",
+-  "twitter_username": "your-twitter",
+-  "public_repos": 42,
+-  "followers": 100,
+-  "following": 50,
+-  "created_at": "2020-01-01T00:00:00Z",
+-  "updated_at": "2024-01-01T00:00:00Z"
+-}
+-```
+-
+-## 技术实现细节
+-
+-### 依赖项
+-
+-- `spring-boot-starter-security` - Spring Security核心
+-- `spring-boot-starter-oauth2-client` - OAuth2客户端支持
+-- `spring-boot-starter-thymeleaf` - 模板引擎（用于登录页面）
+-
+-### 安全配置
+-
+-- 允许公开访问登录页面和OAuth2端点
+-- 配置GitHub OAuth2登录
+-- 禁用CSRF保护（开发环境）
+-- 允许H2控制台访问
+-
+-### 用户实体扩展
+-
+-User实体已扩展支持OAuth2：
+-- `githubId` - GitHub用户ID
+-- `githubUsername` - GitHub用户名
+-- `loginType` - 登录方式（LOCAL/GITHUB）
+-
+-## 故障排除
+-
+-### 常见问题
+-
+-1. **JAVA_HOME未设置**
+-   - 解决方案：设置正确的JAVA_HOME环境变量
+-
+-2. **GitHub OAuth2授权失败**
+-   - 检查Client ID和Client Secret是否正确
+-   - 验证回调URL是否与GitHub应用配置一致
+-
+-3. **端口冲突**
+-   - 修改 `server.port` 配置使用其他端口
+-
+-4. **依赖下载失败**
+-   - 检查网络连接
+-   - 尝试使用 `mvn clean install -U`
+-
+-### 日志调试
+-
+-启用调试日志：
+-```properties
+-logging.level.org.springframework.security=DEBUG
+-logging.level.org.springframework.security.oauth2=DEBUG
+-```
+-
+-## 生产环境注意事项
+-
+-1. **启用CSRF保护**
+-2. **使用HTTPS**
+-3. **配置数据库持久化**
+-4. **设置合适的会话超时**
+-5. **配置生产环境的GitHub OAuth2应用**
+-
+-## 下一步开发建议
+-
+-1. 实现用户注册和本地登录
+-2. 添加角色和权限管理
+-3. 实现用户信息持久化到数据库
+-4. 添加JWT令牌支持
+-5. 实现前端界面集成
+Index: GITHUB_OAUTH2_TROUBLESHOOTING.md
+===================================================================
+diff --git a/GITHUB_OAUTH2_TROUBLESHOOTING.md b/GITHUB_OAUTH2_TROUBLESHOOTING.md
+deleted file mode 100644
+--- a/GITHUB_OAUTH2_TROUBLESHOOTING.md	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ /dev/null	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
+@@ -1,165 +0,0 @@
+-# GitHub OAuth2 故障排除指南
+-
+-## 问题描述
+-GitHub OAuth2 回调一直处于 pending 状态：
+-```
+-http://localhost:8080/login/oauth2/code/github?code=9f9e1a6ae9915df6066b&state=xEbaRfcoRluNo_DcAI6KjMS7S_hjILCB7JwmAZ-H39s%3D
+-```
+-
+-## 可能的原因和解决方案
+-
+-### 1. GitHub 应用回调 URL 配置错误
+-
+-#### 检查 GitHub OAuth App 配置
+-1. 访问 GitHub Settings → Developer settings → OAuth Apps
+-2. 找到您的应用
+-3. 检查 **Authorization callback URL** 配置
+-
+-#### 正确的回调 URL 配置
+-对于本地开发环境，回调 URL 应该配置为：
+-```
+-http://localhost:8080/login/oauth2/code/github
+-```
+-
+-#### 配置步骤
+-1. 登录 GitHub
+-2. 进入 Settings → Developer settings → OAuth Apps
+-3. 点击您的应用
+-4. 在 "Authorization callback URL" 字段中输入：
+-   ```
+-   http://localhost:8080/login/oauth2/code/github
+-   ```
+-5. 点击 "Update application"
+-
+-### 2. 网络或代理问题
+-
+-#### 检查网络连接
+-确保您的开发环境可以访问 GitHub API：
+-```bash
+-# 测试 GitHub API 连接
+-curl -I https://api.github.com
+-
+-# 测试 GitHub OAuth 端点
+-curl -I https://github.com/login/oauth/authorize
+-```
+-
+-#### 检查防火墙和代理
+-- 确保端口 8080 没有被防火墙阻止
+-- 如果使用代理，确保代理配置正确
+-
+-### 3. 后端配置问题
+-
+-#### 检查 application.properties
+-确保以下配置正确：
+-```properties
+-# GitHub OAuth2 配置
+-spring.security.oauth2.client.registration.github.client-id=您的client-id
+-spring.security.oauth2.client.registration.github.client-secret=您的client-secret
+-spring.security.oauth2.client.registration.github.scope=user:email,read:user
+-
+-# OAuth2 Provider 配置
+-spring.security.oauth2.client.provider.github.authorization-uri=https://github.com/login/oauth/authorize
+-spring.security.oauth2.client.provider.github.token-uri=https://github.com/login/oauth/access_token
+-spring.security.oauth2.client.provider.github.user-info-uri=https://api.github.com/user
+-spring.security.oauth2.client.provider.github.user-name-attribute=login
+-```
+-
+-### 4. 安全配置问题
+-
+-#### 检查 SecurityConfig
+-确保 OAuth2 登录配置正确：
+-```java
+-.oauth2Login(oauth2 -> oauth2
+-    .loginPage("/login")
+-    .defaultSuccessUrl("http://localhost:3001/home", true)
+-    .failureUrl("http://localhost:3001/login?error=true")
+-)
+-```
+-
+-### 5. 调试步骤
+-
+-#### 启用详细日志
+-在 `application.properties` 中添加：
+-```properties
+-# 启用 Spring Security 调试日志
+-logging.level.org.springframework.security=DEBUG
+-logging.level.org.springframework.security.oauth2=DEBUG
+-
+-# 启用 HTTP 请求日志
+-logging.level.org.apache.http=DEBUG
+-```
+-
+-#### 检查后端日志
+-重启后端服务，查看控制台输出：
+-```bash
+-mvn -f backend/interface/pom.xml spring-boot:run
+-```
+-
+-在日志中查找：
+-- OAuth2 授权请求
+-- 令牌交换过程
+-- 用户信息获取
+-- 任何错误信息
+-
+-### 6. 常见错误
+-
+-#### 错误：Invalid redirect_uri
+-```
+-error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application.
+-```
+-**解决方案**：确保 GitHub 应用的回调 URL 配置为 `http://localhost:8080/login/oauth2/code/github`
+-
+-#### 错误：Bad credentials
+-```
+-error=bad_verification_code&error_description=The+code+passed+is+incorrect+or+expired.
+-```
+-**解决方案**：重新启动登录流程，确保使用新的授权码
+-
+-#### 错误：Rate limit exceeded
+-```
+-error=rate_limit_exceeded
+-```
+-**解决方案**：等待一段时间后重试，或检查 GitHub API 速率限制
+-
+-### 7. 测试流程
+-
+-#### 步骤 1：验证 GitHub 应用配置
+-1. 确认 client-id 和 client-secret 正确
+-2. 确认回调 URL 配置正确
+-3. 确认应用状态为 "Active"
+-
+-#### 步骤 2：验证后端配置
+-1. 重启后端服务
+-2. 检查启动日志是否有错误
+-3. 访问 `http://localhost:8080/login` 确认登录页面正常
+-
+-#### 步骤 3：测试登录流程
+-1. 访问前端 `http://localhost:3001/login`
+-2. 点击 "使用 GitHub 登录"
+-3. 观察重定向到 GitHub 授权页面
+-4. 授权后观察回调过程
+-
+-### 8. 替代方案
+-
+-如果 GitHub OAuth2 仍然有问题，可以考虑：
+-
+-#### 使用环境变量
+-```properties
+-spring.security.oauth2.client.registration.github.client-id=${GITHUB_CLIENT_ID}
+-spring.security.oauth2.client.registration.github.client-secret=${GITHUB_CLIENT_SECRET}
+-```
+-
+-#### 使用不同的 OAuth2 提供商
+-- Google OAuth2
+-- Facebook OAuth2
+-- 其他支持的提供商
+-
+-## 联系支持
+-
+-如果以上步骤都无法解决问题，请提供：
+-1. 后端启动日志
+-2. 浏览器网络面板截图
+-3. GitHub 应用配置截图
+-4. 具体的错误信息
+-
+-这样可以帮助进一步诊断问题。
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java	(date 1765788915877)
+@@ -140,7 +140,8 @@
+         user.password = password;
+         user.displayName = username;
+         user.isLocalAccount = true;
+-        
++        user.avatarUrl = "/images/default-avatar.png";
++
+         return user;
+     }
+     
+Index: frontend/src/components/Navbar.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/Navbar.jsx b/frontend/src/components/Navbar.jsx
+--- a/frontend/src/components/Navbar.jsx	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/frontend/src/components/Navbar.jsx	(date 1765789004507)
+@@ -57,9 +57,9 @@
+               borderRadius: '25px',
+               border: '1px solid rgba(255, 255, 255, 0.3)'
+             }}>
+-              <img 
+-                src={user.avatar_url || `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`} 
+-                alt="用户头像" 
++              <img
++                  src={user.avatar_url || "/images/default-avatar.png"}
++                  alt="用户头像"
+                 className="user-avatar"
+                 style={{
+                   width: '35px',
+Index: frontend/src/pages/BlogHome.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/BlogHome.jsx b/frontend/src/pages/BlogHome.jsx
+--- a/frontend/src/pages/BlogHome.jsx	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/frontend/src/pages/BlogHome.jsx	(date 1765810430497)
+@@ -1,33 +1,13 @@
+-import React from 'react'
++import React, { useState, useEffect } from 'react'
++import { getPublishedBlogPostsPaginated } from '../services/authService'
+ 
+ const BlogHome = ({ user }) => {
+-  // 示例博客文章数据
+-  const blogPosts = [
+-    {
+-      id: 1,
+-      title: 'Spring Boot 集成 GitHub OAuth2 登录',
+-      date: '2024年1月15日',
+-      category: '技术',
+-      readTime: '5分钟阅读',
+-      excerpt: '本文详细介绍了如何在Spring Boot应用中集成GitHub OAuth2登录功能，包括配置GitHub应用、设置Spring Security和创建用户界面。'
+-    },
+-    {
+-      id: 2,
+-      title: '微服务架构设计与实践',
+-      date: '2024年1月10日',
+-      category: '架构',
+-      readTime: '8分钟阅读',
+-      excerpt: '探讨微服务架构的设计原则、最佳实践以及在实际项目中的应用经验，包括服务拆分、通信机制和监控策略。'
+-    },
+-    {
+-      id: 3,
+-      title: '前端性能优化指南',
+-      date: '2024年1月5日',
+-      category: '前端',
+-      readTime: '6分钟阅读',
+-      excerpt: '分享前端性能优化的实用技巧，包括代码分割、懒加载、缓存策略和渲染优化等，帮助提升用户体验。'
+-    }
+-  ]
++  const [blogPosts, setBlogPosts] = useState([])
++  const [loading, setLoading] = useState(true)
++  const [currentPage, setCurrentPage] = useState(1)
++  const [totalPages, setTotalPages] = useState(1)
++  const [totalItems, setTotalItems] = useState(0)
++  const pageSize = 10
+ 
+   const categories = [
+     { name: '技术', count: 12 },
+@@ -38,6 +18,155 @@
+ 
+   const tags = ['#SpringBoot', '#Java', '#微服务', '#前端', '#DevOps']
+ 
++  useEffect(() => {
++    loadBlogPosts()
++  }, [currentPage])
++
++  const loadBlogPosts = async () => {
++    try {
++      setLoading(true)
++      const response = await getPublishedBlogPostsPaginated(currentPage, pageSize)
++      // 确保正确访问分页数据中的数组
++      const pageData = response.data || response
++      setBlogPosts(pageData.data || [])
++      setTotalPages(pageData.totalPages || 1)
++      setTotalItems(pageData.total || 0)
++    } catch (error) {
++      console.error('Error loading blog posts:', error)
++      setBlogPosts([])
++      setTotalPages(1)
++      setTotalItems(0)
++    } finally {
++      setLoading(false)
++    }
++  }
++
++  const handlePageChange = (page) => {
++    setCurrentPage(page)
++    window.scrollTo(0, 0)
++  }
++
++  const formatDate = (dateString) => {
++    if (!dateString) return ''
++    const date = new Date(dateString)
++    return date.toLocaleDateString('zh-CN', {
++      year: 'numeric',
++      month: 'long',
++      day: 'numeric'
++    })
++  }
++
++  const Pagination = () => {
++    if (totalPages <= 1) return null
++
++    const pages = []
++    const maxVisiblePages = 5
++    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
++    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
++
++    if (endPage - startPage < maxVisiblePages - 1) {
++      startPage = Math.max(1, endPage - maxVisiblePages + 1)
++    }
++
++    for (let i = startPage; i <= endPage; i++) {
++      pages.push(i)
++    }
++
++    return (
++      <div style={{
++        display: 'flex',
++        justifyContent: 'center',
++        alignItems: 'center',
++        gap: '0.5rem',
++        marginTop: '2rem',
++        flexWrap: 'wrap'
++      }}>
++        <button
++          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
++          disabled={currentPage === 1}
++          style={{
++            padding: '0.5rem 1rem',
++            border: '1px solid #ddd',
++            borderRadius: '4px',
++            backgroundColor: currentPage === 1 ? '#f5f5f5' : 'white',
++            color: currentPage === 1 ? '#999' : '#333',
++            cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
++          }}
++        >
++          上一页
++        </button>
++
++        {startPage > 1 && (
++          <>
++            <button
++              onClick={() => handlePageChange(1)}
++              style={{
++                padding: '0.5rem 1rem',
++                border: '1px solid #ddd',
++                borderRadius: '4px',
++                backgroundColor: 'white',
++                cursor: 'pointer'
++              }}
++            >
++              1
++            </button>
++            {startPage > 2 && <span style={{ padding: '0 0.5rem' }}>...</span>}
++          </>
++        )}
++
++        {pages.map(page => (
++          <button
++            key={page}
++            onClick={() => handlePageChange(page)}
++            style={{
++              padding: '0.5rem 1rem',
++              border: '1px solid #ddd',
++              borderRadius: '4px',
++              backgroundColor: page === currentPage ? '#667eea' : 'white',
++              color: page === currentPage ? 'white' : '#333',
++              cursor: 'pointer'
++            }}
++          >
++            {page}
++          </button>
++        ))}
++
++        {endPage < totalPages && (
++          <>
++            {endPage < totalPages - 1 && <span style={{ padding: '0 0.5rem' }}>...</span>}
++            <button
++              onClick={() => handlePageChange(totalPages)}
++              style={{
++                padding: '0.5rem 1rem',
++                border: '1px solid #ddd',
++                borderRadius: '4px',
++                backgroundColor: 'white',
++                cursor: 'pointer'
++              }}
++            >
++              {totalPages}
++            </button>
++          </>
++        )}
++
++        <button
++          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
++          disabled={currentPage === totalPages}
++          style={{
++            padding: '0.5rem 1rem',
++            border: '1px solid #ddd',
++            borderRadius: '4px',
++            backgroundColor: currentPage === totalPages ? '#f5f5f5' : 'white',
++            color: currentPage === totalPages ? '#999' : '#333',
++            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
++          }}
++        >
++          下一页
++        </button>
++      </div>
++    )
++  }
++
+   return (
+     <div className="page">
+       <div className="container">
+@@ -57,9 +186,9 @@
+               marginBottom: '2rem',
+               flexWrap: 'wrap'
+             }}>
+-              <img 
+-                src={user.avatar_url} 
+-                alt="用户头像" 
++              <img
++                src={user.avatar_url || "/images/default-avatar.png"}
++                alt="用户头像"
+                 style={{
+                   width: '100px',
+                   height: '100px',
+@@ -67,7 +196,7 @@
+                   border: '4px solid #667eea'
+                 }}
+                 onError={(e) => {
+-                  e.target.src = 'https://via.placeholder.com/100x100/667eea/ffffff?text=U'
++                  e.target.src = '/images/default-avatar.png'
+                 }}
+               />
+               <div style={{ flex: 1 }}>
+@@ -164,41 +293,60 @@
+           {/* 文章列表 */}
+           <div>
+             <div className="card">
+-              <h2 style={{ 
+-                color: '#333', 
+-                marginBottom: '1.5rem', 
+-                borderBottom: '2px solid #667eea', 
+-                paddingBottom: '0.5rem' 
++              <div style={{ 
++                display: 'flex', 
++                justifyContent: 'space-between', 
++                alignItems: 'center',
++                marginBottom: '1.5rem',
++                borderBottom: '2px solid #667eea',
++                paddingBottom: '0.5rem'
+               }}>
+-                最新文章
+-              </h2>
+-              
+-              {blogPosts.map((post) => (
+-                <div 
+-                  key={post.id}
+-                  style={{
+-                    background: '#f8f9fa',
+-                    padding: '1.5rem',
+-                    borderRadius: '8px',
+-                    marginBottom: '1rem',
+-                    borderLeft: '4px solid #667eea'
+-                  }}
+-                >
+-                  <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>
+-                    {post.title}
+-                  </h3>
+-                  <div style={{ 
+-                    color: '#666', 
+-                    fontSize: '0.9rem', 
+-                    marginBottom: '1rem' 
+-                  }}>
+-                    {post.date} • {post.category} • {post.readTime}
+-                  </div>
+-                  <p style={{ color: '#555', lineHeight: '1.6' }}>
+-                    {post.excerpt}
+-                  </p>
+-                </div>
+-              ))}
++                <h2 style={{ color: '#333', margin: 0 }}>最新文章</h2>
++                <span style={{ color: '#666', fontSize: '0.9rem' }}>
++                  共 {totalItems} 篇文章
++                </span>
++              </div>
++
++              {loading ? (
++                <div style={{ textAlign: 'center', padding: '2rem' }}>
++                  <p>加载中...</p>
++                </div>
++              ) : blogPosts.length === 0 ? (
++                <div style={{ textAlign: 'center', padding: '2rem' }}>
++                  <p>暂无文章</p>
++                </div>
++              ) : (
++                <>
++                  {blogPosts.map((post) => (
++                    <div 
++                      key={post.id}
++                      style={{
++                        background: '#f8f9fa',
++                        padding: '1.5rem',
++                        borderRadius: '8px',
++                        marginBottom: '1rem',
++                        borderLeft: '4px solid #667eea'
++                      }}
++                    >
++                      <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>
++                        {post.title}
++                      </h3>
++                      <div style={{ 
++                        color: '#666', 
++                        fontSize: '0.9rem', 
++                        marginBottom: '1rem' 
++                      }}>
++                        {formatDate(post.createdAt)} • {post.category || '未分类'} • {post.readTime || '5分钟阅读'}
++                      </div>
++                      <p style={{ color: '#555', lineHeight: '1.6' }}>
++                        {post.summary || post.content?.substring(0, 150) + '...' || '暂无摘要'}
++                      </p>
++                    </div>
++                  ))}
++                  
++                  <Pagination />
++                </>
++              )}
+             </div>
+           </div>
+ 
+Index: general_development_specification.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/general_development_specification.md b/general_development_specification.md
+new file mode 100644
+--- /dev/null	(date 1765784144536)
++++ b/general_development_specification.md	(date 1765784144536)
+@@ -0,0 +1,458 @@
++# 个人博客系统通用开发规范
++
++## 概述
++本规范适用于个人博客系统的全栈开发，涵盖后端（Java + Spring Boot + DDD）、前端（React + Vite）及基础设施。旨在为AI生成代码、团队协作和代码审查提供统一标准。
++
++---
++
++## 一、目录结构组织原则
++
++### 1.1 总体项目结构
++```
++personal-portfolio/
++├── backend/                    # 后端项目（Maven多模块）
++│   ├── domain/                # 领域层
++│   ├── application/           # 应用层
++│   ├── infrastructure/        # 基础设施层
++│   ├── interface/             # 用户界面层（Web控制器）
++│   └── startup/               # 启动模块
++├── frontend/                  # 前端项目（React + Vite）
++│   ├── src/
++│   │   ├── components/        # 可复用组件
++│   │   ├── pages/             # 页面组件
++│   │   ├── services/          # API服务层
++│   │   ├── hooks/             # 自定义Hooks
++│   │   └── utils/             # 工具函数
++│   └── public/                # 静态资源
++├── docs/                      # 项目文档
++├── scripts/                   # 部署与构建脚本
++└── config/                    # 配置文件（可选）
++```
++
++### 1.2 后端DDD分层规范
++- **领域层（domain）**：核心业务逻辑，包含实体、值对象、领域服务、仓储接口、领域事件、工厂。
++  - 禁止依赖任何外部层（应用层、基础设施层、界面层）。
++- **应用层（application）**：协调领域对象完成用例，包含应用服务、命令/查询对象、DTO、应用事件。
++  - 仅依赖领域层，通过依赖倒置使用基础设施。
++- **基础设施层（infrastructure）**：技术实现，包含持久化实现、外部服务调用、消息队列、配置、工具类。
++  - 实现领域层定义的接口（如仓储接口）。
++- **界面层（interface）**：用户界面，包含Web控制器、RPC接口、DTO、异常处理器。
++  - 依赖应用层，不直接访问领域层。
++
++### 1.3 前端模块化组织
++- **组件分类**：
++  - `components/common`：全局通用组件（按钮、输入框等）
++  - `components/layout`：布局组件（导航栏、页脚等）
++  - `components/features`：业务功能组件
++- **页面组织**：每个页面对应一个目录，包含主组件、子组件和样式文件。
++- **服务层**：按业务模块划分，每个模块一个Service文件。
++- **Hooks**：提取可复用逻辑，命名以 `use` 开头。
++
++### 1.4 配置文件管理
++- 配置文件统一放在 `resources/` 目录下。
++- 区分环境：`application-dev.properties`、`application-prod.properties`。
++- 敏感信息（密码、密钥）使用环境变量或配置中心，禁止硬编码。
++
++### 1.5 资源文件组织
++- 静态资源（图片、字体）放在 `frontend/public/` 或 `backend/src/main/resources/static/`。
++- 国际化文件按语言分目录存放。
++- 模板文件放在 `resources/templates/`。
++
++---
++
++## 二、代码规范
++
++### 2.1 命名规范
++
++#### 包名（Package）
++- 全部小写，使用公司域名反写（如 `com.personal.portfolio`）。
++- 分层包结构：`com.personal.portfolio.blog.domain.model`。
++
++#### 类名（Class）
++- 大驼峰（PascalCase），名词或名词短语。
++- 实体类：`BlogPost`、`User`
++- 接口：`BlogPostRepository`（后缀为能力，如Repository、Service）
++- 抽象类：`BaseEntity`、`AbstractHandler`
++- 异常类：以 `Exception` 结尾，如 `BusinessException`
++- 测试类：以 `Test` 结尾，如 `BlogPostServiceTest`
++
++#### 方法名（Method）
++- 小驼峰（camelCase），动词或动词短语。
++- 获取方法：`getBlogPostById()`、`findAll()`
++- 布尔方法：`isPublished()`、`hasPermission()`
++- 业务方法：`publish()`、`cancelOrder()`
++- 工厂方法：`create()`、`fromCommand()`
++
++#### 变量名（Variable）
++- 小驼峰，有意义的名词。
++- 集合类型使用复数：`blogPosts`、`users`
++- 临时变量：`i`、`j`、`entry`（仅限局部作用域）
++- 常量：全大写，下划线分隔，如 `MAX_RETRY_COUNT`
++
++#### 前端特定命名
++- React组件：大驼峰，与文件名一致。
++- 自定义Hook：以 `use` 开头，如 `useAuth`
++- CSS类名：短横线分隔（kebab-case），如 `.blog-card`
++- 枚举：全大写，下划线分隔，如 `POST_STATUS.PUBLISHED`
++
++### 2.2 类设计规范
++- **单一职责**：每个类只做一件事。
++- **类大小限制**：单个类不超过300行（理想200行），超过应拆分。
++- **字段顺序**：
++  1. 静态常量
++  2. 实例变量
++  3. 构造函数
++  4. 公共方法
++  5. 受保护方法
++  6. 私有方法
++- **访问修饰符**：最小化暴露，优先使用 `private`，必要时使用 `protected`，避免 `public` 字段。
++
++### 2.3 方法设计规范
++- **方法长度**：不超过30行（推荐15行以内）。
++- **参数数量**：不超过4个，超过时使用对象封装（命令对象、参数对象）。
++- **圈复杂度**：不超过10，过高需拆分子方法。
++- **抽象级别一致**：方法内所有语句应在同一抽象级别。
++- **返回值**：避免返回 `null`，使用 `Optional` 或空集合。
++
++### 2.4 注释规范
++- **类注释**：说明类职责、作者、版本。
++- **方法注释**：说明功能、参数、返回值、异常。
++- **复杂逻辑注释**：解释业务规则和算法。
++- **TODO/FIXME**：使用 `// TODO:` 或 `// FIXME:` 标注待办事项。
++- **禁止无用注释**：如 `// setter`、`// getter`。
++
++### 2.5 格式规范
++- **缩进**：2个空格（前端）、4个空格（后端Java）。
++- **行宽**：不超过120字符。
++- **空行**：方法之间、逻辑块之间用空行分隔。
++- **花括号**：K&R风格，左括号不换行。
++- **导入顺序**：IDE自动优化，分组：静态导入、第三方库、项目内部。
++
++---
++
++## 三、代码质量原则
++
++### 3.1 SOLID设计原则
++1. **单一职责（SRP）**：每个类/模块只做一件事。
++2. **开闭原则（OCP）**：对扩展开放，对修改关闭，使用接口和抽象。
++3. **里氏替换（LSP）**：子类必须能替换父类而不影响程序。
++4. **接口隔离（ISP）**：接口要小而专，避免臃肿。
++5. **依赖倒置（DIP）**：高层模块不依赖低层模块，二者都依赖抽象。
++
++### 3.2 DRY原则（Don't Repeat Yourself）
++- 重复代码提取为方法、类或工具函数。
++- 业务规则在领域层集中定义，避免散落。
++- 前端重复UI组件提取为可复用组件。
++
++### 3.3 可读性、可维护性、可扩展性
++- **可读性**：命名清晰、结构清晰、注释恰当。
++- **可维护性**：模块化、低耦合、高内聚。
++- **可扩展性**：预留扩展点，使用策略模式、插件架构。
++
++### 3.4 设计模式应用指南
++- **工厂模式**：复杂对象创建。
++- **仓储模式**：数据访问抽象。
++- **策略模式**：可替换的算法。
++- **观察者模式**：事件驱动。
++- **装饰器模式**：动态增强功能。
++- **前端容器/展示组件模式**：分离逻辑与UI。
++
++### 3.5 代码审查检查清单
++- [ ] 类是否超过300行？
++- [ ] 方法是否超过30行？
++- [ ] 方法参数是否超过4个？
++- [ ] 圈复杂度是否过高？
++- [ ] 是否有重复代码？
++- [ ] 命名是否准确表达意图？
++- [ ] 注释是否必要且清晰？
++- [ ] 异常处理是否得当？
++- [ ] 测试是否覆盖核心逻辑？
++- [ ] 是否符合DDD分层依赖规则？
++
++---
++
++## 四、异常处理原则
++
++### 4.1 异常分类
++- **业务异常（BusinessException）**：用户操作错误、业务规则违反，应给出友好提示。
++- **系统异常（SystemException）**：系统内部错误（数据库连接失败、外部服务异常），需记录日志并告警。
++- **校验异常（ValidationException）**：参数校验失败，返回详细字段错误。
++- **安全异常（SecurityException）**：权限不足、认证失败。
++
++### 4.2 异常处理最佳实践
++- 早抛出，晚捕获。
++- 受检异常仅用于基础设施层（如IO、SQL）。
++- 领域层和应用层使用运行时异常。
++- 禁止空的catch块，至少记录日志。
++- 异常信息中避免敏感数据（密码、密钥）。
++
++### 4.3 错误信息设计
++- 错误码：全局唯一，便于定位。
++- 错误消息：用户友好，可读性强。
++- 错误详情：开发调试用，包含请求ID、时间戳。
++- 多语言支持：根据客户端语言返回相应消息。
++
++### 4.4 日志记录规范
++- 使用SLF4J + Logback。
++- 日志级别：
++  - `ERROR`：系统异常，需立即处理。
++  - `WARN`：潜在问题，需要关注。
++  - `INFO`：关键业务操作。
++  - `DEBUG`：调试信息，开发环境开启。
++  - `TRACE`：详细跟踪。
++- 日志格式：包含时间、级别、线程、类名、消息、异常栈。
++- 敏感信息脱敏：手机号、邮箱、身份证号等。
++
++### 4.5 全局异常处理机制
++- 使用 `@ControllerAdvice` 或全局中间件统一处理异常。
++- 返回统一格式的响应：
++```json
++{
++  "code": "ERROR_CODE",
++  "message": "错误描述",
++  "data": null,
++  "timestamp": "2025-12-15T15:30:00"
++}
++```
++
++---
++
++## 五、测试规范
++
++### 5.1 测试金字塔原则
++- **单元测试（70%）**：测试独立功能单元，快速执行。
++- **集成测试（20%）**：测试模块间交互，涉及数据库、外部服务。
++- **端到端测试（10%）**：测试完整业务流程，模拟用户操作。
++
++### 5.2 单元测试规范
++- 使用JUnit 5 + Mockito。
++- 测试类命名：`被测类名 + Test`，如 `BlogPostServiceTest`。
++- 测试方法命名：`should_预期结果_when_条件` 或 `given_条件_when_操作_then_结果`。
++- 每个测试方法只验证一个行为。
++- 使用Given-When-Then结构。
++- 避免测试私有方法，通过公共方法间接测试。
++- 测试覆盖率目标：行覆盖率 ≥ 80%，分支覆盖率 ≥ 70%。
++
++### 5.3 集成测试规范
++- 使用 `@SpringBootTest` 启动容器。
++- 使用测试数据库（如H2）或容器化数据库（Testcontainers）。
++- 每个测试类结束后清理数据。
++- 测试API接口时使用 `MockMvc` 或 `TestRestTemplate`。
++
++### 5.4 端到端测试规范
++- 使用Cypress或Playwright进行前端E2E测试。
++- 模拟真实用户操作：点击、输入、导航。
++- 测试关键用户路径：注册、登录、发布博客、评论。
++- 运行在独立测试环境，避免影响生产数据。
++
++### 5.5 测试代码质量要求
++- 测试代码与生产代码同标准，保持整洁可维护。
++- 避免硬编码，使用工厂方法创建测试数据。
++- 测试用例独立，不依赖执行顺序。
++- 失败时提供清晰错误信息。
++
++### 5.6 测试类型总结
++| 测试类型 | 测试对象 | 工具 | 执行频率 |
++|----------|----------|------|----------|
++| 单元测试 | 类、方法 | JUnit, Mockito | 每次提交 |
++| 集成测试 | 模块交互 | SpringBootTest, Testcontainers | 每次合并 |
++| 端到端测试 | 完整业务流程 | Cypress, Playwright | 每日/发布前 |
++| 性能测试 | 关键接口响应时间 | JMeter, Gatling | 每周/版本发布 |
++
++---
++
++## 六、DDD特定规范
++
++### 6.1 充血模型实现规范
++- 实体包含数据和行为，业务逻辑内聚在实体内部。
++- 每个业务方法不超过30行，参数不超过4个。
++- 保护不变式：任何状态变更都经过验证。
++- 无公开setter，使用有业务意义的方法（如 `publish()`、`cancel()`）。
++- 发布领域事件：重要状态变更通过事件通知其他组件。
++
++### 6.2 聚合根设计原则
++- 聚合根是聚合的入口，控制内部实体的一致性。
++- 聚合边界内强一致性，边界间最终一致性。
++- 暴露不可变视图：`Collections.unmodifiableList()`。
++- 工厂方法创建复杂聚合。
++
++### 6.3 值对象使用规范
++- 不可变：所有字段final，构造函数设置全部属性。
++- 实现 `equals()` 和 `hashCode()`，基于所有字段。
++- 包含丰富的业务方法：计算、验证、格式化。
++- 优先使用值对象替代基本类型（如 `Money` 替代 `BigDecimal`）。
++
++### 6.4 领域服务与应用服务职责划分
++- **领域服务**：处理跨多个实体的业务逻辑，无状态。
++- **应用服务**：协调领域对象，事务管理，DTO转换，不包含业务逻辑。
++- 应用服务方法不超过15行，只做编排。
++
++### 6.5 仓储模式实现
++- 仓储接口定义在领域层。
++- 实现类在基础设施层。
++- 仓储方法返回聚合根或值对象，而非实体。
++- 使用规范命名：`save()`、`findById()`、`delete()`。
++
++---
++
++## 七、API设计规范
++
++### 7.1 RESTful API设计
++- 资源命名：使用名词复数，如 `/blog-posts`、`/users`。
++- HTTP方法：
++  - `GET`：获取资源
++  - `POST`：创建资源
++  - `PUT`：全量更新资源
++  - `PATCH`：部分更新资源
++  - `DELETE`：删除资源
++- 版本管理：URL路径包含版本号，如 `/api/v1/blog-posts`。
++- 过滤、排序、分页：使用查询参数，如 `?page=1&size=10&sort=createdAt,desc`。
++
++### 7.2 请求/响应格式
++- 请求体：JSON格式，使用小驼峰命名。
++- 响应体：统一封装，包含状态码、消息、数据、时间戳。
++- 日期时间：ISO 8601格式，如 `"2025-12-15T15:30:00"`。
++
++### 7.3 错误码设计
++- 全局错误码：4位数字，前两位表示模块，后两位表示具体错误。
++- 示例：`1001`（用户模块-用户不存在）、`2001`（博客模块-标题不能为空）。
++- HTTP状态码映射：业务错误返回200，错误信息在body中。
++
++### 7.4 安全规范
++- 认证：JWT令牌，有效期不宜过长。
++- 授权：基于角色的访问控制（RBAC）。
++- 输入校验：服务端必须校验，防止SQL注入、XSS攻击。
++- 敏感接口限流、防刷。
++- API文档使用OpenAPI 3.0（Swagger）。
++
++---
++
++## 八、数据库规范
++
++### 8.1 表设计规范
++- 表名：小写，下划线分隔，如 `blog_post`、`user_profile`。
++- 字段名：小写，下划线分隔，如 `created_at`、`author_id`。
++- 主键：使用BIGINT自增或雪花算法生成。
++- 必备字段：`id`、`created_at`、`updated_at`、`deleted`（逻辑删除）。
++- 索引：为查询条件字段建立索引，避免过多索引影响写性能。
++
++### 8.2 数据一致性保证
++- 事务范围：尽量小，避免长事务。
++- 乐观锁：使用 `version` 字段防止并发更新。
++- 逻辑删除：使用 `deleted` 标志位，避免物理删除。
++- 外键约束：数据库层或应用层保证。
++
++### 8.3 迁移脚本管理
++- 使用Flyway或Liquibase管理数据库版本。
++- 脚本命名：`V{版本号}__{描述}.sql`，如 `V1.0__create_blog_post_table.sql`。
++- 回滚脚本：每个变更提供回滚脚本。
++
++---
++
++## 九、部署与运维规范
++
++### 9.1 环境配置
++- 环境变量管理：使用配置中心或K8s ConfigMap。
++- 配置文件分离：`application-dev.yml`、`application-prod.yml`。
++- 密钥管理：使用Vault或云服务密钥管理。
++
++### 9.2 日志收集
++- 日志集中收集：ELK（Elasticsearch, Logstash, Kibana）或Loki。
++- 结构化日志：输出JSON格式，便于解析。
++- 日志保留策略：生产环境至少保留30天。
++
++### 9.3 监控指标
++- 应用监控：Spring Boot Actuator + Prometheus + Grafana。
++- 业务监控：关键业务指标（注册数、发布数、访问量）。
++- 告警规则：设置错误率、响应时间、系统资源告警。
++
++### 9.4 性能优化
++- 数据库查询优化：避免N+1查询，使用连接或批量查询。
++- 缓存策略：Redis缓存热点数据，设置过期时间。
++- 前端性能：代码分割、懒加载、图片优化、CDN加速。
++
++---
++
++## 十、AI生成代码提示模板
++
++### 10.1 实体类生成提示
++```
++请生成充血模型的DDD实体代码，要求：
++1. 数据+行为一体：实体包含丰富的业务方法
++2. 每个业务方法不超过30行代码
++3. 方法参数不超过4个
++4. 保护不变式：所有状态变更都经过验证
++5. 使用值对象替换基本类型
++6. 提供工厂方法创建实例
++7. 发布领域事件
++8. 暴露不可变视图的内部集合
++9. 包含业务计算属性（如isOverdue()）
++10. 无公开setter方法，只有有业务意义的修改方法
++```
++
++### 10.2 应用服务生成提示
++```
++请生成DDD应用服务代码，要求：
++1. 类名以AppService结尾，如BlogPostAppService
++2. 每个方法对应一个用例，不超过15行
++3. 使用命令对象封装参数
++4. 委托给领域对象执行业务逻辑，不在应用服务实现业务规则
++5. 事务管理使用@Transactional
++6. 返回统一响应对象
++7. 发布应用事件
++8. 异常处理使用全局异常处理器
++```
++
++### 10.3 前端组件生成提示
++```
++请生成React组件代码，要求：
++1. 使用函数组件和Hooks
++2. 组件单一职责，不超过200行
++3. 使用TypeScript定义Props和State
++4. 错误处理使用try-catch或错误边界
++5. 加载状态使用Suspense或自定义loading状态
++6. 样式使用CSS Modules或Styled Components
++7. 组件可复用，通过Props配置
++8. 包含必要的PropTypes或TypeScript接口
++```
++
++### 10.4 API接口生成提示
++```
++请生成RESTful API控制器代码，要求：
++1. 使用@RestController，路径前缀/api/v1
++2. 每个端点对应一个HTTP方法
++3. 参数校验使用@Valid和自定义注解
++4. 返回统一响应对象ApiResponse
++5. 异常由全局异常处理器处理
++6. 接口文档使用@Operation、@ApiResponse注解
++7. 安全控制使用@PreAuthorize或自定义注解
++8. 日志记录关键操作
++```
++
++---
++
++## 附录：检查清单汇总
++
++### 代码提交前自查清单
++- [ ] 代码编译通过，无语法错误
++- [ ] 单元测试通过，覆盖率达标
++- [ ] 集成测试通过
++- [ ] 代码符合命名规范
++- [ ] 无硬编码敏感信息
++- [ ] 日志记录恰当
++- [ ] 异常处理完善
++- [ ] 文档更新（如有必要）
++
++### 代码审查重点清单
++- [ ] 架构符合DDD分层依赖
++- [ ] 业务逻辑内聚在领域层
++- [ ] 无重复代码
++- [ ] 性能无潜在问题
++- [ ] 安全无漏洞
++- [ ] 测试覆盖充分
++- [ ] 代码可读性高
++
++---
++
++**版本历史**
++- v1.0 (2025-12-15)：初始版本，基于现有DDD规范和项目实践制定。
+\ No newline at end of file
+Index: frontend/src/pages/CreatorCenter.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/CreatorCenter.jsx b/frontend/src/pages/CreatorCenter.jsx
+--- a/frontend/src/pages/CreatorCenter.jsx	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/frontend/src/pages/CreatorCenter.jsx	(date 1765790462261)
+@@ -271,9 +271,9 @@
+               marginBottom: '2rem',
+               flexWrap: 'wrap'
+             }}>
+-              <img 
+-                src={user.avatar_url} 
+-                alt="用户头像" 
++              <img
++                src={user.avatar_url || "/images/default-avatar.png"}
++                alt="用户头像"
+                 style={{
+                   width: '80px',
+                   height: '80px',
+@@ -281,7 +281,7 @@
+                   border: '3px solid #667eea'
+                 }}
+                 onError={(e) => {
+-                  e.target.src = 'https://via.placeholder.com/80x80/667eea/ffffff?text=U'
++                  e.target.src = '/images/default-avatar.png'
+                 }}
+               />
+               <div style={{ flex: 1 }}>
