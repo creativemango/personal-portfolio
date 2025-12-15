@@ -1,0 +1,1360 @@
+Subject: [PATCH] set default advatar
+---
+Index: ENTITY_VALIDATION.md
+===================================================================
+diff --git a/ENTITY_VALIDATION.md b/ENTITY_VALIDATION.md
+deleted file mode 100644
+--- a/ENTITY_VALIDATION.md	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ /dev/null	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
+@@ -1,99 +0,0 @@
+-# 实体类验证文档
+-
+-## 实体类创建完成
+-
+-已成功创建以下JPA实体类：
+-
+-### 1. User (用户实体)
+-- **表名**: `users`
+-- **主键**: `id` (自增)
+-- **关键字段**: 
+-  - `username` (唯一，非空)
+-  - `email` (唯一，非空)
+-  - `password` (非空)
+-  - `role` (默认"USER")
+-- **关系**: 
+-  - 一对多: `blogPosts` (用户写的文章)
+-  - 一对多: `comments` (用户发表的评论)
+-
+-### 2. Category (分类实体)
+-- **表名**: `categories`
+-- **主键**: `id` (自增)
+-- **关键字段**:
+-  - `name` (唯一，非空)
+-  - `slug` (唯一，非空)
+-  - `is_active` (默认true)
+-- **关系**:
+-  - 一对多: `blogPosts` (分类下的文章)
+-
+-### 3. BlogPost (博客文章实体)
+-- **表名**: `blog_posts`
+-- **主键**: `id` (自增)
+-- **关键字段**:
+-  - `title` (非空)
+-  - `slug` (唯一，非空)
+-  - `content` (TEXT类型，非空)
+-  - `is_published` (默认false)
+-- **关系**:
+-  - 多对一: `author` (文章作者)
+-  - 多对一: `category` (文章分类)
+-  - 一对多: `comments` (文章评论)
+-
+-### 4. Comment (评论实体)
+-- **表名**: `comments`
+-- **主键**: `id` (自增)
+-- **关键字段**:
+-  - `content` (TEXT类型，非空)
+-  - `is_approved` (默认false)
+-- **关系**:
+-  - 多对一: `author` (评论作者)
+-  - 多对一: `blogPost` (所属文章)
+-  - 多对一: `parentComment` (父评论，支持嵌套评论)
+-
+-## 数据库配置
+-
+-### H2数据库配置
+-- **数据库URL**: `jdbc:h2:mem:portfolio;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`
+-- **用户名**: `sa`
+-- **密码**: 空
+-- **DDL策略**: `create-drop` (开发环境)
+-- **H2控制台**: 启用，路径 `/h2-console`
+-
+-### JPA配置
+-- **方言**: `H2Dialect`
+-- **显示SQL**: 启用
+-- **格式化SQL**: 启用
+-
+-## 依赖配置
+-
+-### Domain模块依赖
+-- **Lombok**: 用于简化getter/setter
+-- **JPA API**: 用于实体类注解
+-
+-## 验证结果
+-
+-✅ **实体类设计完成** - 所有4个实体类已创建
+-✅ **数据库关系设计完成** - 一对多、多对一关系已配置
+-✅ **JPA注解配置完成** - 所有实体类都使用了正确的JPA注解
+-✅ **数据库配置完成** - H2内存数据库配置已设置
+-✅ **依赖配置完成** - 必要的依赖已添加到pom.xml
+-
+-## 下一步建议
+-
+-1. **编译项目**: 需要正确配置JAVA_HOME环境变量
+-2. **创建Repository接口**: 为每个实体类创建对应的Repository
+-3. **创建Service层**: 实现业务逻辑
+-4. **创建Controller层**: 提供REST API
+-5. **测试数据库连接**: 启动应用并访问H2控制台验证表结构
+-
+-## H2控制台访问
+-
+-应用启动后，可以通过以下URL访问H2控制台：
+-```
+-http://localhost:8080/api/h2-console
+-```
+-
+-连接信息:
+-- JDBC URL: `jdbc:h2:mem:portfolio`
+-- 用户名: `sa`
+-- 密码: (空)
+Index: GITHUB_OAUTH2_SETUP.md
+===================================================================
+diff --git a/GITHUB_OAUTH2_SETUP.md b/GITHUB_OAUTH2_SETUP.md
+deleted file mode 100644
+--- a/GITHUB_OAUTH2_SETUP.md	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ /dev/null	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
+@@ -1,180 +0,0 @@
+-# GitHub OAuth2 登录集成指南
+-
+-## 概述
+-
+-本项目已成功集成了Spring Security OAuth2，支持通过GitHub账户登录。以下是完整的配置和使用说明。
+-
+-## 已实现的功能
+-
+-1. ✅ Spring Security OAuth2 依赖配置
+-2. ✅ GitHub OAuth2 应用配置
+-3. ✅ 安全配置类
+-4. ✅ 登录控制器
+-5. ✅ 用户实体扩展
+-6. ✅ 登录页面模板
+-
+-## 配置步骤
+-
+-### 1. 设置JAVA_HOME环境变量
+-
+-由于Maven需要正确的JAVA_HOME环境变量，请按以下步骤设置：
+-
+-**Windows:**
+-```cmd
+-# 设置JAVA_HOME环境变量
+-setx JAVA_HOME "C:\Program Files\Java\jdk-21"
+-# 重启命令行或重新加载环境变量
+-```
+-
+-**验证设置:**
+-```cmd
+-echo %JAVA_HOME%
+-java -version
+-mvn -version
+-```
+-
+-### 2. 配置GitHub OAuth2应用
+-
+-1. 访问 [GitHub Developer Settings](https://github.com/settings/developers)
+-2. 点击 "New OAuth App"
+-3. 填写应用信息：
+-   - **Application name**: Personal Portfolio
+-   - **Homepage URL**: http://localhost:8080
+-   - **Authorization callback URL**: http://localhost:8080/login/oauth2/code/github
+-4. 点击 "Register application"
+-5. 复制生成的 Client ID 和 Client Secret
+-
+-**重要提示**: 回调URL必须是 `http://localhost:8080/login/oauth2/code/github`，这是Spring Security OAuth2的默认重定向URL。
+-
+-### 3. 更新配置文件
+-
+-在 `backend/interface/src/main/resources/application.properties` 中更新您的GitHub OAuth2凭据：
+-
+-```properties
+-# Spring Security OAuth2 GitHub Configuration
+-spring.security.oauth2.client.registration.github.client-id=您的实际Client ID
+-spring.security.oauth2.client.registration.github.client-secret=您的实际Client Secret
+-spring.security.oauth2.client.registration.github.scope=user:email,read:user
+-spring.security.oauth2.client.registration.github.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
+-```
+-
+-### 4. 运行应用程序
+-
+-```bash
+-# 在项目根目录执行
+-mvn -f backend/interface/pom.xml spring-boot:run
+-```
+-
+-或者：
+-
+-```bash
+-# 先编译整个项目
+-mvn clean install
+-# 然后运行
+-mvn -f backend/interface/pom.xml spring-boot:run
+-```
+-
+-## 使用说明
+-
+-### 访问应用
+-
+-1. 启动应用后，访问: http://localhost:8080/
+-2. 点击登录链接或直接访问: http://localhost:8080/login
+-3. 点击 "使用 GitHub 登录" 按钮
+-4. 授权应用访问您的GitHub账户
+-5. 登录成功后，您将被重定向到用户信息页面
+-
+-### API端点
+-
+-- `GET /` - 首页
+-- `GET /login` - 登录页面
+-- `GET /user/profile` - 获取当前用户信息（需要登录）
+-- `POST /logout` - 退出登录
+-
+-### 获取用户信息
+-
+-登录成功后，访问 `/user/profile` 将返回类似以下格式的用户信息：
+-
+-```json
+-{
+-  "id": 12345678,
+-  "login": "your-github-username",
+-  "name": "Your Name",
+-  "email": "your-email@example.com",
+-  "avatar_url": "https://avatars.githubusercontent.com/u/12345678?v=4",
+-  "bio": "Your bio",
+-  "location": "Your location",
+-  "company": "Your company",
+-  "blog": "https://your-blog.com",
+-  "twitter_username": "your-twitter",
+-  "public_repos": 42,
+-  "followers": 100,
+-  "following": 50,
+-  "created_at": "2020-01-01T00:00:00Z",
+-  "updated_at": "2024-01-01T00:00:00Z"
+-}
+-```
+-
+-## 技术实现细节
+-
+-### 依赖项
+-
+-- `spring-boot-starter-security` - Spring Security核心
+-- `spring-boot-starter-oauth2-client` - OAuth2客户端支持
+-- `spring-boot-starter-thymeleaf` - 模板引擎（用于登录页面）
+-
+-### 安全配置
+-
+-- 允许公开访问登录页面和OAuth2端点
+-- 配置GitHub OAuth2登录
+-- 禁用CSRF保护（开发环境）
+-- 允许H2控制台访问
+-
+-### 用户实体扩展
+-
+-User实体已扩展支持OAuth2：
+-- `githubId` - GitHub用户ID
+-- `githubUsername` - GitHub用户名
+-- `loginType` - 登录方式（LOCAL/GITHUB）
+-
+-## 故障排除
+-
+-### 常见问题
+-
+-1. **JAVA_HOME未设置**
+-   - 解决方案：设置正确的JAVA_HOME环境变量
+-
+-2. **GitHub OAuth2授权失败**
+-   - 检查Client ID和Client Secret是否正确
+-   - 验证回调URL是否与GitHub应用配置一致
+-
+-3. **端口冲突**
+-   - 修改 `server.port` 配置使用其他端口
+-
+-4. **依赖下载失败**
+-   - 检查网络连接
+-   - 尝试使用 `mvn clean install -U`
+-
+-### 日志调试
+-
+-启用调试日志：
+-```properties
+-logging.level.org.springframework.security=DEBUG
+-logging.level.org.springframework.security.oauth2=DEBUG
+-```
+-
+-## 生产环境注意事项
+-
+-1. **启用CSRF保护**
+-2. **使用HTTPS**
+-3. **配置数据库持久化**
+-4. **设置合适的会话超时**
+-5. **配置生产环境的GitHub OAuth2应用**
+-
+-## 下一步开发建议
+-
+-1. 实现用户注册和本地登录
+-2. 添加角色和权限管理
+-3. 实现用户信息持久化到数据库
+-4. 添加JWT令牌支持
+-5. 实现前端界面集成
+Index: GITHUB_OAUTH2_TROUBLESHOOTING.md
+===================================================================
+diff --git a/GITHUB_OAUTH2_TROUBLESHOOTING.md b/GITHUB_OAUTH2_TROUBLESHOOTING.md
+deleted file mode 100644
+--- a/GITHUB_OAUTH2_TROUBLESHOOTING.md	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ /dev/null	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
+@@ -1,165 +0,0 @@
+-# GitHub OAuth2 故障排除指南
+-
+-## 问题描述
+-GitHub OAuth2 回调一直处于 pending 状态：
+-```
+-http://localhost:8080/login/oauth2/code/github?code=9f9e1a6ae9915df6066b&state=xEbaRfcoRluNo_DcAI6KjMS7S_hjILCB7JwmAZ-H39s%3D
+-```
+-
+-## 可能的原因和解决方案
+-
+-### 1. GitHub 应用回调 URL 配置错误
+-
+-#### 检查 GitHub OAuth App 配置
+-1. 访问 GitHub Settings → Developer settings → OAuth Apps
+-2. 找到您的应用
+-3. 检查 **Authorization callback URL** 配置
+-
+-#### 正确的回调 URL 配置
+-对于本地开发环境，回调 URL 应该配置为：
+-```
+-http://localhost:8080/login/oauth2/code/github
+-```
+-
+-#### 配置步骤
+-1. 登录 GitHub
+-2. 进入 Settings → Developer settings → OAuth Apps
+-3. 点击您的应用
+-4. 在 "Authorization callback URL" 字段中输入：
+-   ```
+-   http://localhost:8080/login/oauth2/code/github
+-   ```
+-5. 点击 "Update application"
+-
+-### 2. 网络或代理问题
+-
+-#### 检查网络连接
+-确保您的开发环境可以访问 GitHub API：
+-```bash
+-# 测试 GitHub API 连接
+-curl -I https://api.github.com
+-
+-# 测试 GitHub OAuth 端点
+-curl -I https://github.com/login/oauth/authorize
+-```
+-
+-#### 检查防火墙和代理
+-- 确保端口 8080 没有被防火墙阻止
+-- 如果使用代理，确保代理配置正确
+-
+-### 3. 后端配置问题
+-
+-#### 检查 application.properties
+-确保以下配置正确：
+-```properties
+-# GitHub OAuth2 配置
+-spring.security.oauth2.client.registration.github.client-id=您的client-id
+-spring.security.oauth2.client.registration.github.client-secret=您的client-secret
+-spring.security.oauth2.client.registration.github.scope=user:email,read:user
+-
+-# OAuth2 Provider 配置
+-spring.security.oauth2.client.provider.github.authorization-uri=https://github.com/login/oauth/authorize
+-spring.security.oauth2.client.provider.github.token-uri=https://github.com/login/oauth/access_token
+-spring.security.oauth2.client.provider.github.user-info-uri=https://api.github.com/user
+-spring.security.oauth2.client.provider.github.user-name-attribute=login
+-```
+-
+-### 4. 安全配置问题
+-
+-#### 检查 SecurityConfig
+-确保 OAuth2 登录配置正确：
+-```java
+-.oauth2Login(oauth2 -> oauth2
+-    .loginPage("/login")
+-    .defaultSuccessUrl("http://localhost:3001/home", true)
+-    .failureUrl("http://localhost:3001/login?error=true")
+-)
+-```
+-
+-### 5. 调试步骤
+-
+-#### 启用详细日志
+-在 `application.properties` 中添加：
+-```properties
+-# 启用 Spring Security 调试日志
+-logging.level.org.springframework.security=DEBUG
+-logging.level.org.springframework.security.oauth2=DEBUG
+-
+-# 启用 HTTP 请求日志
+-logging.level.org.apache.http=DEBUG
+-```
+-
+-#### 检查后端日志
+-重启后端服务，查看控制台输出：
+-```bash
+-mvn -f backend/interface/pom.xml spring-boot:run
+-```
+-
+-在日志中查找：
+-- OAuth2 授权请求
+-- 令牌交换过程
+-- 用户信息获取
+-- 任何错误信息
+-
+-### 6. 常见错误
+-
+-#### 错误：Invalid redirect_uri
+-```
+-error=redirect_uri_mismatch&error_description=The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application.
+-```
+-**解决方案**：确保 GitHub 应用的回调 URL 配置为 `http://localhost:8080/login/oauth2/code/github`
+-
+-#### 错误：Bad credentials
+-```
+-error=bad_verification_code&error_description=The+code+passed+is+incorrect+or+expired.
+-```
+-**解决方案**：重新启动登录流程，确保使用新的授权码
+-
+-#### 错误：Rate limit exceeded
+-```
+-error=rate_limit_exceeded
+-```
+-**解决方案**：等待一段时间后重试，或检查 GitHub API 速率限制
+-
+-### 7. 测试流程
+-
+-#### 步骤 1：验证 GitHub 应用配置
+-1. 确认 client-id 和 client-secret 正确
+-2. 确认回调 URL 配置正确
+-3. 确认应用状态为 "Active"
+-
+-#### 步骤 2：验证后端配置
+-1. 重启后端服务
+-2. 检查启动日志是否有错误
+-3. 访问 `http://localhost:8080/login` 确认登录页面正常
+-
+-#### 步骤 3：测试登录流程
+-1. 访问前端 `http://localhost:3001/login`
+-2. 点击 "使用 GitHub 登录"
+-3. 观察重定向到 GitHub 授权页面
+-4. 授权后观察回调过程
+-
+-### 8. 替代方案
+-
+-如果 GitHub OAuth2 仍然有问题，可以考虑：
+-
+-#### 使用环境变量
+-```properties
+-spring.security.oauth2.client.registration.github.client-id=${GITHUB_CLIENT_ID}
+-spring.security.oauth2.client.registration.github.client-secret=${GITHUB_CLIENT_SECRET}
+-```
+-
+-#### 使用不同的 OAuth2 提供商
+-- Google OAuth2
+-- Facebook OAuth2
+-- 其他支持的提供商
+-
+-## 联系支持
+-
+-如果以上步骤都无法解决问题，请提供：
+-1. 后端启动日志
+-2. 浏览器网络面板截图
+-3. GitHub 应用配置截图
+-4. 具体的错误信息
+-
+-这样可以帮助进一步诊断问题。
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java	(date 1765788915877)
+@@ -140,7 +140,8 @@
+         user.password = password;
+         user.displayName = username;
+         user.isLocalAccount = true;
+-        
++        user.avatarUrl = "/images/default-avatar.png";
++
+         return user;
+     }
+     
+Index: frontend/src/components/Navbar.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/Navbar.jsx b/frontend/src/components/Navbar.jsx
+--- a/frontend/src/components/Navbar.jsx	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/frontend/src/components/Navbar.jsx	(date 1765789004507)
+@@ -57,9 +57,9 @@
+               borderRadius: '25px',
+               border: '1px solid rgba(255, 255, 255, 0.3)'
+             }}>
+-              <img 
+-                src={user.avatar_url || `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`} 
+-                alt="用户头像" 
++              <img
++                  src={user.avatar_url || "/images/default-avatar.png"}
++                  alt="用户头像"
+                 className="user-avatar"
+                 style={{
+                   width: '35px',
+Index: frontend/src/pages/BlogHome.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/BlogHome.jsx b/frontend/src/pages/BlogHome.jsx
+--- a/frontend/src/pages/BlogHome.jsx	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/frontend/src/pages/BlogHome.jsx	(date 1765790491588)
+@@ -57,9 +57,9 @@
+               marginBottom: '2rem',
+               flexWrap: 'wrap'
+             }}>
+-              <img 
+-                src={user.avatar_url} 
+-                alt="用户头像" 
++              <img
++                src={user.avatar_url || "/images/default-avatar.png"}
++                alt="用户头像"
+                 style={{
+                   width: '100px',
+                   height: '100px',
+@@ -67,7 +67,7 @@
+                   border: '4px solid #667eea'
+                 }}
+                 onError={(e) => {
+-                  e.target.src = 'https://via.placeholder.com/100x100/667eea/ffffff?text=U'
++                  e.target.src = '/images/default-avatar.png'
+                 }}
+               />
+               <div style={{ flex: 1 }}>
+Index: general_development_specification.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/general_development_specification.md b/general_development_specification.md
+new file mode 100644
+--- /dev/null	(date 1765784144536)
++++ b/general_development_specification.md	(date 1765784144536)
+@@ -0,0 +1,458 @@
++# 个人博客系统通用开发规范
++
++## 概述
++本规范适用于个人博客系统的全栈开发，涵盖后端（Java + Spring Boot + DDD）、前端（React + Vite）及基础设施。旨在为AI生成代码、团队协作和代码审查提供统一标准。
++
++---
++
++## 一、目录结构组织原则
++
++### 1.1 总体项目结构
++```
++personal-portfolio/
++├── backend/                    # 后端项目（Maven多模块）
++│   ├── domain/                # 领域层
++│   ├── application/           # 应用层
++│   ├── infrastructure/        # 基础设施层
++│   ├── interface/             # 用户界面层（Web控制器）
++│   └── startup/               # 启动模块
++├── frontend/                  # 前端项目（React + Vite）
++│   ├── src/
++│   │   ├── components/        # 可复用组件
++│   │   ├── pages/             # 页面组件
++│   │   ├── services/          # API服务层
++│   │   ├── hooks/             # 自定义Hooks
++│   │   └── utils/             # 工具函数
++│   └── public/                # 静态资源
++├── docs/                      # 项目文档
++├── scripts/                   # 部署与构建脚本
++└── config/                    # 配置文件（可选）
++```
++
++### 1.2 后端DDD分层规范
++- **领域层（domain）**：核心业务逻辑，包含实体、值对象、领域服务、仓储接口、领域事件、工厂。
++  - 禁止依赖任何外部层（应用层、基础设施层、界面层）。
++- **应用层（application）**：协调领域对象完成用例，包含应用服务、命令/查询对象、DTO、应用事件。
++  - 仅依赖领域层，通过依赖倒置使用基础设施。
++- **基础设施层（infrastructure）**：技术实现，包含持久化实现、外部服务调用、消息队列、配置、工具类。
++  - 实现领域层定义的接口（如仓储接口）。
++- **界面层（interface）**：用户界面，包含Web控制器、RPC接口、DTO、异常处理器。
++  - 依赖应用层，不直接访问领域层。
++
++### 1.3 前端模块化组织
++- **组件分类**：
++  - `components/common`：全局通用组件（按钮、输入框等）
++  - `components/layout`：布局组件（导航栏、页脚等）
++  - `components/features`：业务功能组件
++- **页面组织**：每个页面对应一个目录，包含主组件、子组件和样式文件。
++- **服务层**：按业务模块划分，每个模块一个Service文件。
++- **Hooks**：提取可复用逻辑，命名以 `use` 开头。
++
++### 1.4 配置文件管理
++- 配置文件统一放在 `resources/` 目录下。
++- 区分环境：`application-dev.properties`、`application-prod.properties`。
++- 敏感信息（密码、密钥）使用环境变量或配置中心，禁止硬编码。
++
++### 1.5 资源文件组织
++- 静态资源（图片、字体）放在 `frontend/public/` 或 `backend/src/main/resources/static/`。
++- 国际化文件按语言分目录存放。
++- 模板文件放在 `resources/templates/`。
++
++---
++
++## 二、代码规范
++
++### 2.1 命名规范
++
++#### 包名（Package）
++- 全部小写，使用公司域名反写（如 `com.personal.portfolio`）。
++- 分层包结构：`com.personal.portfolio.blog.domain.model`。
++
++#### 类名（Class）
++- 大驼峰（PascalCase），名词或名词短语。
++- 实体类：`BlogPost`、`User`
++- 接口：`BlogPostRepository`（后缀为能力，如Repository、Service）
++- 抽象类：`BaseEntity`、`AbstractHandler`
++- 异常类：以 `Exception` 结尾，如 `BusinessException`
++- 测试类：以 `Test` 结尾，如 `BlogPostServiceTest`
++
++#### 方法名（Method）
++- 小驼峰（camelCase），动词或动词短语。
++- 获取方法：`getBlogPostById()`、`findAll()`
++- 布尔方法：`isPublished()`、`hasPermission()`
++- 业务方法：`publish()`、`cancelOrder()`
++- 工厂方法：`create()`、`fromCommand()`
++
++#### 变量名（Variable）
++- 小驼峰，有意义的名词。
++- 集合类型使用复数：`blogPosts`、`users`
++- 临时变量：`i`、`j`、`entry`（仅限局部作用域）
++- 常量：全大写，下划线分隔，如 `MAX_RETRY_COUNT`
++
++#### 前端特定命名
++- React组件：大驼峰，与文件名一致。
++- 自定义Hook：以 `use` 开头，如 `useAuth`
++- CSS类名：短横线分隔（kebab-case），如 `.blog-card`
++- 枚举：全大写，下划线分隔，如 `POST_STATUS.PUBLISHED`
++
++### 2.2 类设计规范
++- **单一职责**：每个类只做一件事。
++- **类大小限制**：单个类不超过300行（理想200行），超过应拆分。
++- **字段顺序**：
++  1. 静态常量
++  2. 实例变量
++  3. 构造函数
++  4. 公共方法
++  5. 受保护方法
++  6. 私有方法
++- **访问修饰符**：最小化暴露，优先使用 `private`，必要时使用 `protected`，避免 `public` 字段。
++
++### 2.3 方法设计规范
++- **方法长度**：不超过30行（推荐15行以内）。
++- **参数数量**：不超过4个，超过时使用对象封装（命令对象、参数对象）。
++- **圈复杂度**：不超过10，过高需拆分子方法。
++- **抽象级别一致**：方法内所有语句应在同一抽象级别。
++- **返回值**：避免返回 `null`，使用 `Optional` 或空集合。
++
++### 2.4 注释规范
++- **类注释**：说明类职责、作者、版本。
++- **方法注释**：说明功能、参数、返回值、异常。
++- **复杂逻辑注释**：解释业务规则和算法。
++- **TODO/FIXME**：使用 `// TODO:` 或 `// FIXME:` 标注待办事项。
++- **禁止无用注释**：如 `// setter`、`// getter`。
++
++### 2.5 格式规范
++- **缩进**：2个空格（前端）、4个空格（后端Java）。
++- **行宽**：不超过120字符。
++- **空行**：方法之间、逻辑块之间用空行分隔。
++- **花括号**：K&R风格，左括号不换行。
++- **导入顺序**：IDE自动优化，分组：静态导入、第三方库、项目内部。
++
++---
++
++## 三、代码质量原则
++
++### 3.1 SOLID设计原则
++1. **单一职责（SRP）**：每个类/模块只做一件事。
++2. **开闭原则（OCP）**：对扩展开放，对修改关闭，使用接口和抽象。
++3. **里氏替换（LSP）**：子类必须能替换父类而不影响程序。
++4. **接口隔离（ISP）**：接口要小而专，避免臃肿。
++5. **依赖倒置（DIP）**：高层模块不依赖低层模块，二者都依赖抽象。
++
++### 3.2 DRY原则（Don't Repeat Yourself）
++- 重复代码提取为方法、类或工具函数。
++- 业务规则在领域层集中定义，避免散落。
++- 前端重复UI组件提取为可复用组件。
++
++### 3.3 可读性、可维护性、可扩展性
++- **可读性**：命名清晰、结构清晰、注释恰当。
++- **可维护性**：模块化、低耦合、高内聚。
++- **可扩展性**：预留扩展点，使用策略模式、插件架构。
++
++### 3.4 设计模式应用指南
++- **工厂模式**：复杂对象创建。
++- **仓储模式**：数据访问抽象。
++- **策略模式**：可替换的算法。
++- **观察者模式**：事件驱动。
++- **装饰器模式**：动态增强功能。
++- **前端容器/展示组件模式**：分离逻辑与UI。
++
++### 3.5 代码审查检查清单
++- [ ] 类是否超过300行？
++- [ ] 方法是否超过30行？
++- [ ] 方法参数是否超过4个？
++- [ ] 圈复杂度是否过高？
++- [ ] 是否有重复代码？
++- [ ] 命名是否准确表达意图？
++- [ ] 注释是否必要且清晰？
++- [ ] 异常处理是否得当？
++- [ ] 测试是否覆盖核心逻辑？
++- [ ] 是否符合DDD分层依赖规则？
++
++---
++
++## 四、异常处理原则
++
++### 4.1 异常分类
++- **业务异常（BusinessException）**：用户操作错误、业务规则违反，应给出友好提示。
++- **系统异常（SystemException）**：系统内部错误（数据库连接失败、外部服务异常），需记录日志并告警。
++- **校验异常（ValidationException）**：参数校验失败，返回详细字段错误。
++- **安全异常（SecurityException）**：权限不足、认证失败。
++
++### 4.2 异常处理最佳实践
++- 早抛出，晚捕获。
++- 受检异常仅用于基础设施层（如IO、SQL）。
++- 领域层和应用层使用运行时异常。
++- 禁止空的catch块，至少记录日志。
++- 异常信息中避免敏感数据（密码、密钥）。
++
++### 4.3 错误信息设计
++- 错误码：全局唯一，便于定位。
++- 错误消息：用户友好，可读性强。
++- 错误详情：开发调试用，包含请求ID、时间戳。
++- 多语言支持：根据客户端语言返回相应消息。
++
++### 4.4 日志记录规范
++- 使用SLF4J + Logback。
++- 日志级别：
++  - `ERROR`：系统异常，需立即处理。
++  - `WARN`：潜在问题，需要关注。
++  - `INFO`：关键业务操作。
++  - `DEBUG`：调试信息，开发环境开启。
++  - `TRACE`：详细跟踪。
++- 日志格式：包含时间、级别、线程、类名、消息、异常栈。
++- 敏感信息脱敏：手机号、邮箱、身份证号等。
++
++### 4.5 全局异常处理机制
++- 使用 `@ControllerAdvice` 或全局中间件统一处理异常。
++- 返回统一格式的响应：
++```json
++{
++  "code": "ERROR_CODE",
++  "message": "错误描述",
++  "data": null,
++  "timestamp": "2025-12-15T15:30:00"
++}
++```
++
++---
++
++## 五、测试规范
++
++### 5.1 测试金字塔原则
++- **单元测试（70%）**：测试独立功能单元，快速执行。
++- **集成测试（20%）**：测试模块间交互，涉及数据库、外部服务。
++- **端到端测试（10%）**：测试完整业务流程，模拟用户操作。
++
++### 5.2 单元测试规范
++- 使用JUnit 5 + Mockito。
++- 测试类命名：`被测类名 + Test`，如 `BlogPostServiceTest`。
++- 测试方法命名：`should_预期结果_when_条件` 或 `given_条件_when_操作_then_结果`。
++- 每个测试方法只验证一个行为。
++- 使用Given-When-Then结构。
++- 避免测试私有方法，通过公共方法间接测试。
++- 测试覆盖率目标：行覆盖率 ≥ 80%，分支覆盖率 ≥ 70%。
++
++### 5.3 集成测试规范
++- 使用 `@SpringBootTest` 启动容器。
++- 使用测试数据库（如H2）或容器化数据库（Testcontainers）。
++- 每个测试类结束后清理数据。
++- 测试API接口时使用 `MockMvc` 或 `TestRestTemplate`。
++
++### 5.4 端到端测试规范
++- 使用Cypress或Playwright进行前端E2E测试。
++- 模拟真实用户操作：点击、输入、导航。
++- 测试关键用户路径：注册、登录、发布博客、评论。
++- 运行在独立测试环境，避免影响生产数据。
++
++### 5.5 测试代码质量要求
++- 测试代码与生产代码同标准，保持整洁可维护。
++- 避免硬编码，使用工厂方法创建测试数据。
++- 测试用例独立，不依赖执行顺序。
++- 失败时提供清晰错误信息。
++
++### 5.6 测试类型总结
++| 测试类型 | 测试对象 | 工具 | 执行频率 |
++|----------|----------|------|----------|
++| 单元测试 | 类、方法 | JUnit, Mockito | 每次提交 |
++| 集成测试 | 模块交互 | SpringBootTest, Testcontainers | 每次合并 |
++| 端到端测试 | 完整业务流程 | Cypress, Playwright | 每日/发布前 |
++| 性能测试 | 关键接口响应时间 | JMeter, Gatling | 每周/版本发布 |
++
++---
++
++## 六、DDD特定规范
++
++### 6.1 充血模型实现规范
++- 实体包含数据和行为，业务逻辑内聚在实体内部。
++- 每个业务方法不超过30行，参数不超过4个。
++- 保护不变式：任何状态变更都经过验证。
++- 无公开setter，使用有业务意义的方法（如 `publish()`、`cancel()`）。
++- 发布领域事件：重要状态变更通过事件通知其他组件。
++
++### 6.2 聚合根设计原则
++- 聚合根是聚合的入口，控制内部实体的一致性。
++- 聚合边界内强一致性，边界间最终一致性。
++- 暴露不可变视图：`Collections.unmodifiableList()`。
++- 工厂方法创建复杂聚合。
++
++### 6.3 值对象使用规范
++- 不可变：所有字段final，构造函数设置全部属性。
++- 实现 `equals()` 和 `hashCode()`，基于所有字段。
++- 包含丰富的业务方法：计算、验证、格式化。
++- 优先使用值对象替代基本类型（如 `Money` 替代 `BigDecimal`）。
++
++### 6.4 领域服务与应用服务职责划分
++- **领域服务**：处理跨多个实体的业务逻辑，无状态。
++- **应用服务**：协调领域对象，事务管理，DTO转换，不包含业务逻辑。
++- 应用服务方法不超过15行，只做编排。
++
++### 6.5 仓储模式实现
++- 仓储接口定义在领域层。
++- 实现类在基础设施层。
++- 仓储方法返回聚合根或值对象，而非实体。
++- 使用规范命名：`save()`、`findById()`、`delete()`。
++
++---
++
++## 七、API设计规范
++
++### 7.1 RESTful API设计
++- 资源命名：使用名词复数，如 `/blog-posts`、`/users`。
++- HTTP方法：
++  - `GET`：获取资源
++  - `POST`：创建资源
++  - `PUT`：全量更新资源
++  - `PATCH`：部分更新资源
++  - `DELETE`：删除资源
++- 版本管理：URL路径包含版本号，如 `/api/v1/blog-posts`。
++- 过滤、排序、分页：使用查询参数，如 `?page=1&size=10&sort=createdAt,desc`。
++
++### 7.2 请求/响应格式
++- 请求体：JSON格式，使用小驼峰命名。
++- 响应体：统一封装，包含状态码、消息、数据、时间戳。
++- 日期时间：ISO 8601格式，如 `"2025-12-15T15:30:00"`。
++
++### 7.3 错误码设计
++- 全局错误码：4位数字，前两位表示模块，后两位表示具体错误。
++- 示例：`1001`（用户模块-用户不存在）、`2001`（博客模块-标题不能为空）。
++- HTTP状态码映射：业务错误返回200，错误信息在body中。
++
++### 7.4 安全规范
++- 认证：JWT令牌，有效期不宜过长。
++- 授权：基于角色的访问控制（RBAC）。
++- 输入校验：服务端必须校验，防止SQL注入、XSS攻击。
++- 敏感接口限流、防刷。
++- API文档使用OpenAPI 3.0（Swagger）。
++
++---
++
++## 八、数据库规范
++
++### 8.1 表设计规范
++- 表名：小写，下划线分隔，如 `blog_post`、`user_profile`。
++- 字段名：小写，下划线分隔，如 `created_at`、`author_id`。
++- 主键：使用BIGINT自增或雪花算法生成。
++- 必备字段：`id`、`created_at`、`updated_at`、`deleted`（逻辑删除）。
++- 索引：为查询条件字段建立索引，避免过多索引影响写性能。
++
++### 8.2 数据一致性保证
++- 事务范围：尽量小，避免长事务。
++- 乐观锁：使用 `version` 字段防止并发更新。
++- 逻辑删除：使用 `deleted` 标志位，避免物理删除。
++- 外键约束：数据库层或应用层保证。
++
++### 8.3 迁移脚本管理
++- 使用Flyway或Liquibase管理数据库版本。
++- 脚本命名：`V{版本号}__{描述}.sql`，如 `V1.0__create_blog_post_table.sql`。
++- 回滚脚本：每个变更提供回滚脚本。
++
++---
++
++## 九、部署与运维规范
++
++### 9.1 环境配置
++- 环境变量管理：使用配置中心或K8s ConfigMap。
++- 配置文件分离：`application-dev.yml`、`application-prod.yml`。
++- 密钥管理：使用Vault或云服务密钥管理。
++
++### 9.2 日志收集
++- 日志集中收集：ELK（Elasticsearch, Logstash, Kibana）或Loki。
++- 结构化日志：输出JSON格式，便于解析。
++- 日志保留策略：生产环境至少保留30天。
++
++### 9.3 监控指标
++- 应用监控：Spring Boot Actuator + Prometheus + Grafana。
++- 业务监控：关键业务指标（注册数、发布数、访问量）。
++- 告警规则：设置错误率、响应时间、系统资源告警。
++
++### 9.4 性能优化
++- 数据库查询优化：避免N+1查询，使用连接或批量查询。
++- 缓存策略：Redis缓存热点数据，设置过期时间。
++- 前端性能：代码分割、懒加载、图片优化、CDN加速。
++
++---
++
++## 十、AI生成代码提示模板
++
++### 10.1 实体类生成提示
++```
++请生成充血模型的DDD实体代码，要求：
++1. 数据+行为一体：实体包含丰富的业务方法
++2. 每个业务方法不超过30行代码
++3. 方法参数不超过4个
++4. 保护不变式：所有状态变更都经过验证
++5. 使用值对象替换基本类型
++6. 提供工厂方法创建实例
++7. 发布领域事件
++8. 暴露不可变视图的内部集合
++9. 包含业务计算属性（如isOverdue()）
++10. 无公开setter方法，只有有业务意义的修改方法
++```
++
++### 10.2 应用服务生成提示
++```
++请生成DDD应用服务代码，要求：
++1. 类名以AppService结尾，如BlogPostAppService
++2. 每个方法对应一个用例，不超过15行
++3. 使用命令对象封装参数
++4. 委托给领域对象执行业务逻辑，不在应用服务实现业务规则
++5. 事务管理使用@Transactional
++6. 返回统一响应对象
++7. 发布应用事件
++8. 异常处理使用全局异常处理器
++```
++
++### 10.3 前端组件生成提示
++```
++请生成React组件代码，要求：
++1. 使用函数组件和Hooks
++2. 组件单一职责，不超过200行
++3. 使用TypeScript定义Props和State
++4. 错误处理使用try-catch或错误边界
++5. 加载状态使用Suspense或自定义loading状态
++6. 样式使用CSS Modules或Styled Components
++7. 组件可复用，通过Props配置
++8. 包含必要的PropTypes或TypeScript接口
++```
++
++### 10.4 API接口生成提示
++```
++请生成RESTful API控制器代码，要求：
++1. 使用@RestController，路径前缀/api/v1
++2. 每个端点对应一个HTTP方法
++3. 参数校验使用@Valid和自定义注解
++4. 返回统一响应对象ApiResponse
++5. 异常由全局异常处理器处理
++6. 接口文档使用@Operation、@ApiResponse注解
++7. 安全控制使用@PreAuthorize或自定义注解
++8. 日志记录关键操作
++```
++
++---
++
++## 附录：检查清单汇总
++
++### 代码提交前自查清单
++- [ ] 代码编译通过，无语法错误
++- [ ] 单元测试通过，覆盖率达标
++- [ ] 集成测试通过
++- [ ] 代码符合命名规范
++- [ ] 无硬编码敏感信息
++- [ ] 日志记录恰当
++- [ ] 异常处理完善
++- [ ] 文档更新（如有必要）
++
++### 代码审查重点清单
++- [ ] 架构符合DDD分层依赖
++- [ ] 业务逻辑内聚在领域层
++- [ ] 无重复代码
++- [ ] 性能无潜在问题
++- [ ] 安全无漏洞
++- [ ] 测试覆盖充分
++- [ ] 代码可读性高
++
++---
++
++**版本历史**
++- v1.0 (2025-12-15)：初始版本，基于现有DDD规范和项目实践制定。
+\ No newline at end of file
+Index: frontend/src/pages/CreatorCenter.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/CreatorCenter.jsx b/frontend/src/pages/CreatorCenter.jsx
+--- a/frontend/src/pages/CreatorCenter.jsx	(revision e0eb73553d2dc990e3d24196b51543837736e5f8)
++++ b/frontend/src/pages/CreatorCenter.jsx	(date 1765790462261)
+@@ -271,9 +271,9 @@
+               marginBottom: '2rem',
+               flexWrap: 'wrap'
+             }}>
+-              <img 
+-                src={user.avatar_url} 
+-                alt="用户头像" 
++              <img
++                src={user.avatar_url || "/images/default-avatar.png"}
++                alt="用户头像"
+                 style={{
+                   width: '80px',
+                   height: '80px',
+@@ -281,7 +281,7 @@
+                   border: '3px solid #667eea'
+                 }}
+                 onError={(e) => {
+-                  e.target.src = 'https://via.placeholder.com/80x80/667eea/ffffff?text=U'
++                  e.target.src = '/images/default-avatar.png'
+                 }}
+               />
+               <div style={{ flex: 1 }}>
+diff --git a/frontend/public/images/default-avatar.png b/frontend/public/images/default-avatar.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..a973abe459501fa6d40588ee1bf408bb8de5544a
+GIT binary patch
+literal 41367
+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
+Scz)}vU;nDVc;%aa<NpEN(U5ll
+
