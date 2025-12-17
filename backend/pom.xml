@@ -25,6 +25,10 @@
         <module>startup</module>
     </modules>
 
+    <properties>
+        <mybatis-plus.version>3.5.14</mybatis-plus.version>
+    </properties>
+
     <dependencies>
         <!-- MapStruct Plus for object mapping -->
         <dependency>
@@ -38,6 +42,16 @@
             <artifactId>mapstruct-processor</artifactId>
             <version>1.5.5.Final</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>${mybatis-plus.version}</version>
         </dependency>
     </dependencies>
     <build>

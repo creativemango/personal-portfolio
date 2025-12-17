@@ -1,42 +1,81 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
+import Pagination from '../components/Pagination';
+import { getPublishedBlogPosts } from '../services/blogService';
 
 const BlogHome = ({ user }) => {
-  // 示例博客文章数据
-  const blogPosts = [
-    {
-      id: 1,
-      title: 'Spring Boot 集成 GitHub OAuth2 登录',
-      date: '2024年1月15日',
-      category: '技术',
-      readTime: '5分钟阅读',
-      excerpt: '本文详细介绍了如何在Spring Boot应用中集成GitHub OAuth2登录功能，包括配置GitHub应用、设置Spring Security和创建用户界面。'
-    },
-    {
-      id: 2,
-      title: '微服务架构设计与实践',
-      date: '2024年1月10日',
-      category: '架构',
-      readTime: '8分钟阅读',
-      excerpt: '探讨微服务架构的设计原则、最佳实践以及在实际项目中的应用经验，包括服务拆分、通信机制和监控策略。'
-    },
-    {
-      id: 3,
-      title: '前端性能优化指南',
-      date: '2024年1月5日',
-      category: '前端',
-      readTime: '6分钟阅读',
-      excerpt: '分享前端性能优化的实用技巧，包括代码分割、懒加载、缓存策略和渲染优化等，帮助提升用户体验。'
-    }
-  ]
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    size: 10,
+    total: 0,
+    pages: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [keyword, setKeyword] = useState('');
 
   const categories = [
     { name: '技术', count: 12 },
     { name: '生活', count: 8 },
     { name: '读书', count: 5 },
     { name: '旅行', count: 3 }
-  ]
+  ];
 
-  const tags = ['#SpringBoot', '#Java', '#微服务', '#前端', '#DevOps']
+  const tags = ['#SpringBoot', '#Java', '#微服务', '#前端', '#DevOps'];
+
+  // 加载文章列表
+  const loadBlogPosts = async (page = 1, searchKeyword = '') => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await getPublishedBlogPosts(page, pagination.size, searchKeyword);
+      
+      setBlogPosts(response.records || []);
+      setPagination({
+        page: response.page || 1,
+        size: response.size || 10,
+        total: response.total || 0,
+        pages: response.pages || 0
+      });
+    } catch (err) {
+      console.error('加载文章失败:', err);
+      setError(err.message || '加载文章失败，请稍后重试');
+      setBlogPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 初始加载
+  useEffect(() => {
+    loadBlogPosts(1, keyword);
+  }, []);
+
+  // 处理分页变化
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      loadBlogPosts(newPage, keyword);
+      window.scrollTo(0, 0); // 滚动到顶部
+    }
+  };
+
+  // 处理搜索
+  const handleSearch = (e) => {
+    e.preventDefault();
+    loadBlogPosts(1, keyword);
+  };
+
+  // 处理搜索输入变化
+  const handleKeywordChange = (e) => {
+    setKeyword(e.target.value);
+  };
+
+  // 清除搜索
+  const clearSearch = () => {
+    setKeyword('');
+    loadBlogPosts(1, '');
+  };
 
   return (
     <div className="page">
@@ -154,6 +193,49 @@ const BlogHome = ({ user }) => {
           </div>
         )}
 
+        {/* 搜索区域 */}
+        <div className="card" style={{ marginBottom: '2rem' }}>
+          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <input
+              type="text"
+              placeholder="搜索文章标题或内容..."
+              value={keyword}
+              onChange={handleKeywordChange}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '1rem'
+              }}
+            />
+            <button type="submit" style={{
+              padding: '0.75rem 1.5rem',
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '1rem'
+            }}>
+              搜索
+            </button>
+            {keyword && (
+              <button type="button" onClick={clearSearch} style={{
+                padding: '0.75rem 1.5rem',
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}>
+                清除
+              </button>
+            )}
+          </form>
+        </div>
+
         {/* 博客内容区域 */}
         <div style={{ 
           display: 'grid', 
@@ -163,43 +245,93 @@ const BlogHome = ({ user }) => {
         }}>
           {/* 文章列表 */}
           <div>
-            <div className="card">
-              <h2 style={{ 
-                color: '#333', 
-                marginBottom: '1.5rem', 
-                borderBottom: '2px solid #667eea', 
-                paddingBottom: '0.5rem' 
-              }}>
-                最新文章
-              </h2>
-              
-              {blogPosts.map((post) => (
-                <div 
-                  key={post.id}
-                  style={{
-                    background: '#f8f9fa',
-                    padding: '1.5rem',
-                    borderRadius: '8px',
-                    marginBottom: '1rem',
-                    borderLeft: '4px solid #667eea'
-                  }}
-                >
-                  <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>
-                    {post.title}
-                  </h3>
-                  <div style={{ 
-                    color: '#666', 
-                    fontSize: '0.9rem', 
-                    marginBottom: '1rem' 
+            {loading && (
+              <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>正在加载文章...</p>
+              </div>
+            )}
+            
+            {error && (
+              <div className="card" style={{ textAlign: 'center', padding: '2rem', color: '#dc3545' }}>
+                <p>{error}</p>
+              </div>
+            )}
+            
+            {!loading && !error && blogPosts.length === 0 && (
+              <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>暂无文章</p>
+              </div>
+            )}
+            
+            {!loading && !error && blogPosts.length > 0 && (
+              <div>
+                <div className="card">
+                  <h2 style={{ 
+                    color: '#333', 
+                    marginBottom: '1.5rem', 
+                    borderBottom: '2px solid #667eea', 
+                    paddingBottom: '0.5rem' 
                   }}>
-                    {post.date} • {post.category} • {post.readTime}
-                  </div>
-                  <p style={{ color: '#555', lineHeight: '1.6' }}>
-                    {post.excerpt}
-                  </p>
+                    最新文章
+                    {keyword && (
+                      <span style={{ fontSize: '0.9rem', color: '#666', marginLeft: '1rem' }}>
+                        (搜索: "{keyword}")
+                      </span>
+                    )}
+                  </h2>
+                  
+                  {blogPosts.map((post) => (
+                    <div 
+                      key={post.id}
+                      style={{
+                        background: '#f8f9fa',
+                        padding: '1.5rem',
+                        borderRadius: '8px',
+                        marginBottom: '1rem',
+                        borderLeft: '4px solid #667eea'
+                      }}
+                    >
+                      <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>
+                        {post.title}
+                      </h3>
+                      <div style={{ 
+                        color: '#666', 
+                        fontSize: '0.9rem', 
+                        marginBottom: '1rem' 
+                      }}>
+                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString('zh-CN') : ''} • 
+                        {post.category || '未分类'} • 
+                        {post.summary || '暂无摘要'}
+                      </div>
+                      <p style={{ color: '#555', lineHeight: '1.6' }}>
+                        {post.summary || post.content?.substring(0, 200) + '...'}
+                      </p>
+                      <div style={{ marginTop: '1rem' }}>
+                        <span style={{ 
+                          background: '#667eea', 
+                          color: 'white', 
+                          padding: '0.25rem 0.5rem', 
+                          borderRadius: '3px',
+                          fontSize: '0.8rem'
+                        }}>
+                          阅读更多
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+                
+                {/* 分页组件 */}
+                {pagination.pages > 1 && (
+                  <Pagination
+                    currentPage={pagination.page}
+                    totalPages={pagination.pages}
+                    totalItems={pagination.total}
+                    onPageChange={handlePageChange}
+                  />
+                )}
+              </div>
+            )}
           </div>
 
           {/* 侧边栏 */}

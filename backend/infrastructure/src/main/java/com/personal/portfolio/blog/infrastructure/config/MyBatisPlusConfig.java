@@ -1,11 +1,22 @@
 package com.personal.portfolio.blog.infrastructure.config;
 
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * MyBatis Plus 配置类
- */
 @Configuration
 public class MyBatisPlusConfig {
-    // 暂时不需要额外配置，使用默认配置
+
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+
+        // MyBatis Plus 3.5.x 版本的分页插件路径可能有变化
+        // 尝试使用以下导入
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+
+        return interceptor;
+    }
 }

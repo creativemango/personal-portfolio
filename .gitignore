@@ -12,6 +12,8 @@ buildNumber.properties
 
 # IDE
 .idea/
+.zerorules
+.clinerules
 *.iws
 *.iml
 *.ipr

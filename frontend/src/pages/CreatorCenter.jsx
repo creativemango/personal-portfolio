@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from '../services/authService'
+import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from '../services/blogService'
+import Pagination from '../components/Pagination'
 
 const CreatorCenter = ({ user }) => {
   const [showCreateArticle, setShowCreateArticle] = useState(false)
@@ -13,39 +14,78 @@ const CreatorCenter = ({ user }) => {
     category: '',
     tags: ''
   })
+  
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
 
   // 加载文章列表
   useEffect(() => {
     if (showArticleManagement) {
-      loadArticles()
+      loadArticles(currentPage)
     }
-  }, [showArticleManagement])
+  }, [showArticleManagement, currentPage])
 
-  const loadArticles = async () => {
+  const loadArticles = async (page = 1) => {
     setLoading(true)
     try {
-      const response = await getBlogPosts()
+      // 调用分页接口，传递当前页码和每页大小
+      const response = await getBlogPosts(page, pageSize)
       console.log('文章列表响应:', response)
       
-      // 确保 articles 始终是一个数组
+      // 处理分页响应数据结构
       let articlesData = []
+      let total = 0
+      let pages = 1
       
-      if (Array.isArray(response)) {
+      if (response && response.status === 100) {
+        // 新的分页响应结构
+        const pageData = response.data
+        if (pageData && pageData.records && Array.isArray(pageData.records)) {
+          articlesData = pageData.records
+          total = pageData.total || 0
+          pages = pageData.pages || 1
+        }
+      } else if (Array.isArray(response)) {
+        // 兼容旧的无分页结构
         articlesData = response
+        total = response.length
+        pages = 1
       } else if (response && Array.isArray(response.data)) {
+        // 另一种可能的响应结构
         articlesData = response.data
+        total = response.total || response.data.length
+        pages = response.pages || 1
       } else if (response && response.data) {
         // 如果 data 不是数组，尝试将其转换为数组
         articlesData = [response.data]
+        total = 1
+        pages = 1
       }
       
       setArticles(articlesData)
+      setTotalItems(total)
+      setTotalPages(pages)
+      
+      // 如果当前页码大于总页数，重置为第一页
+      if (page > pages && pages > 0) {
+        setCurrentPage(1)
+      }
     } catch (error) {
       console.error('加载文章失败:', error)
       setArticles([])
+      setTotalItems(0)
+      setTotalPages(1)
     } finally {
       setLoading(false)
     }
+  }
+
+  // 处理页码变化
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
   }
 
   const handleInputChange = (e) => {
@@ -83,9 +123,9 @@ const CreatorCenter = ({ user }) => {
         category: '',
         tags: ''
       })
-      // 如果正在查看文章管理，重新加载文章列表
+      // 如果正在查看文章管理，重新加载文章列表，保持当前页码
       if (showArticleManagement) {
-        loadArticles()
+        loadArticles(currentPage)
       }
     } catch (error) {
       console.error('创建文章失败:', error)
@@ -125,7 +165,7 @@ const CreatorCenter = ({ user }) => {
         category: '',
         tags: ''
       })
-      loadArticles()
+      loadArticles(currentPage)
     } catch (error) {
       console.error('更新文章失败:', error)
       alert('更新文章失败，请重试')
@@ -137,7 +177,7 @@ const CreatorCenter = ({ user }) => {
       try {
         await deleteBlogPost(articleId)
         alert('文章删除成功！')
-        loadArticles()
+        loadArticles(currentPage)
       } catch (error) {
         console.error('删除文章失败:', error)
         alert('删除文章失败，请重试')
@@ -502,6 +542,17 @@ const CreatorCenter = ({ user }) => {
                             </div>
                           ))}
                         </div>
+                        {/* 分页组件 */}
+                        {totalPages > 1 && (
+                          <div style={{ marginTop: '2rem' }}>
+                            <Pagination 
+                              currentPage={currentPage}
+                              totalPages={totalPages}
+                              onPageChange={handlePageChange}
+                              totalItems={totalItems}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

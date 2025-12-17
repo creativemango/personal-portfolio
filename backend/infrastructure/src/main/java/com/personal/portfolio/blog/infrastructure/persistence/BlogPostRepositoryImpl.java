@@ -1,6 +1,9 @@
 package com.personal.portfolio.blog.infrastructure.persistence;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.personal.portfolio.blog.domain.common.PageResult;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.event.BlogPostCreatedEvent;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
@@ -63,13 +66,13 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         
         for (Object event : domainEvents) {
             // 如果是BlogPostCreatedEvent且是新增操作，需要设置ID
-            if (event instanceof BlogPostCreatedEvent createdEvent && isNew) {
+            if (event instanceof BlogPostCreatedEvent && isNew) {
                 // 创建新的事件对象，设置正确的ID
                 BlogPostCreatedEvent updatedEvent = new BlogPostCreatedEvent(
                     blogPost.getId(),
-                    createdEvent.title(),
-                    createdEvent.authorId(),
-                    createdEvent.createdAt()
+                    ((BlogPostCreatedEvent) event).title(),
+                    ((BlogPostCreatedEvent) event).authorId(),
+                    ((BlogPostCreatedEvent) event).createdAt()
                 );
                 applicationEventPublisher.publishEvent(updatedEvent);
             } else {
@@ -126,5 +129,96 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
     public boolean existsByTitle(String title) {
         int count = blogPostMapper.countByTitle(title);
         return count > 0;
+    }
+    
+    @Override
+    public PageResult<BlogPost> findPage(int page, int size, String keyword) {
+        Page<BlogPostEntity> pageRequest = new Page<>(page, size);
+        LambdaQueryWrapper<BlogPostEntity> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 如果有关键词，按标题模糊查询
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            queryWrapper.like(BlogPostEntity::getTitle, keyword.trim());
+        }
+        
+        // 按创建时间降序排序
+        queryWrapper.orderByDesc(BlogPostEntity::getCreatedAt);
+        
+        IPage<BlogPostEntity> result = blogPostMapper.selectPage(pageRequest, queryWrapper);
+        
+        // 转换为领域对象
+        List<BlogPost> blogPosts = result.getRecords().stream()
+                .map(entity -> converter.convert(entity, BlogPost.class))
+                .collect(Collectors.toList());
+        
+        // 转换为领域层的PageResult
+        return PageResult.of(blogPosts, result.getTotal(), (int)result.getCurrent(), (int)result.getSize());
+    }
+    
+    @Override
+    public PageResult<BlogPost> findPublishedPage(int page, int size, String keyword) {
+        Page<BlogPostEntity> pageRequest = new Page<>(page, size);
+        LambdaQueryWrapper<BlogPostEntity> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 只查询已发布的文章
+        queryWrapper.eq(BlogPostEntity::getIsPublished, true);
+        
+        // 如果有关键词，按标题模糊查询
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(BlogPostEntity::getTitle, keyword.trim())
+                    .or()
+                    .like(BlogPostEntity::getContent, keyword.trim()));
+        }
+        
+        // 按创建时间降序排序
+        queryWrapper.orderByDesc(BlogPostEntity::getCreatedAt);
+        
+        IPage<BlogPostEntity> result = blogPostMapper.selectPage(pageRequest, queryWrapper);
+        
+        // 转换为领域对象
+        List<BlogPost> blogPosts = result.getRecords().stream()
+                .map(entity -> converter.convert(entity, BlogPost.class))
+                .collect(Collectors.toList());
+        
+        // 转换为领域层的PageResult
+        return PageResult.of(blogPosts, result.getTotal(), (int)result.getCurrent(), (int)result.getSize());
+    }
+    
+    @Override
+    public PageResult<BlogPost> findPageWithConditions(int page, int size, String keyword, String category, String status) {
+        Page<BlogPostEntity> pageRequest = new Page<>(page, size);
+        LambdaQueryWrapper<BlogPostEntity> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 添加发布状态条件
+        if (status != null && !status.trim().isEmpty()) {
+            queryWrapper.eq(BlogPostEntity::getIsPublished, "PUBLISHED".equalsIgnoreCase(status.trim()));
+        }
+        
+        // 添加分类条件
+        if (category != null && !category.trim().isEmpty()) {
+            queryWrapper.eq(BlogPostEntity::getCategory, category.trim());
+        }
+        
+        // 添加关键词条件
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(BlogPostEntity::getTitle, keyword.trim())
+                    .or()
+                    .like(BlogPostEntity::getContent, keyword.trim()));
+        }
+        
+        // 按创建时间降序排序
+        queryWrapper.orderByDesc(BlogPostEntity::getCreatedAt);
+        
+        IPage<BlogPostEntity> result = blogPostMapper.selectPage(pageRequest, queryWrapper);
+        
+        // 转换为领域对象
+        List<BlogPost> blogPosts = result.getRecords().stream()
+                .map(entity -> converter.convert(entity, BlogPost.class))
+                .collect(Collectors.toList());
+        
+        // 转换为领域层的PageResult
+        return PageResult.of(blogPosts, result.getTotal(), (int)result.getCurrent(), (int)result.getSize());
     }
 }

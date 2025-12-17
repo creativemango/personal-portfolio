@@ -1,7 +1,9 @@
 package com.personal.portfolio.blog.interfaces.controller;
 
 import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
+import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
 import com.personal.portfolio.blog.application.service.BlogPostAppService;
+import com.personal.portfolio.blog.domain.common.PageResult;
 import com.personal.portfolio.blog.domain.context.CurrentUserContext;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.interfaces.dto.request.CreateBlogPostRequest;
@@ -47,19 +49,29 @@ public class BlogPostController {
     }
     
     /**
-     * 获取所有博客文章
+     * 分页获取所有博客文章
      */
     @GetMapping
-    public List<BlogPost> getAllBlogPosts() {
-        return blogPostAppService.getAllBlogPosts();
+    public PageResult<BlogPost> getAllBlogPosts(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        
+        QueryBlogPostCommand command = new QueryBlogPostCommand(page, size, keyword, null, null);
+        return blogPostAppService.getAllBlogPosts(command);
     }
     
     /**
-     * 获取已发布的博客文章
+     * 分页获取已发布的博客文章
      */
     @GetMapping("/published")
-    public List<BlogPost> getPublishedBlogPosts() {
-        return blogPostAppService.getPublishedBlogPosts();
+    public PageResult<BlogPost> getPublishedBlogPosts(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword) {
+        
+        QueryBlogPostCommand command = new QueryBlogPostCommand(page, size, keyword, null, "PUBLISHED");
+        return blogPostAppService.getPublishedBlogPosts(command);
     }
     
     /**
@@ -103,5 +115,25 @@ public class BlogPostController {
     @DeleteMapping("/{id}")
     public void deleteBlogPost(@PathVariable Long id) {
         blogPostAppService.deleteBlogPost(id);
+    }
+    
+    /**
+     * 获取所有博客文章（兼容旧接口）
+     * @deprecated 使用分页接口替代
+     */
+    @Deprecated
+    @GetMapping("/all")
+    public List<BlogPost> getAllBlogPostsOld() {
+        return blogPostAppService.getAllBlogPosts();
+    }
+    
+    /**
+     * 获取已发布的博客文章（兼容旧接口）
+     * @deprecated 使用分页接口替代
+     */
+    @Deprecated
+    @GetMapping("/published/all")
+    public List<BlogPost> getPublishedBlogPostsOld() {
+        return blogPostAppService.getPublishedBlogPosts();
     }
 }

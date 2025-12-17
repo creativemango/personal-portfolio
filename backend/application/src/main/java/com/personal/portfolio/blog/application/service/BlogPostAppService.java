@@ -1,8 +1,10 @@
 package com.personal.portfolio.blog.application.service;
 
 import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
+import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
 import com.personal.portfolio.blog.application.event.BlogPostCreatedApplicationEvent;
 import com.personal.portfolio.blog.application.exception.BusinessException;
+import com.personal.portfolio.blog.domain.common.PageResult;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
 
@@ -78,16 +80,40 @@ public class BlogPostAppService {
     
     /**
      * 获取所有博客文章
+     * @deprecated 使用分页方法替代
      */
+    @Deprecated
     public List<BlogPost> getAllBlogPosts() {
         return blogPostRepository.findAll();
     }
     
     /**
      * 获取已发布的博客文章
+     * @deprecated 使用分页方法替代
      */
+    @Deprecated
     public List<BlogPost> getPublishedBlogPosts() {
         return blogPostRepository.findPublishedPosts();
+    }
+    
+    /**
+     * 分页查询所有博客文章
+     */
+    public PageResult<BlogPost> getAllBlogPosts(@Valid QueryBlogPostCommand command) {
+        PageResult<BlogPost> pageResult = blogPostRepository.findPage(
+            command.getPage(), command.getSize(), command.getTitle());
+        
+        return convertToApplicationPageResult(pageResult);
+    }
+    
+    /**
+     * 分页查询已发布的博客文章
+     */
+    public PageResult<BlogPost> getPublishedBlogPosts(@Valid QueryBlogPostCommand command) {
+        PageResult<BlogPost> pageResult = blogPostRepository.findPublishedPage(
+            command.getPage(), command.getSize(), command.getTitle());
+        
+        return convertToApplicationPageResult(pageResult);
     }
     
     /**
@@ -124,5 +150,17 @@ public class BlogPostAppService {
             throw new IllegalArgumentException("博客文章不存在: " + id);
         }
         blogPostRepository.delete(id);
+    }
+    
+    /**
+     * 将领域层的分页结果转换为应用层的分页结果
+     */
+    private PageResult<BlogPost> convertToApplicationPageResult(PageResult<BlogPost> domainPageResult) {
+        return new PageResult<>(
+            domainPageResult.getRecords(),
+            domainPageResult.getTotal(),
+            domainPageResult.getPage(),
+            domainPageResult.getSize()
+        );
     }
 }
