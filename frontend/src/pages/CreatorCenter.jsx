@@ -3,8 +3,16 @@ import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from '..
 import Pagination from '../components/Pagination'
 
 const CreatorCenter = ({ user }) => {
-  const [showCreateArticle, setShowCreateArticle] = useState(false)
-  const [showArticleManagement, setShowArticleManagement] = useState(false)
+  // 视图状态枚举
+  const VIEWS = {
+    NONE: null,
+    CREATE: 'create',
+    MANAGE: 'manage',
+    STATS: 'stats',
+    SETTINGS: 'settings'
+  }
+  
+  const [activeView, setActiveView] = useState(VIEWS.NONE)
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(false)
   const [editingArticle, setEditingArticle] = useState(null)
@@ -23,10 +31,10 @@ const CreatorCenter = ({ user }) => {
 
   // 加载文章列表
   useEffect(() => {
-    if (showArticleManagement) {
+    if (activeView === VIEWS.MANAGE) {
       loadArticles(currentPage)
     }
-  }, [showArticleManagement, currentPage])
+  }, [activeView, currentPage, VIEWS.MANAGE])
 
   const loadArticles = async (page = 1) => {
     setLoading(true)
@@ -48,16 +56,6 @@ const CreatorCenter = ({ user }) => {
           total = pageData.total || 0
           pages = pageData.pages || 1
         }
-      } else if (Array.isArray(response)) {
-        // 兼容旧的无分页结构
-        articlesData = response
-        total = response.length
-        pages = 1
-      } else if (response && Array.isArray(response.data)) {
-        // 另一种可能的响应结构
-        articlesData = response.data
-        total = response.total || response.data.length
-        pages = response.pages || 1
       } else if (response && response.data) {
         // 如果 data 不是数组，尝试将其转换为数组
         articlesData = [response.data]
@@ -116,7 +114,7 @@ const CreatorCenter = ({ user }) => {
       
       await createBlogPost(blogPostData)
       alert('文章创建成功！')
-      setShowCreateArticle(false)
+      setActiveView(VIEWS.NONE)
       setArticleForm({
         title: '',
         content: '',
@@ -124,7 +122,7 @@ const CreatorCenter = ({ user }) => {
         tags: ''
       })
       // 如果正在查看文章管理，重新加载文章列表，保持当前页码
-      if (showArticleManagement) {
+      if (activeView === VIEWS.MANAGE) {
         loadArticles(currentPage)
       }
     } catch (error) {
@@ -141,7 +139,7 @@ const CreatorCenter = ({ user }) => {
       category: article.category || '',
       tags: article.tags ? article.tags.join(', ') : ''
     })
-    setShowCreateArticle(true)
+    setActiveView(VIEWS.CREATE)
   }
 
   const handleUpdateArticle = async (e) => {
@@ -157,7 +155,7 @@ const CreatorCenter = ({ user }) => {
       
       await updateBlogPost(editingArticle.id, blogPostData)
       alert('文章更新成功！')
-      setShowCreateArticle(false)
+      setActiveView(VIEWS.NONE)
       setEditingArticle(null)
       setArticleForm({
         title: '',
@@ -186,7 +184,7 @@ const CreatorCenter = ({ user }) => {
   }
 
   const closeModal = () => {
-    setShowCreateArticle(false)
+    setActiveView(VIEWS.NONE)
     setEditingArticle(null)
     setArticleForm({
       title: '',
@@ -227,38 +225,38 @@ const CreatorCenter = ({ user }) => {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button 
-                onClick={() => setShowCreateArticle(true)}
+                onClick={() => setActiveView(activeView === VIEWS.CREATE ? VIEWS.NONE : VIEWS.CREATE)}
                 className="btn btn-primary"
                 style={{ 
                   width: '100%',
                   textAlign: 'left',
                   padding: '0.75rem 1rem',
-                  background: showCreateArticle ? '#667eea' : '#e9ecef',
+                  background: activeView === VIEWS.CREATE ? '#667eea' : '#e9ecef',
                   border: 'none',
                   borderRadius: '6px',
-                  color: showCreateArticle ? 'white' : '#495057',
+                  color: activeView === VIEWS.CREATE ? 'white' : '#495057',
                   cursor: 'pointer',
                   fontSize: '1rem',
-                  fontWeight: showCreateArticle ? '500' : 'normal'
+                  fontWeight: activeView === VIEWS.CREATE ? '500' : 'normal'
                 }}
               >
                 ✏️ 写文章
               </button>
               
               <button 
-                onClick={() => setShowArticleManagement(true)}
+                onClick={() => setActiveView(activeView === VIEWS.MANAGE ? VIEWS.NONE : VIEWS.MANAGE)}
                 className="btn"
                 style={{ 
                   width: '100%',
                   textAlign: 'left',
                   padding: '0.75rem 1rem',
-                  background: showArticleManagement ? '#667eea' : '#e9ecef',
+                  background: activeView === VIEWS.MANAGE ? '#667eea' : '#e9ecef',
                   border: 'none',
                   borderRadius: '6px',
-                  color: showArticleManagement ? 'white' : '#495057',
+                  color: activeView === VIEWS.MANAGE ? 'white' : '#495057',
                   cursor: 'pointer',
                   fontSize: '1rem',
-                  fontWeight: showArticleManagement ? '500' : 'normal'
+                  fontWeight: activeView === VIEWS.MANAGE ? '500' : 'normal'
                 }}
               >
                 📊 文章管理
@@ -395,7 +393,7 @@ const CreatorCenter = ({ user }) => {
             </div>
 
             {/* 文章管理界面 */}
-            {showArticleManagement ? (
+            {activeView === VIEWS.MANAGE ? (
               <div>
                 <div style={{ 
                   display: 'flex', 
@@ -412,7 +410,7 @@ const CreatorCenter = ({ user }) => {
                     文章管理
                   </h3>
                   <button 
-                    onClick={() => setShowArticleManagement(false)}
+                    onClick={() => setActiveView(VIEWS.NONE)}
                     style={{
                       padding: '0.5rem 1rem',
                       border: '1px solid #ddd',
@@ -444,7 +442,7 @@ const CreatorCenter = ({ user }) => {
                           您还没有创建任何文章，点击"写文章"开始创作吧！
                         </p>
                         <button 
-                          onClick={() => setShowCreateArticle(true)}
+                          onClick={() => setActiveView(VIEWS.CREATE)}
                           style={{
                             padding: '0.75rem 1.5rem',
                             border: 'none',
@@ -609,7 +607,7 @@ const CreatorCenter = ({ user }) => {
       </div>
 
       {/* 创建/编辑文章模态框 */}
-      {showCreateArticle && (
+      {activeView === VIEWS.CREATE && (
         <div style={{
           position: 'fixed',
           top: 0,
