@@ -47,8 +47,9 @@ export const checkAuth = async () => {
     // 使用全局拦截器自动添加 token（如果有的话）
     const response = await api.get('/user/profile')
     
-    // 解析响应数据结构 - 后端直接返回用户信息，没有嵌套的 data 字段
-    const userData = response.data
+    // 解析响应数据结构 - 兼容直接返回和包装返回
+    const responseData = response.data
+    const userData = (responseData.status === 100 && responseData.data) ? responseData.data : responseData
     
     console.log('checkAuth response data:', userData)
     

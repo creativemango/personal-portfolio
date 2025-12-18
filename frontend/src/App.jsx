@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import BlogHome from './pages/BlogHome'
+import BlogPost from './pages/BlogPost'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import CreatorCenter from './pages/CreatorCenter'
@@ -36,6 +37,10 @@ function App() {
             element={
               user ? <BlogHome /> : <Navigate to="/login" replace />
             } 
+          />
+          <Route 
+            path="/post/:id" 
+            element={<BlogPost />} 
           />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

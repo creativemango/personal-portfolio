@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Pagination from '../components/Pagination';
 import { getPublishedBlogPosts } from '../services/blogService';
 import { useAuth } from '../context/AuthContext';
@@ -146,7 +147,7 @@ const BlogHome = () => {
                     </div>
                     
                     <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-1">
-                      {post.title}
+                      <Link to={`/post/${post.id}`}>{post.title}</Link>
                     </h3>
                     
                     <p className="text-gray-600 mb-4 line-clamp-2 flex-1">
@@ -162,9 +163,9 @@ const BlogHome = () => {
                         />
                         <span className="text-xs font-medium text-gray-700">{user?.name || user?.login || 'Admin'}</span>
                       </div>
-                      <span className="text-primary-600 text-sm font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 cursor-pointer">
+                      <Link to={`/post/${post.id}`} className="text-primary-600 text-sm font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 cursor-pointer">
                         阅读全文 <ArrowRight className="w-4 h-4" />
-                      </span>
+                      </Link>
                     </div>
                   </div>
                 </article>
