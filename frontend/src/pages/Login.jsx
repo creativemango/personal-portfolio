@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import { Navigate, Link, useNavigate } from 'react-router-dom'
-import { getGitHubLoginUrl, login } from '../services/authService'
+import { getGitHubLoginUrl } from '../services/authService'
+import { useAuth } from '../context/AuthContext'
 
-const Login = ({ user, setUser }) => {
+const Login = () => {
+  const { user, login } = useAuth()
   const navigate = useNavigate()
   
   // 如果用户已经登录，重定向到博客主页
@@ -69,10 +71,7 @@ const Login = ({ user, setUser }) => {
       // 新的响应结构：如果登录成功，直接返回用户数据和token
       // 不再使用success字段，而是通过HTTP状态码判断
       if (result && result.token) {
-        // 登录成功，更新用户状态
-        const userData = result.user
-        setUser(userData)
-        console.log('User stored in localStorage, navigating to /home')
+        console.log('User logged in, navigating to /home')
         // 使用React Router导航，保持状态
         navigate('/home', { replace: true })
       } else {

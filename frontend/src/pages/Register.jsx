@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import { Navigate, Link, useNavigate } from 'react-router-dom'
-import { register, checkUsernameAvailability } from '../services/authService'
+import { checkUsernameAvailability } from '../services/authService'
+import { useAuth } from '../context/AuthContext'
 
-const Register = ({ user, setUser }) => {
+const Register = () => {
+  const { user, setUser, register } = useAuth()
   const navigate = useNavigate()
   
   // 如果用户已经登录，重定向到博客主页

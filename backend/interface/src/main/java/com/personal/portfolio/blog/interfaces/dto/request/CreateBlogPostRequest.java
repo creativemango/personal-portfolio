@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-@AutoMapper(target = CreateBlogPostCommand.class)
+@AutoMapper(target = CreateBlogPostCommand.class, reverseConvertGenerate = false)
 public class CreateBlogPostRequest {
     @NotBlank(message = "博客标题不能为空")
     @Size(min = 1, max = 200, message = "标题长度必须在1-200个字符之间")

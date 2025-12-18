@@ -1,116 +1,139 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { logout } from '../services/authService'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { Search, Moon, Menu, X } from 'lucide-react'
 
-const Navbar = ({ user, setUser }) => {
+const Navbar = () => {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   const handleLogout = async () => {
     try {
       await logout();
-      setUser(null); // 立即清空用户状态
-      window.location.href = '/';
+      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
-      setUser(null);
-      window.location.href = '/';
+      navigate('/');
     }
   }
 
-  return (
-    <nav className="navbar">
-      <div className="navbar-content">
-        <div className="logo">
-          <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>
-            个人作品集
-          </Link>
-        </div>
-        
-        <ul className="nav-links">
-          <li>
-            <Link to="/">首页</Link>
-          </li>
-          {user && (
-            <li>
-              <Link to="/home">博客</Link>
-            </li>
-          )}
-          {user && (
-            <li>
-              <Link to="/creator-center">创作者中心</Link>
-            </li>
-          )}
-          <li>
-            <Link to="/about">关于</Link>
-          </li>
-          <li>
-            <Link to="/contact">联系</Link>
-          </li>
-        </ul>
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
 
-        <div className="user-info">
-          {user ? (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '1rem',
-              background: 'rgba(255, 255, 255, 0.2)',
-              padding: '0.5rem 1rem',
-              borderRadius: '25px',
-              border: '1px solid rgba(255, 255, 255, 0.3)'
-            }}>
-              <img
+  return (
+    <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm group-hover:bg-primary-700 transition-colors">
+                B
+              </div>
+              <span className="text-xl font-bold tracking-tight text-gray-900 group-hover:text-primary-600 transition-colors">
+                MyBlog
+              </span>
+            </Link>
+          </div>
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+            <Link to="/" className="hover:text-primary-600 transition">首页</Link>
+            {user && (
+              <>
+                <Link to="/home" className="hover:text-primary-600 transition">博客</Link>
+                <Link to="/creator-center" className="hover:text-primary-600 transition">创作者中心</Link>
+              </>
+            )}
+            <Link to="/about" className="hover:text-primary-600 transition">关于</Link>
+            <Link to="/contact" className="hover:text-primary-600 transition">联系</Link>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-4">
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
+              <Search className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
+              <Moon className="w-5 h-5" />
+            </button>
+            
+            {user ? (
+              <div className="hidden md:flex items-center gap-3 pl-2 border-l border-gray-200">
+                <img
                   src={user.avatar_url || "/images/default-avatar.png"}
                   alt="用户头像"
-                className="user-avatar"
-                style={{
-                  width: '35px',
-                  height: '35px',
-                  borderRadius: '50%',
-                  border: '2px solid white'
-                }}
-                onError={(e) => {
-                  // 防止无限循环：如果已经是占位符图片，就不再设置
-                  if (!e.target.src.includes('via.placeholder.com')) {
-                    e.target.src = `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`
-                  }
-                }}
-              />
-              <span style={{ 
-                color: 'white', 
-                fontWeight: '500',
-                fontSize: '0.95rem'
-              }}>
-                {user.login || user.username}
-              </span>
-              <div style={{ 
-                width: '8px', 
-                height: '8px', 
-                background: '#4CAF50', 
-                borderRadius: '50%',
-                animation: 'pulse 2s infinite'
-              }}></div>
-              <button 
-                onClick={handleLogout}
-                className="btn btn-danger"
-                style={{ 
-                  fontSize: '0.8rem', 
-                  padding: '0.4rem 0.8rem',
-                  background: 'rgba(220, 53, 69, 0.9)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)'
-                }}
+                  className="w-8 h-8 rounded-full border border-gray-200 object-cover"
+                  onError={(e) => {
+                    if (!e.target.src.includes('via.placeholder.com')) {
+                      e.target.src = `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`
+                    }
+                  }}
+                />
+                <button 
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-red-600 hover:text-red-700 transition"
+                >
+                  注销
+                </button>
+              </div>
+            ) : (
+              <Link 
+                to="/login" 
+                className="hidden md:block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition shadow-sm"
               >
-                注销
-              </button>
-            </div>
-          ) : (
-            <Link to="/login" className="btn" style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.3)'
-            }}>
-              登录
-            </Link>
-          )}
+                登录
+              </Link>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+              onClick={toggleMenu}
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 top-16">
+          <div className="px-4 py-3 space-y-3">
+            <Link to="/" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>首页</Link>
+            {user && (
+              <>
+                <Link to="/home" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>博客</Link>
+                <Link to="/creator-center" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>创作者中心</Link>
+              </>
+            )}
+            <Link to="/about" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>关于</Link>
+            <Link to="/contact" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>联系</Link>
+            
+            <div className="border-t border-gray-100 pt-3 mt-2">
+              {user ? (
+                <button 
+                  onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                  className="w-full text-left text-red-600 font-medium py-2"
+                >
+                  注销
+                </button>
+              ) : (
+                <Link 
+                  to="/login" 
+                  className="block w-full text-center bg-gray-900 text-white font-medium py-2 rounded-lg"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  登录
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost } from '../services/blogService'
 import Pagination from '../components/Pagination'
+import { useAuth } from '../context/AuthContext'
 
-const CreatorCenter = ({ user }) => {
+const CreatorCenter = () => {
+  const { user } = useAuth()
   // 视图状态枚举
   const VIEWS = {
     NONE: null,

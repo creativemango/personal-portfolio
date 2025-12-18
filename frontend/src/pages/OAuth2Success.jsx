@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { checkAuth } from '../services/authService'
 
-const OAuth2Success = ({ setUser }) => {
+const OAuth2Success = () => {
+  const { setUser } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
@@ -47,8 +50,6 @@ const OAuth2Success = ({ setUser }) => {
 
     const checkAuthFallback = async () => {
       try {
-        // 导入 checkAuth 函数
-        const { checkAuth } = await import('../services/authService')
         const userData = await checkAuth()
         if (userData) {
           setUser(userData)
@@ -66,29 +67,18 @@ const OAuth2Success = ({ setUser }) => {
   }, [navigate, setUser, searchParams])
 
   return (
-    <div className="page">
-      <div className="container">
-        <div style={{ 
-          maxWidth: '400px', 
-          margin: '2rem auto', 
-          textAlign: 'center' 
-        }}>
-          <div className="card">
-            <h1 style={{ color: '#667eea', marginBottom: '1rem' }}>
-              登录处理中...
-            </h1>
-            <p style={{ color: '#666', marginBottom: '2rem' }}>
-              正在处理您的 GitHub 登录，请稍候...
-            </p>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '1rem'
-            }}>
-              <div className="spinner"></div>
-              <span>处理中</span>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full mx-4 text-center">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <h1 className="text-2xl font-bold text-purple-600 mb-4">
+            登录处理中...
+          </h1>
+          <p className="text-gray-600 mb-8">
+            正在处理您的 GitHub 登录，请稍候...
+          </p>
+          <div className="flex justify-center items-center gap-3 text-gray-500">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+            <span>处理中</span>
           </div>
         </div>
       </div>

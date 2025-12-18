@@ -30,7 +30,7 @@ public class UserRepositoryImpl implements UserRepository {
     
     @Override
     public User save(User user) {
-        UserEntity userEntity = converter.convert(user, UserEntity.class);;
+        UserEntity userEntity = converter.convert(user, UserEntity.class);
 
         if (userEntity.getId() == null) {
             // 新增

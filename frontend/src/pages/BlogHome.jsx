@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Pagination from '../components/Pagination';
 import { getPublishedBlogPosts } from '../services/blogService';
+import { useAuth } from '../context/AuthContext';
+import { 
+  Github, Twitter, Mail, Sparkles, 
+  Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight,
+  Search, Folder, Tag, ChevronDown 
+} from 'lucide-react';
 
-const BlogHome = ({ user }) => {
+const BlogHome = () => {
+  const { user } = useAuth();
   const [blogPosts, setBlogPosts] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -66,347 +73,198 @@ const BlogHome = ({ user }) => {
     loadBlogPosts(1, keyword);
   };
 
-  // 处理搜索输入变化
-  const handleKeywordChange = (e) => {
-    setKeyword(e.target.value);
-  };
-
-  // 清除搜索
-  const clearSearch = () => {
-    setKeyword('');
-    loadBlogPosts(1, '');
-  };
-
   return (
-    <div className="page">
-      <div className="container">
-        {/* 欢迎区域 */}
-        <div className="welcome-section">
-          <h1>欢迎来到我的博客！</h1>
-          <p>这里是我分享技术、生活和思考的地方</p>
-        </div>
-
-        {/* 用户信息区域 */}
-        {user && (
-          <div className="card">
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '2rem', 
-              marginBottom: '2rem',
-              flexWrap: 'wrap'
-            }}>
-              <img
-                src={user.avatar_url || "/images/default-avatar.png"}
-                alt="用户头像"
-                style={{
-                  width: '100px',
-                  height: '100px',
-                  borderRadius: '50%',
-                  border: '4px solid #667eea'
-                }}
-                onError={(e) => {
-                  e.target.src = '/images/default-avatar.png'
-                }}
-              />
-              <div style={{ flex: 1 }}>
-                <h2 style={{ color: '#333', marginBottom: '0.5rem' }}>
-                  {user.name || user.login}
-                </h2>
-                {user.bio && (
-                  <p style={{ color: '#666', marginBottom: '0.5rem' }}>{user.bio}</p>
-                )}
-                {user.location && (
-                  <p style={{ color: '#666', marginBottom: '0.5rem' }}>{user.location}</p>
-                )}
-                {user.company && (
-                  <p style={{ color: '#666', marginBottom: '0.5rem' }}>
-                    公司: {user.company}
-                  </p>
-                )}
-                {user.blog && (
-                  <p>
-                    <a 
-                      href={user.blog} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ color: '#667eea', textDecoration: 'none' }}
-                    >
-                      {user.blog}
-                    </a>
-                  </p>
-                )}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        
+        {/* 左侧主栏：文章列表 */}
+        <div className="col-span-1 lg:col-span-8 space-y-10">
+          
+          {/* Hero Card */}
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-purple-500 p-1">
+                <img 
+                  src={user?.avatar_url || "/images/default-avatar.png"} 
+                  alt="Avatar" 
+                  className="w-full h-full rounded-full bg-white border-2 border-white object-cover"
+                  onError={(e) => {
+                    e.target.src = '/images/default-avatar.png'
+                  }}
+                />
               </div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
-
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-              gap: '1rem' 
-            }}>
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '1rem', 
-                background: '#f8f9fa', 
-                borderRadius: '8px' 
-              }}>
-                <div style={{ 
-                  fontSize: '1.5rem', 
-                  fontWeight: 'bold', 
-                  color: '#667eea' 
-                }}>
-                  {user.followers || 0}
-                </div>
-                <div style={{ color: '#666', fontSize: '0.9rem' }}>关注者</div>
-              </div>
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '1rem', 
-                background: '#f8f9fa', 
-                borderRadius: '8px' 
-              }}>
-                <div style={{ 
-                  fontSize: '1.5rem', 
-                  fontWeight: 'bold', 
-                  color: '#667eea' 
-                }}>
-                  {user.following || 0}
-                </div>
-                <div style={{ color: '#666', fontSize: '0.9rem' }}>关注中</div>
-              </div>
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '1rem', 
-                background: '#f8f9fa', 
-                borderRadius: '8px' 
-              }}>
-                <div style={{ 
-                  fontSize: '1.5rem', 
-                  fontWeight: 'bold', 
-                  color: '#667eea' 
-                }}>
-                  {user.public_repos || 0}
-                </div>
-                <div style={{ color: '#666', fontSize: '0.9rem' }}>公开仓库</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 搜索区域 */}
-        <div className="card" style={{ marginBottom: '2rem' }}>
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="搜索文章标题或内容..."
-              value={keyword}
-              onChange={handleKeywordChange}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            />
-            <button type="submit" style={{
-              padding: '0.75rem 1.5rem',
-              background: '#667eea',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem'
-            }}>
-              搜索
-            </button>
-            {keyword && (
-              <button type="button" onClick={clearSearch} style={{
-                padding: '0.75rem 1.5rem',
-                background: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '1rem'
-              }}>
-                清除
-              </button>
-            )}
-          </form>
-        </div>
-
-        {/* 博客内容区域 */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '2fr 1fr', 
-          gap: '2rem',
-          alignItems: 'start'
-        }}>
-          {/* 文章列表 */}
-          <div>
-            {loading && (
-              <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-                <p>正在加载文章...</p>
-              </div>
-            )}
-            
-            {error && (
-              <div className="card" style={{ textAlign: 'center', padding: '2rem', color: '#dc3545' }}>
-                <p>{error}</p>
-              </div>
-            )}
-            
-            {!loading && !error && blogPosts.length === 0 && (
-              <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-                <p>暂无文章</p>
-              </div>
-            )}
-            
-            {!loading && !error && blogPosts.length > 0 && (
-              <div>
-                <div className="card">
-                  <h2 style={{ 
-                    color: '#333', 
-                    marginBottom: '1.5rem', 
-                    borderBottom: '2px solid #667eea', 
-                    paddingBottom: '0.5rem' 
-                  }}>
-                    最新文章
-                    {keyword && (
-                      <span style={{ fontSize: '0.9rem', color: '#666', marginLeft: '1rem' }}>
-                        (搜索: "{keyword}")
-                      </span>
-                    )}
-                  </h2>
-                  
-                  {blogPosts.map((post) => (
-                    <div 
-                      key={post.id}
-                      style={{
-                        background: '#f8f9fa',
-                        padding: '1.5rem',
-                        borderRadius: '8px',
-                        marginBottom: '1rem',
-                        borderLeft: '4px solid #667eea'
-                      }}
-                    >
-                      <h3 style={{ color: '#333', marginBottom: '0.5rem' }}>
-                        {post.title}
-                      </h3>
-                      <div style={{ 
-                        color: '#666', 
-                        fontSize: '0.9rem', 
-                        marginBottom: '1rem' 
-                      }}>
-                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString('zh-CN') : ''} • 
-                        {post.category || '未分类'} • 
-                        {post.summary || '暂无摘要'}
-                      </div>
-                      <p style={{ color: '#555', lineHeight: '1.6' }}>
-                        {post.summary || post.content?.substring(0, 200) + '...'}
-                      </p>
-                      <div style={{ marginTop: '1rem' }}>
-                        <span style={{ 
-                          background: '#667eea', 
-                          color: 'white', 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '3px',
-                          fontSize: '0.8rem'
-                        }}>
-                          阅读更多
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* 分页组件 */}
-                {pagination.pages > 1 && (
-                  <Pagination
-                    currentPage={pagination.page}
-                    totalPages={pagination.pages}
-                    totalItems={pagination.total}
-                    onPageChange={handlePageChange}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* 侧边栏 */}
-          <div>
-            <div className="card">
-              <h3 style={{ 
-                color: '#333', 
-                marginBottom: '1rem', 
-                borderBottom: '2px solid #667eea', 
-                paddingBottom: '0.5rem' 
-              }}>
-                分类
-              </h3>
-              <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem' }}>
-                {categories.map((category, index) => (
-                  <li 
-                    key={index}
-                    style={{ 
-                      padding: '0.5rem 0', 
-                      borderBottom: '1px solid #eee',
-                      display: 'flex',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <span>{category.name}</span>
-                    <span style={{ color: '#667eea' }}>({category.count})</span>
-                  </li>
-                ))}
-              </ul>
-
-              <h3 style={{ 
-                color: '#333', 
-                marginBottom: '1rem', 
-                borderBottom: '2px solid #667eea', 
-                paddingBottom: '0.5rem' 
-              }}>
-                热门标签
-              </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {tags.map((tag, index) => (
-                  <span 
-                    key={index}
-                    style={{
-                      background: '#e9ecef',
-                      color: '#495057',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '3px',
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="card">
-              <h3 style={{ 
-                color: '#333', 
-                marginBottom: '1rem', 
-                borderBottom: '2px solid #667eea', 
-                paddingBottom: '0.5rem' 
-              }}>
-                关于本站
-              </h3>
-              <p style={{ color: '#666', lineHeight: '1.6' }}>
-                这是一个个人技术博客，主要分享编程技术、项目经验和生活感悟。
-                本站使用 React + Spring Boot 构建，支持 GitHub OAuth2 登录。
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Hello, {user?.name || user?.login || '博主'} 👋</h2>
+              <p className="text-gray-600 mb-4 leading-relaxed">
+                {user?.bio || '全栈开发者，热爱开源与设计。这里记录我的代码、生活和一些奇思妙想。'}
               </p>
+              <div className="flex justify-center md:justify-start gap-3">
+                <a href={user?.html_url || "#"} target="_blank" rel="noreferrer" className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"><Github className="w-5 h-5" /></a>
+                <a href="#" className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-50 rounded-full transition"><Twitter className="w-5 h-5" /></a>
+                <a href={`mailto:${user?.email || ''}`} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Mail className="w-5 h-5" /></a>
+              </div>
             </div>
           </div>
+
+          {/* 文章列表 Header */}
+          <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-yellow-500" /> 最新文章
+            </h3>
+            <div className="text-sm text-gray-500">共 {pagination.total} 篇</div>
+          </div>
+
+          {/* 文章列表 */}
+          <div className="space-y-8">
+            {loading ? (
+              <div className="text-center py-20 text-gray-500">加载中...</div>
+            ) : error ? (
+              <div className="text-center py-20 text-red-500">{error}</div>
+            ) : blogPosts.length === 0 ? (
+              <div className="text-center py-20 text-gray-500">暂无文章</div>
+            ) : (
+              blogPosts.map((post) => (
+                <article key={post.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-100 overflow-hidden group flex flex-col md:flex-row h-auto md:h-56">
+                  {/* Placeholder for Cover Image */}
+                  <div className="md:w-1/3 bg-gray-200 relative overflow-hidden flex items-center justify-center">
+                    <div className="text-gray-400 text-6xl">🖼️</div>
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary-600 shadow-sm">
+                      {post.category || '未分类'}
+                    </div>
+                  </div>
+                  
+                  <div className="md:w-2/3 p-6 flex flex-col">
+                    <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> 
+                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString('zh-CN') : ''}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 5 min read</span>
+                    </div>
+                    
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-1">
+                      {post.title}
+                    </h3>
+                    
+                    <p className="text-gray-600 mb-4 line-clamp-2 flex-1">
+                      {post.summary || post.content?.substring(0, 150) + '...'}
+                    </p>
+                    
+                    <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={user?.avatar_url || "/images/default-avatar.png"} 
+                          className="w-6 h-6 rounded-full border border-gray-200" 
+                          alt="Author"
+                        />
+                        <span className="text-xs font-medium text-gray-700">{user?.name || user?.login || 'Admin'}</span>
+                      </div>
+                      <span className="text-primary-600 text-sm font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 cursor-pointer">
+                        阅读全文 <ArrowRight className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          {/* 分页器 */}
+          {pagination.pages > 1 && (
+            <div className="flex justify-center items-center gap-2 pt-8">
+              <button 
+                className="w-10 h-10 rounded-lg flex items-center justify-center border border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              {/* Simple Pagination Logic for Demo */}
+              <span className="text-sm font-medium text-gray-700">
+                第 {pagination.page} 页 / 共 {pagination.pages} 页
+              </span>
+
+              <button 
+                className="w-10 h-10 rounded-lg flex items-center justify-center border border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.pages}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 右侧边栏 */}
+        <div className="hidden lg:block col-span-4 space-y-8">
+          
+          {/* 搜索框 */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <h4 className="font-bold text-gray-900 mb-4">搜索</h4>
+            <form onSubmit={handleSearch} className="relative">
+              <input 
+                type="text" 
+                placeholder="输入关键词..." 
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+            </form>
+          </div>
+
+          {/* 分类目录 */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Folder className="w-4 h-4 text-primary-500" /> 分类
+            </h4>
+            <ul className="space-y-3">
+              {categories.map((cat, idx) => (
+                <li key={idx}>
+                  <a href="#" className="flex justify-between items-center text-gray-600 hover:text-primary-600 group transition">
+                    <span>{cat.name}</span> 
+                    <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full group-hover:bg-primary-50 group-hover:text-primary-600 transition">{cat.count}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* 热门标签 */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Tag className="w-4 h-4 text-primary-500" /> 标签云
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag, idx) => (
+                <span 
+                  key={idx} 
+                  className="px-3 py-1 bg-gray-100 text-sm text-gray-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition cursor-pointer"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* 订阅卡片 */}
+          <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white text-center">
+            <h4 className="font-bold text-lg mb-2">订阅更新</h4>
+            <p className="text-primary-100 text-sm mb-4">每周精选文章，直接发送到你的邮箱。</p>
+            <div className="space-y-2">
+              <input type="email" placeholder="you@example.com" className="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50" />
+              <button className="w-full bg-white text-primary-700 font-bold py-2 rounded-lg hover:bg-gray-50 transition">订阅</button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BlogHome
+export default BlogHome;
