@@ -55,9 +55,11 @@ public class BlogPostController {
     public PageResult<BlogPost> getAllBlogPosts(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category) {
         
-        QueryBlogPostCommand command = new QueryBlogPostCommand(page, size, keyword, null, null);
+        QueryBlogPostCommand command = new QueryBlogPostCommand(page, size, keyword, category, status);
         return blogPostAppService.getAllBlogPosts(command);
     }
     

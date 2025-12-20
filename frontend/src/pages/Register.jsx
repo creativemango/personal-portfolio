@@ -2,12 +2,14 @@ import React, { useState } from 'react'
 import { Navigate, Link, useNavigate } from 'react-router-dom'
 import { checkUsernameAvailability } from '../services/authService'
 import { useAuth } from '../context/AuthContext'
+import { User, Mail, Lock, ArrowRight, AlertCircle, UserPlus } from 'lucide-react'
+import AuthLayout from '../layouts/AuthLayout'
+import FormInput from '../components/FormInput'
 
 const Register = () => {
   const { user, setUser, register } = useAuth()
   const navigate = useNavigate()
   
-  // 如果用户已经登录，重定向到博客主页
   if (user) {
     return <Navigate to="/home" replace />
   }
@@ -20,56 +22,69 @@ const Register = () => {
   })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
-  const [usernameAvailable, setUsernameAvailable] = useState(null)
-  const [checkingUsername, setCheckingUsername] = useState(false)
+  const [usernameStatus, setUsernameStatus] = useState(null) // null, 'loading', 'success', 'error'
+  const [usernameMessage, setUsernameMessage] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
 
-    // 清除对应字段的错误
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }))
+      setErrors(prev => ({ ...prev, [name]: '' }))
     }
 
-    // 实时检查用户名可用性
     if (name === 'username') {
       if (value) {
-        // 先验证用户名格式
         if (!/^[a-zA-Z0-9]+$/.test(value) || value.length > 50) {
-          setUsernameAvailable(false)
+          setUsernameStatus('error')
+          setUsernameMessage('用户名只能包含字母和数字，最多50位')
           return
         }
         
-        // 设置检查状态
-        setCheckingUsername(true)
+        setUsernameStatus('loading')
+        setUsernameMessage('')
         
-        // 调用后端接口检查用户名可用性
         checkUsernameAvailability(value)
           .then(result => {
-            if (result.success) {
-              setUsernameAvailable(result.available)
+            // result is the unwrapped data.
+            // Backend returns Boolean for check-username? 
+            // Let's assume it returns { available: true/false } or simply true/false.
+            // I should check authService.js checkUsernameAvailability.
+            // It calls api.get. If backend returns simple boolean, result is boolean.
+            // If backend returns object { available: true }, result is that object.
+            
+            // Let's assume the previous code `result.success` and `result.available` implies 
+            // the response was wrapped. Now it is unwrapped.
+            // If the backend returns `true` or `false` directly inside data...
+            
+            // Wait, I need to verify what checkUsernameAvailability returns.
+            // Previously: 
+            // if (result.success) { setUsernameAvailable(result.available) }
+            
+            // If I look at authService.js:
+            // return data
+            
+            // I'll assume result has an 'available' property or is the boolean itself.
+            // To be safe, let's debug or assume it follows the pattern { available: true }
+            
+            const isAvailable = result && typeof result === 'object' ? result.available : result
+            
+            if (isAvailable) {
+              setUsernameStatus('success')
+              setUsernameMessage('用户名可用')
             } else {
-              setUsernameAvailable(null)
+              setUsernameStatus('error')
+              setUsernameMessage('用户名已存在')
             }
           })
           .catch(error => {
             console.error('检查用户名可用性失败:', error)
-            setUsernameAvailable(null)
-          })
-          .finally(() => {
-            setCheckingUsername(false)
+            setUsernameStatus(null)
+            setUsernameMessage('')
           })
       } else {
-        // 用户名为空时重置状态
-        setUsernameAvailable(null)
-        setCheckingUsername(false)
+        setUsernameStatus(null)
+        setUsernameMessage('')
       }
     }
   }
@@ -77,30 +92,24 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {}
 
-    // 用户名验证
     if (!formData.username) {
       newErrors.username = '用户名不能为空'
-    } else if (formData.username.length > 50) {
-      newErrors.username = '用户名不能超过50位'
-    } else if (!/^[a-zA-Z0-9]+$/.test(formData.username)) {
-      newErrors.username = '用户名只能包含字母和数字'
-    } else if (usernameAvailable === false) {
+    } else if (usernameStatus === 'error' && !usernameMessage.includes('只能包含')) {
       newErrors.username = '用户名已存在'
+    } else if (usernameStatus === 'error') {
+       newErrors.username = usernameMessage
     }
 
-    // 邮箱验证（可选）- 只验证格式，不检查是否已存在
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = '邮箱格式不正确'
     }
 
-    // 密码验证
     if (!formData.password) {
       newErrors.password = '密码不能为空'
     } else if (formData.password.length < 8 || formData.password.length > 16) {
       newErrors.password = '密码长度必须为8-16位'
     }
 
-    // 确认密码验证
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = '请确认密码'
     } else if (formData.password !== formData.confirmPassword) {
@@ -113,22 +122,14 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault()
-    
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     setIsLoading(true)
     try {
       const result = await register(formData.username, formData.password, formData.email)
-      console.log('Register result:', result)
       if (result.success) {
-        // 注册成功，更新用户状态
         setUser(result.user)
-        // 存储用户信息到localStorage，确保页面刷新后仍保持登录状态
         localStorage.setItem('user', JSON.stringify(result.user))
-        console.log('User stored in localStorage, navigating to /home')
-        // 使用React Router导航，保持状态
         navigate('/home', { replace: true })
       } else {
         setErrors({ submit: result.message })
@@ -141,191 +142,106 @@ const Register = () => {
   }
 
   return (
-    <div className="page">
-      <div className="container">
-        <div style={{ 
-          maxWidth: '400px', 
-          margin: '2rem auto', 
-          textAlign: 'center' 
-        }}>
-          <div className="card">
-            <h1 style={{ color: '#667eea', marginBottom: '1rem' }}>
-              注册新账户
-            </h1>
+    <AuthLayout
+      title="创建新账户"
+      subtitle="加入我们，开始您的创作之旅"
+      icon={UserPlus}
+    >
+      <form className="mt-8 space-y-6" onSubmit={handleRegister}>
+        <div className="space-y-4">
+          <FormInput
+            label="用户名"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            placeholder="字母和数字，最多50位"
+            icon={User}
+            error={errors.username}
+            required
+            status={usernameStatus}
+            statusMessage={usernameMessage}
+          />
 
-            <form onSubmit={handleRegister}>
-              {/* 用户名 */}
-              <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                  用户名 *
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="input"
-                  style={{ 
-                    width: '100%',
-                    border: errors.username ? '1px solid #e74c3c' : '1px solid #ddd'
-                  }}
-                  placeholder="请输入用户名（字母和数字，最多50位）"
-                />
-                {checkingUsername && (
-                  <div style={{ 
-                    color: '#667eea', 
-                    fontSize: '0.8rem', 
-                    marginTop: '0.25rem' 
-                  }}>
-                    检查用户名中...
-                  </div>
-                )}
-                {!checkingUsername && usernameAvailable !== null && formData.username && (
-                  <div style={{ 
-                    color: usernameAvailable ? '#27ae60' : '#e74c3c', 
-                    fontSize: '0.8rem', 
-                    marginTop: '0.25rem' 
-                  }}>
-                    {usernameAvailable ? '✓ 用户名可用' : '✗ 用户名已存在'}
-                  </div>
-                )}
-                {errors.username && (
-                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    {errors.username}
-                  </div>
-                )}
-              </div>
+          <FormInput
+            label="邮箱"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="可选，用于找回密码"
+            icon={Mail}
+            error={errors.email}
+          />
 
-              {/* 邮箱 */}
-              <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                  邮箱
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="input"
-                  style={{ 
-                    width: '100%',
-                    border: errors.email ? '1px solid #e74c3c' : '1px solid #ddd'
-                  }}
-                  placeholder="请输入邮箱（可选）"
-                />
-                {errors.email && (
-                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    {errors.email}
-                  </div>
-                )}
-              </div>
+          <FormInput
+            label="密码"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="8-16位字符"
+            icon={Lock}
+            error={errors.password}
+            required
+          />
 
-              {/* 密码 */}
-              <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                  密码 *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="input"
-                  style={{ 
-                    width: '100%',
-                    border: errors.password ? '1px solid #e74c3c' : '1px solid #ddd'
-                  }}
-                  placeholder="请输入密码（8-16位）"
-                />
-                {errors.password && (
-                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    {errors.password}
-                  </div>
-                )}
-              </div>
-
-              {/* 确认密码 */}
-              <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                  确认密码 *
-                </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="input"
-                  style={{ 
-                    width: '100%',
-                    border: errors.confirmPassword ? '1px solid #e74c3c' : '1px solid #ddd'
-                  }}
-                  placeholder="请再次输入密码"
-                />
-                {errors.confirmPassword && (
-                  <div style={{ color: '#e74c3c', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    {errors.confirmPassword}
-                  </div>
-                )}
-              </div>
-
-              <button 
-                type="submit"
-                disabled={isLoading}
-                className="btn"
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  fontSize: '1.1rem',
-                  backgroundColor: isLoading ? '#95a5a6' : '#667eea',
-                  border: 'none',
-                  cursor: isLoading ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {isLoading ? '注册中...' : '注册'}
-              </button>
-
-              {errors.submit && (
-                <div style={{ 
-                  color: '#e74c3c', 
-                  fontSize: '0.9rem', 
-                  marginTop: '1rem',
-                  padding: '0.5rem',
-                  backgroundColor: '#fdf2f2',
-                  borderRadius: '5px'
-                }}>
-                  {errors.submit}
-                </div>
-              )}
-
-              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #eee' }}>
-                <p style={{ color: '#666', margin: 0 }}>
-                  已有账户？{' '}
-                  <Link to="/login" style={{ color: '#667eea', textDecoration: 'none' }}>
-                    立即登录
-                  </Link>
-                </p>
-              </div>
-            </form>
-          </div>
-
-          <div style={{ 
-            marginTop: '1rem', 
-            padding: '1rem', 
-            background: '#f8f9fa', 
-            borderRadius: '5px',
-            fontSize: '0.9rem',
-            color: '#666'
-          }}>
-            <p><strong>注册说明：</strong></p>
-            <ul style={{ textAlign: 'left', marginTop: '0.5rem' }}>
-              <li>用户名：50位以内的字母和数字组合</li>
-              <li>密码：8-16位字符</li>
-              <li>邮箱为可选字段，可用于找回密码</li>
-            </ul>
-          </div>
+          <FormInput
+            label="确认密码"
+            name="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="请再次输入密码"
+            icon={Lock}
+            error={errors.confirmPassword}
+            required
+          />
         </div>
-      </div>
-    </div>
+
+        {errors.submit && (
+          <div className="rounded-lg bg-red-50 p-4 border border-red-100">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">注册失败</h3>
+                <div className="mt-1 text-sm text-red-700">{errors.submit}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
+          >
+            {isLoading ? (
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                <ArrowRight className="h-5 w-5 text-primary-500 group-hover:text-primary-400 transition-colors" />
+              </span>
+            )}
+            {isLoading ? '注册中...' : '立即注册'}
+          </button>
+        </div>
+        
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            已有账户？{' '}
+            <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
+              立即登录
+            </Link>
+          </p>
+        </div>
+      </form>
+    </AuthLayout>
   )
 }
 

@@ -100,8 +100,8 @@ public class BlogPostAppService {
      * 分页查询所有博客文章
      */
     public PageResult<BlogPost> getAllBlogPosts(@Valid QueryBlogPostCommand command) {
-        PageResult<BlogPost> pageResult = blogPostRepository.findPage(
-            command.getPage(), command.getSize(), command.getTitle());
+        PageResult<BlogPost> pageResult = blogPostRepository.findPageWithConditions(
+            command.getPage(), command.getSize(), command.getTitle(), command.getCategory(), command.getStatus());
         
         return convertToApplicationPageResult(pageResult);
     }

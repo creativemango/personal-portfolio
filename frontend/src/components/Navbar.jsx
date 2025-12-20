@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Search, Moon, Menu, X } from 'lucide-react'
+import { Search, Moon, Menu, X, LogOut } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -33,7 +33,7 @@ const Navbar = () => {
                 B
               </div>
               <span className="text-xl font-bold tracking-tight text-gray-900 group-hover:text-primary-600 transition-colors">
-                MyBlog
+                DailySpark
               </span>
             </Link>
           </div>
@@ -74,9 +74,10 @@ const Navbar = () => {
                 />
                 <button 
                   onClick={handleLogout}
-                  className="text-sm font-medium text-red-600 hover:text-red-700 transition"
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 group"
+                  title="注销"
                 >
-                  注销
+                  <LogOut className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
             ) : (

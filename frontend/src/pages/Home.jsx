@@ -42,7 +42,7 @@ const Home = () => {
                 to="/login" 
                 className="inline-flex items-center justify-center gap-2 w-full bg-white text-gray-900 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition relative z-10"
               >
-                <Github className="w-5 h-5" /> 使用 GitHub 登录
+                立即登录
               </Link>
             </div>
           )}

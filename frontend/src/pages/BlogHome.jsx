@@ -128,9 +128,17 @@ const BlogHome = () => {
             ) : (
               blogPosts.map((post) => (
                 <article key={post.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-100 overflow-hidden group flex flex-col md:flex-row h-auto md:h-56">
-                  {/* Placeholder for Cover Image */}
-                  <div className="md:w-1/3 bg-gray-200 relative overflow-hidden flex items-center justify-center">
-                    <div className="text-gray-400 text-6xl">🖼️</div>
+                  {/* Cover Image */}
+                  <div className="md:w-1/3 bg-gray-200 relative overflow-hidden">
+                    <img 
+                      src={post.coverImage || '/images/default_article_cover.png'} 
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                         e.target.onerror = null;
+                         e.target.src = '/images/default_article_cover.png'
+                       }}
+                    />
                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary-600 shadow-sm">
                       {post.category || '未分类'}
                     </div>
