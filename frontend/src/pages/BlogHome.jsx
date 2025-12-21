@@ -23,15 +23,15 @@ const BlogHome = () => {
   const [keyword, setKeyword] = useState('');
 
   const categories = [
-    { name: '技术', count: 12 },
-    { name: '生活', count: 8 },
-    { name: '读书', count: 5 },
-    { name: '旅行', count: 3 }
+    { name: 'Technology', count: 12 },
+    { name: 'Life', count: 8 },
+    { name: 'Reading', count: 5 },
+    { name: 'Travel', count: 3 }
   ];
 
-  const tags = ['#SpringBoot', '#Java', '#微服务', '#前端', '#DevOps'];
+  const tags = ['#SpringBoot', '#Java', '#Microservices', '#Frontend', '#DevOps'];
 
-  // 加载文章列表
+  // Load blog posts
   const loadBlogPosts = async (page = 1, searchKeyword = '') => {
     try {
       setLoading(true);
@@ -47,28 +47,28 @@ const BlogHome = () => {
         pages: response.pages || 0
       });
     } catch (err) {
-      console.error('加载文章失败:', err);
-      setError(err.message || '加载文章失败，请稍后重试');
+      console.error('Failed to load articles:', err);
+      setError(err.message || 'Failed to load articles, please try again later');
       setBlogPosts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 初始加载
+  // Initial load
   useEffect(() => {
     loadBlogPosts(1, keyword);
   }, []);
 
-  // 处理分页变化
+  // Handle page change
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.pages) {
       loadBlogPosts(newPage, keyword);
-      window.scrollTo(0, 0); // 滚动到顶部
+      window.scrollTo(0, 0); // Scroll to top
     }
   };
 
-  // 处理搜索
+  // Handle search
   const handleSearch = (e) => {
     e.preventDefault();
     loadBlogPosts(1, keyword);
@@ -78,7 +78,7 @@ const BlogHome = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         
-        {/* 左侧主栏：文章列表 */}
+        {/* Left Main Column: Article List */}
         <div className="col-span-1 lg:col-span-8 space-y-10">
           
           {/* Hero Card */}
@@ -97,9 +97,9 @@ const BlogHome = () => {
               <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Hello, {user?.name || user?.login || '博主'} 👋</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Hello, {user?.name || user?.login || 'Blogger'} 👋</h2>
               <p className="text-gray-600 mb-4 leading-relaxed">
-                {user?.bio || '全栈开发者，热爱开源与设计。这里记录我的代码、生活和一些奇思妙想。'}
+                {user?.bio || 'Full Stack Developer, loves open source and design. Recording my code, life and some whimsical ideas here.'}
               </p>
               <div className="flex justify-center md:justify-start gap-3">
                 <a href={user?.html_url || "#"} target="_blank" rel="noreferrer" className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"><Github className="w-5 h-5" /></a>
@@ -109,22 +109,22 @@ const BlogHome = () => {
             </div>
           </div>
 
-          {/* 文章列表 Header */}
+          {/* Article List Header */}
           <div className="flex items-center justify-between border-b border-gray-200 pb-4">
             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-500" /> 最新文章
+              <Sparkles className="w-5 h-5 text-yellow-500" /> Latest Articles
             </h3>
-            <div className="text-sm text-gray-500">共 {pagination.total} 篇</div>
+            <div className="text-sm text-gray-500">Total {pagination.total} posts</div>
           </div>
 
-          {/* 文章列表 */}
+          {/* Article List */}
           <div className="space-y-8">
             {loading ? (
-              <div className="text-center py-20 text-gray-500">加载中...</div>
+              <div className="text-center py-20 text-gray-500">Loading...</div>
             ) : error ? (
               <div className="text-center py-20 text-red-500">{error}</div>
             ) : blogPosts.length === 0 ? (
-              <div className="text-center py-20 text-gray-500">暂无文章</div>
+              <div className="text-center py-20 text-gray-500">No articles found</div>
             ) : (
               blogPosts.map((post) => (
                 <article key={post.id} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-100 overflow-hidden group flex flex-col md:flex-row h-auto md:h-56">
@@ -140,7 +140,7 @@ const BlogHome = () => {
                        }}
                     />
                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary-600 shadow-sm">
-                      {post.category || '未分类'}
+                      {post.category || 'Uncategorized'}
                     </div>
                   </div>
                   
@@ -148,7 +148,7 @@ const BlogHome = () => {
                     <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> 
-                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString('zh-CN') : ''}
+                        {post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US') : ''}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 5 min read</span>
@@ -172,7 +172,7 @@ const BlogHome = () => {
                         <span className="text-xs font-medium text-gray-700">{user?.name || user?.login || 'Admin'}</span>
                       </div>
                       <Link to={`/post/${post.id}`} className="text-primary-600 text-sm font-medium group-hover:translate-x-1 transition-transform inline-flex items-center gap-1 cursor-pointer">
-                        阅读全文 <ArrowRight className="w-4 h-4" />
+                        Read More <ArrowRight className="w-4 h-4" />
                       </Link>
                     </div>
                   </div>
@@ -181,7 +181,7 @@ const BlogHome = () => {
             )}
           </div>
 
-          {/* 分页器 */}
+          {/* Pagination */}
           {pagination.pages > 1 && (
             <div className="flex justify-center items-center gap-2 pt-8">
               <button 
@@ -194,7 +194,7 @@ const BlogHome = () => {
               
               {/* Simple Pagination Logic for Demo */}
               <span className="text-sm font-medium text-gray-700">
-                第 {pagination.page} 页 / 共 {pagination.pages} 页
+                Page {pagination.page} of {pagination.pages}
               </span>
 
               <button 
@@ -208,16 +208,16 @@ const BlogHome = () => {
           )}
         </div>
 
-        {/* 右侧边栏 */}
+        {/* Right Sidebar */}
         <div className="hidden lg:block col-span-4 space-y-8">
           
-          {/* 搜索框 */}
+          {/* Search Box */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h4 className="font-bold text-gray-900 mb-4">搜索</h4>
+            <h4 className="font-bold text-gray-900 mb-4">Search</h4>
             <form onSubmit={handleSearch} className="relative">
               <input 
                 type="text" 
-                placeholder="输入关键词..." 
+                placeholder="Enter keywords..." 
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
@@ -226,10 +226,10 @@ const BlogHome = () => {
             </form>
           </div>
 
-          {/* 分类目录 */}
+          {/* Categories */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Folder className="w-4 h-4 text-primary-500" /> 分类
+              <Folder className="w-4 h-4 text-primary-500" /> Categories
             </h4>
             <ul className="space-y-3">
               {categories.map((cat, idx) => (
@@ -243,10 +243,10 @@ const BlogHome = () => {
             </ul>
           </div>
 
-          {/* 热门标签 */}
+          {/* Tags Cloud */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-primary-500" /> 标签云
+              <Tag className="w-4 h-4 text-primary-500" /> Tags Cloud
             </h4>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag, idx) => (
@@ -260,13 +260,13 @@ const BlogHome = () => {
             </div>
           </div>
 
-          {/* 订阅卡片 */}
+          {/* Subscribe Card */}
           <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white text-center">
-            <h4 className="font-bold text-lg mb-2">订阅更新</h4>
-            <p className="text-primary-100 text-sm mb-4">每周精选文章，直接发送到你的邮箱。</p>
+            <h4 className="font-bold text-lg mb-2">Subscribe</h4>
+            <p className="text-primary-100 text-sm mb-4">Weekly selected articles delivered to your inbox.</p>
             <div className="space-y-2">
               <input type="email" placeholder="you@example.com" className="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50" />
-              <button className="w-full bg-white text-primary-700 font-bold py-2 rounded-lg hover:bg-gray-50 transition">订阅</button>
+              <button className="w-full bg-white text-primary-700 font-bold py-2 rounded-lg hover:bg-gray-50 transition">Subscribe</button>
             </div>
           </div>
 

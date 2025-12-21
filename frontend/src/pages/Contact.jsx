@@ -23,7 +23,7 @@ const Contact = () => {
     setIsSubmitting(true);
     // Simulate API call
     setTimeout(() => {
-      alert('感谢您的留言！我会尽快回复您。');
+      alert('Thank you for your message! I will reply as soon as possible.');
       setFormData({
         name: '',
         email: '',
@@ -37,7 +37,7 @@ const Contact = () => {
   const contactInfo = [
     {
       icon: <Mail className="w-6 h-6 text-white" />,
-      title: "邮箱",
+      title: "Email",
       content: "your.email@example.com",
       link: "mailto:your.email@example.com",
       color: "bg-blue-500"
@@ -51,15 +51,15 @@ const Contact = () => {
     },
     {
       icon: <MessageSquare className="w-6 h-6 text-white" />,
-      title: "微信",
+      title: "WeChat",
       content: "your-wechat-id",
       link: null,
       color: "bg-green-500"
     },
     {
       icon: <MapPin className="w-6 h-6 text-white" />,
-      title: "位置",
-      content: "中国 · 北京",
+      title: "Location",
+      content: "Beijing, China",
       link: null,
       color: "bg-red-500"
     }
@@ -71,11 +71,11 @@ const Contact = () => {
         {/* Header Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-            <span className="block">联系我</span>
-            <span className="block text-blue-600 text-2xl mt-4 font-medium">期待与您的交流与合作</span>
+            <span className="block">Contact Me</span>
+            <span className="block text-blue-600 text-2xl mt-4 font-medium">Looking forward to connecting and collaborating</span>
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-            如果您有任何问题、建议或合作意向，欢迎随时与我联系。
+            If you have any questions, suggestions, or collaboration opportunities, feel free to contact me anytime.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ const Contact = () => {
           {/* Contact Info Section */}
           <div className="space-y-8">
             <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">联系方式</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h2>
               <div className="grid gap-6">
                 {contactInfo.map((item, index) => (
                   <div key={index} className="flex items-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-300">
@@ -106,9 +106,9 @@ const Contact = () => {
             </div>
 
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-8 text-white">
-              <h3 className="text-xl font-bold mb-4">响应时间</h3>
+              <h3 className="text-xl font-bold mb-4">Response Time</h3>
               <p className="text-blue-100 leading-relaxed mb-6">
-                我通常会在 24 小时内回复所有邮件和消息。如果您有紧急事务，建议通过微信联系以便获得更快的响应。
+                I usually reply to all emails and messages within 24 hours. For urgent matters, please contact me via WeChat for a faster response.
               </p>
               <div className="flex space-x-4">
                 <a href="#" className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
@@ -123,12 +123,12 @@ const Contact = () => {
 
           {/* Contact Form Section */}
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">发送消息</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Send Message</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    姓名 <span className="text-red-500">*</span>
+                    Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -138,12 +138,12 @@ const Contact = () => {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
-                    placeholder="您的姓名"
+                    placeholder="Your Name"
                   />
                 </div>
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    邮箱 <span className="text-red-500">*</span>
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -160,7 +160,7 @@ const Contact = () => {
 
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                  主题 <span className="text-red-500">*</span>
+                  Subject <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -170,13 +170,13 @@ const Contact = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
-                  placeholder="消息主题"
+                  placeholder="Message Subject"
                 />
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                  消息 <span className="text-red-500">*</span>
+                  Message <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="message"
@@ -186,7 +186,7 @@ const Contact = () => {
                   required
                   rows="6"
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white resize-y"
-                  placeholder="请输入您的消息内容..."
+                  placeholder="Please enter your message here..."
                 />
               </div>
 
@@ -201,12 +201,12 @@ const Contact = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    发送中...
+                    Sending...
                   </span>
                 ) : (
                   <span className="flex items-center">
                     <Send className="w-5 h-5 mr-2" />
-                    发送消息
+                    Send Message
                   </span>
                 )}
               </button>

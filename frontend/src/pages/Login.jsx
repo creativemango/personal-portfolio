@@ -36,8 +36,8 @@ const Login = () => {
 
   const validateForm = () => {
     const newErrors = {}
-    if (!formData.username) newErrors.username = '用户名不能为空'
-    if (!formData.password) newErrors.password = '密码不能为空'
+    if (!formData.username) newErrors.username = 'Username is required'
+    if (!formData.password) newErrors.password = 'Password is required'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -60,8 +60,8 @@ const Login = () => {
 
   return (
     <AuthLayout 
-      title="欢迎回来" 
-      subtitle="登录以管理您的博客和作品集" 
+      title="Welcome Back" 
+      subtitle="Log in to manage your blog and portfolio" 
       icon={LogIn}
     >
       <div className="bg-gray-50 p-1 rounded-xl flex">
@@ -73,7 +73,7 @@ const Login = () => {
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          账号密码
+          Account
         </button>
         <button
           onClick={() => setActiveTab('github')}
@@ -83,7 +83,7 @@ const Login = () => {
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          GitHub 登录
+          GitHub Login
         </button>
       </div>
 
@@ -91,23 +91,23 @@ const Login = () => {
         <form className="mt-8 space-y-6" onSubmit={handleLocalLogin}>
           <div className="space-y-4">
             <FormInput
-              label="用户名"
+              label="Username"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="请输入用户名"
+              placeholder="Enter username"
               icon={User}
               error={errors.username}
               required
             />
 
             <FormInput
-              label="密码"
+              label="Password"
               name="password"
               type="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="请输入密码"
+              placeholder="Enter password"
               icon={Lock}
               error={errors.password}
               required
@@ -121,7 +121,7 @@ const Login = () => {
                   <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">登录失败</h3>
+                  <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
                   <div className="mt-1 text-sm text-red-700">{errors.submit}</div>
                 </div>
               </div>
@@ -144,15 +144,15 @@ const Login = () => {
                   <ArrowRight className="h-5 w-5 text-primary-500 group-hover:text-primary-400 transition-colors" />
                 </span>
               )}
-              {isLoading ? '登录中...' : '立即登录'}
+              {isLoading ? 'Logging in...' : 'Login Now'}
             </button>
           </div>
           
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              还没有账户？{' '}
+              Don't have an account?{' '}
               <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
-                立即注册
+                Register Now
               </Link>
             </p>
           </div>
@@ -162,9 +162,9 @@ const Login = () => {
           <div className="text-center space-y-4">
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
               <Github className="w-16 h-16 mx-auto text-gray-800 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">GitHub 授权登录</h3>
+              <h3 className="text-lg font-medium text-gray-900">GitHub Authorization</h3>
               <p className="text-sm text-gray-500 mt-2">
-                使用 GitHub 账号快速登录，无需注册，自动同步您的基本信息。
+                Login quickly with GitHub account, no registration required.
               </p>
             </div>
 
@@ -173,11 +173,11 @@ const Login = () => {
               className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-[#24292e] hover:bg-[#2f363d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 shadow-md hover:shadow-lg"
             >
               <Github className="w-5 h-5" />
-              前往 GitHub 授权
+              Continue with GitHub
             </button>
             
             <p className="text-xs text-gray-400 text-center px-4">
-              点击上方按钮将跳转至 GitHub 进行授权确认。我们仅请求公开的个人资料权限。
+              You will be redirected to GitHub for authorization. We only request public profile access.
             </p>
           </div>
         </div>

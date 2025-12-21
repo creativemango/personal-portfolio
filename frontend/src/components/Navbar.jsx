@@ -40,15 +40,15 @@ const Navbar = () => {
           
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-            <Link to="/" className="hover:text-primary-600 transition">首页</Link>
+            <Link to="/" className="hover:text-primary-600 transition">Home</Link>
             {user && (
               <>
-                <Link to="/home" className="hover:text-primary-600 transition">博客</Link>
-                <Link to="/creator-center" className="hover:text-primary-600 transition">创作者中心</Link>
+                <Link to="/home" className="hover:text-primary-600 transition">Blog</Link>
+                <Link to="/creator-center" className="hover:text-primary-600 transition">Creator Center</Link>
               </>
             )}
-            <Link to="/about" className="hover:text-primary-600 transition">关于</Link>
-            <Link to="/contact" className="hover:text-primary-600 transition">联系</Link>
+            <Link to="/about" className="hover:text-primary-600 transition">About</Link>
+            <Link to="/contact" className="hover:text-primary-600 transition">Contact</Link>
           </div>
 
           {/* Right Actions */}
@@ -64,7 +64,7 @@ const Navbar = () => {
               <div className="hidden md:flex items-center gap-3 pl-2 border-l border-gray-200">
                 <img
                   src={user.avatar_url || "/images/default-avatar.png"}
-                  alt="用户头像"
+                  alt="User Avatar"
                   className="w-8 h-8 rounded-full border border-gray-200 object-cover"
                   onError={(e) => {
                     if (!e.target.src.includes('via.placeholder.com')) {
@@ -75,7 +75,7 @@ const Navbar = () => {
                 <button 
                   onClick={handleLogout}
                   className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 group"
-                  title="注销"
+                  title="Logout"
                 >
                   <LogOut className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
                 </button>
@@ -85,7 +85,7 @@ const Navbar = () => {
                 to="/login" 
                 className="hidden md:block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition shadow-sm"
               >
-                登录
+                Login
               </Link>
             )}
 
@@ -104,15 +104,15 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 top-16">
           <div className="px-4 py-3 space-y-3">
-            <Link to="/" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>首页</Link>
+            <Link to="/" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
             {user && (
               <>
-                <Link to="/home" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>博客</Link>
-                <Link to="/creator-center" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>创作者中心</Link>
+                <Link to="/home" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Blog</Link>
+                <Link to="/creator-center" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Creator Center</Link>
               </>
             )}
-            <Link to="/about" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>关于</Link>
-            <Link to="/contact" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>联系</Link>
+            <Link to="/about" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>About</Link>
+            <Link to="/contact" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>
             
             <div className="border-t border-gray-100 pt-3 mt-2">
               {user ? (
@@ -120,7 +120,7 @@ const Navbar = () => {
                   onClick={() => { handleLogout(); setIsMenuOpen(false); }}
                   className="w-full text-left text-red-600 font-medium py-2"
                 >
-                  注销
+                  Logout
                 </button>
               ) : (
                 <Link 
@@ -128,7 +128,7 @@ const Navbar = () => {
                   className="block w-full text-center bg-gray-900 text-white font-medium py-2 rounded-lg"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  登录
+                  Login
                 </Link>
               )}
             </div>

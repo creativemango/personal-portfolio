@@ -122,11 +122,11 @@ const CreatorCenter = () => {
 
       if (isPublish) {
         await publishBlogPost(savedArticle.id)
-        alert('文章已发布！')
+        alert('Article published!')
         setActiveView(VIEWS.MANAGE)
         setEditingArticle(null)
       } else {
-        alert('草稿已保存！')
+        alert('Draft saved!')
         if (!editingArticle) {
           // If it was a new draft, switch to edit mode for the created draft
           setEditingArticle(savedArticle)
@@ -135,18 +135,18 @@ const CreatorCenter = () => {
       
     } catch (error) {
       console.error('Operation failed:', error)
-      alert('操作失败，请重试: ' + (error.message || '未知错误'))
+      alert('Operation failed, please try again: ' + (error.message || 'Unknown error'))
     }
   }
 
   const handleDelete = async (id) => {
-    if (confirm('确定要删除这篇文章吗？')) {
+    if (confirm('Are you sure you want to delete this article?')) {
       try {
         await deleteBlogPost(id)
         loadArticles(currentPage)
       } catch (error) {
         console.error('Delete failed:', error)
-        alert('删除失败: ' + error.message)
+        alert('Delete failed: ' + error.message)
       }
     }
   }
@@ -193,7 +193,7 @@ const CreatorCenter = () => {
                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' 
                 : 'hover:bg-gray-800/50 hover:text-gray-200'
             } ${isSidebarCollapsed ? 'md:justify-center' : ''}`}
-            title={isSidebarCollapsed ? "仪表盘" : ""}
+            title={isSidebarCollapsed ? "Dashboard" : ""}
           >
             {activeView === VIEWS.DASHBOARD && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/20 rounded-r-full"></div>}
             <LayoutDashboard className={`w-5 h-5 shrink-0 transition-colors ${activeView === VIEWS.DASHBOARD ? 'text-white' : 'group-hover:text-white'}`} /> 
@@ -207,7 +207,7 @@ const CreatorCenter = () => {
                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' 
                 : 'hover:bg-gray-800/50 hover:text-gray-200'
             } ${isSidebarCollapsed ? 'md:justify-center' : ''}`}
-            title={isSidebarCollapsed ? "写文章" : ""}
+            title={isSidebarCollapsed ? "Write Article" : ""}
           >
             {activeView === VIEWS.CREATE && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/20 rounded-r-full"></div>}
             <PenTool className={`w-5 h-5 shrink-0 transition-colors ${activeView === VIEWS.CREATE ? 'text-white' : 'group-hover:text-white'}`} /> 
@@ -221,7 +221,7 @@ const CreatorCenter = () => {
                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' 
                 : 'hover:bg-gray-800/50 hover:text-gray-200'
             } ${isSidebarCollapsed ? 'md:justify-center' : ''}`}
-            title={isSidebarCollapsed ? "文章管理" : ""}
+            title={isSidebarCollapsed ? "Manage Content" : ""}
           >
             {activeView === VIEWS.MANAGE && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/20 rounded-r-full"></div>}
             <FileText className={`w-5 h-5 shrink-0 transition-colors ${activeView === VIEWS.MANAGE ? 'text-white' : 'group-hover:text-white'}`} /> 
@@ -234,7 +234,7 @@ const CreatorCenter = () => {
           
           <button 
             className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-800/50 hover:text-gray-200 transition-all duration-200 ${isSidebarCollapsed ? 'md:justify-center' : ''}`}
-            title={isSidebarCollapsed ? "设置" : ""}
+            title={isSidebarCollapsed ? "Settings" : ""}
           >
             <Settings className="w-5 h-5 shrink-0 group-hover:text-white transition-colors" /> 
             <span className={`font-medium whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'md:hidden' : 'block'}`}>Settings</span>

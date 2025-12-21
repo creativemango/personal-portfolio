@@ -37,7 +37,7 @@ const Register = () => {
       if (value) {
         if (!/^[a-zA-Z0-9]+$/.test(value) || value.length > 50) {
           setUsernameStatus('error')
-          setUsernameMessage('用户名只能包含字母和数字，最多50位')
+          setUsernameMessage('Username must contain only letters and numbers, max 50 chars')
           return
         }
         
@@ -46,39 +46,18 @@ const Register = () => {
         
         checkUsernameAvailability(value)
           .then(result => {
-            // result is the unwrapped data.
-            // Backend returns Boolean for check-username? 
-            // Let's assume it returns { available: true/false } or simply true/false.
-            // I should check authService.js checkUsernameAvailability.
-            // It calls api.get. If backend returns simple boolean, result is boolean.
-            // If backend returns object { available: true }, result is that object.
-            
-            // Let's assume the previous code `result.success` and `result.available` implies 
-            // the response was wrapped. Now it is unwrapped.
-            // If the backend returns `true` or `false` directly inside data...
-            
-            // Wait, I need to verify what checkUsernameAvailability returns.
-            // Previously: 
-            // if (result.success) { setUsernameAvailable(result.available) }
-            
-            // If I look at authService.js:
-            // return data
-            
-            // I'll assume result has an 'available' property or is the boolean itself.
-            // To be safe, let's debug or assume it follows the pattern { available: true }
-            
             const isAvailable = result && typeof result === 'object' ? result.available : result
             
             if (isAvailable) {
               setUsernameStatus('success')
-              setUsernameMessage('用户名可用')
+              setUsernameMessage('Username available')
             } else {
               setUsernameStatus('error')
-              setUsernameMessage('用户名已存在')
+              setUsernameMessage('Username already exists')
             }
           })
           .catch(error => {
-            console.error('检查用户名可用性失败:', error)
+            console.error('Failed to check username availability:', error)
             setUsernameStatus(null)
             setUsernameMessage('')
           })
@@ -93,27 +72,27 @@ const Register = () => {
     const newErrors = {}
 
     if (!formData.username) {
-      newErrors.username = '用户名不能为空'
-    } else if (usernameStatus === 'error' && !usernameMessage.includes('只能包含')) {
-      newErrors.username = '用户名已存在'
+      newErrors.username = 'Username is required'
+    } else if (usernameStatus === 'error' && !usernameMessage.includes('contain only')) {
+      newErrors.username = 'Username already exists'
     } else if (usernameStatus === 'error') {
        newErrors.username = usernameMessage
     }
 
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '邮箱格式不正确'
+      newErrors.email = 'Invalid email format'
     }
 
     if (!formData.password) {
-      newErrors.password = '密码不能为空'
+      newErrors.password = 'Password is required'
     } else if (formData.password.length < 8 || formData.password.length > 16) {
-      newErrors.password = '密码长度必须为8-16位'
+      newErrors.password = 'Password must be 8-16 characters'
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = '请确认密码'
+      newErrors.confirmPassword = 'Please confirm password'
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = '两次输入的密码不一致'
+      newErrors.confirmPassword = 'Passwords do not match'
     }
 
     setErrors(newErrors)
@@ -135,7 +114,7 @@ const Register = () => {
         setErrors({ submit: result.message })
       }
     } catch (error) {
-      setErrors({ submit: error.message || '注册失败，请稍后重试' })
+      setErrors({ submit: error.message || 'Registration failed, please try again later' })
     } finally {
       setIsLoading(false)
     }
@@ -143,18 +122,18 @@ const Register = () => {
 
   return (
     <AuthLayout
-      title="创建新账户"
-      subtitle="加入我们，开始您的创作之旅"
+      title="Create New Account"
+      subtitle="Join us and start your creative journey"
       icon={UserPlus}
     >
       <form className="mt-8 space-y-6" onSubmit={handleRegister}>
         <div className="space-y-4">
           <FormInput
-            label="用户名"
+            label="Username"
             name="username"
             value={formData.username}
             onChange={handleChange}
-            placeholder="字母和数字，最多50位"
+            placeholder="Letters and numbers, max 50 chars"
             icon={User}
             error={errors.username}
             required
@@ -163,35 +142,35 @@ const Register = () => {
           />
 
           <FormInput
-            label="邮箱"
+            label="Email"
             name="email"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="可选，用于找回密码"
+            placeholder="Optional, used for password recovery"
             icon={Mail}
             error={errors.email}
           />
 
           <FormInput
-            label="密码"
+            label="Password"
             name="password"
             type="password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="8-16位字符"
+            placeholder="8-16 characters"
             icon={Lock}
             error={errors.password}
             required
           />
 
           <FormInput
-            label="确认密码"
+            label="Confirm Password"
             name="confirmPassword"
             type="password"
             value={formData.confirmPassword}
             onChange={handleChange}
-            placeholder="请再次输入密码"
+            placeholder="Please enter password again"
             icon={Lock}
             error={errors.confirmPassword}
             required
@@ -205,7 +184,7 @@ const Register = () => {
                 <AlertCircle className="h-5 w-5 text-red-400" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">注册失败</h3>
+                <h3 className="text-sm font-medium text-red-800">Registration Failed</h3>
                 <div className="mt-1 text-sm text-red-700">{errors.submit}</div>
               </div>
             </div>
@@ -228,15 +207,15 @@ const Register = () => {
                 <ArrowRight className="h-5 w-5 text-primary-500 group-hover:text-primary-400 transition-colors" />
               </span>
             )}
-            {isLoading ? '注册中...' : '立即注册'}
+            {isLoading ? 'Registering...' : 'Register Now'}
           </button>
         </div>
         
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            已有账户？{' '}
+            Already have an account?{' '}
             <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
-              立即登录
+              Login Now
             </Link>
           </p>
         </div>

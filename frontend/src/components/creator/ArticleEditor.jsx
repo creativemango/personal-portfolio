@@ -15,7 +15,7 @@ const ArticleEditor = ({ initialData, onSave, isSaving }) => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category: '技术',
+    category: 'Technology',
     tags: ''
   })
   const [showPreview, setShowPreview] = useState(true)
@@ -27,14 +27,14 @@ const ArticleEditor = ({ initialData, onSave, isSaving }) => {
       setFormData({
         title: initialData.title || '',
         content: initialData.content || '',
-        category: initialData.category || '技术',
+        category: initialData.category || 'Technology',
         tags: initialData.tags ? (Array.isArray(initialData.tags) ? initialData.tags.join(', ') : initialData.tags) : ''
       })
     } else {
       setFormData({
         title: '',
         content: '',
-        category: '技术',
+        category: 'Technology',
         tags: ''
       })
     }
@@ -156,7 +156,7 @@ const ArticleEditor = ({ initialData, onSave, isSaving }) => {
 
   const handleSaveClick = (isPublish) => {
     if (!formData.title || !formData.content) {
-      alert('标题和内容不能为空')
+      alert('Title and content cannot be empty')
       return
     }
     onSave(formData, isPublish)
@@ -347,10 +347,10 @@ const ArticleEditor = ({ initialData, onSave, isSaving }) => {
                     onChange={handleInputChange}
                     className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white transition-all cursor-pointer"
                   >
-                    <option value="技术">Tech</option>
-                    <option value="生活">Life</option>
-                    <option value="读书">Reading</option>
-                    <option value="旅行">Travel</option>
+                    <option value="Technology">Tech</option>
+                    <option value="Life">Life</option>
+                    <option value="Reading">Reading</option>
+                    <option value="Travel">Travel</option>
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

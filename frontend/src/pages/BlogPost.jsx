@@ -28,11 +28,11 @@ const BlogPost = () => {
         if (data) {
           setPost(data)
         } else {
-          setError('文章加载失败')
+          setError('Failed to load post')
         }
       } catch (err) {
         console.error('Failed to fetch post:', err)
-        setError('文章加载失败')
+        setError('Failed to load post')
       } finally {
         setLoading(false)
       }
@@ -66,7 +66,7 @@ const BlogPost = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">加载中...</div>
+        <div className="text-gray-500">Loading...</div>
       </div>
     )
   }
@@ -74,8 +74,8 @@ const BlogPost = () => {
   if (error || !post) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <div className="text-red-500 mb-4">{error || '文章不存在'}</div>
-        <Link to="/home" className="text-primary-600 hover:underline">返回首页</Link>
+        <div className="text-red-500 mb-4">{error || 'Post not found'}</div>
+        <Link to="/home" className="text-primary-600 hover:underline">Back to Home</Link>
       </div>
     )
   }
@@ -103,11 +103,11 @@ const BlogPost = () => {
         
         <div className="absolute inset-0 flex flex-col justify-end max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           <Link to="/home" className="absolute top-8 left-4 sm:left-8 inline-flex items-center text-white/80 hover:text-white transition bg-black/20 hover:bg-black/40 px-4 py-2 rounded-full backdrop-blur-sm">
-            <ArrowLeft className="w-4 h-4 mr-2" /> 返回首页
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Home
           </Link>
           
           <div className="flex items-center gap-3 text-white/80 text-sm font-medium mb-4">
-            <span className="bg-primary-600/90 text-white px-3 py-1 rounded-full backdrop-blur-sm shadow-sm">{post.category || '未分类'}</span>
+            <span className="bg-primary-600/90 text-white px-3 py-1 rounded-full backdrop-blur-sm shadow-sm">{post.category || 'Uncategorized'}</span>
             <span>•</span>
             <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Unknown'}</span>
             <span>•</span>
@@ -252,7 +252,7 @@ const BlogPost = () => {
               {/* Table of Contents */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
                 <h2 className="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2 sticky top-0 bg-white z-10 pb-2 border-b border-gray-50">
-                  目录
+                  Table of Contents
                 </h2>
                 <nav className="relative">
                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-100"></div>
