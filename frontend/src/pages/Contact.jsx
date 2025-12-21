@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Github, Linkedin, Twitter } from 'lucide-react';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -6,227 +7,160 @@ const Contact = () => {
     email: '',
     subject: '',
     message: ''
-  })
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData(prevState => ({
       ...prevState,
       [name]: value
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    // 这里可以添加表单提交逻辑
-    alert('感谢您的留言！我会尽快回复您。')
-    setFormData({
-      name: '',
-      email: '',
-      subject: '',
-      message: ''
-    })
-  }
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Simulate API call
+    setTimeout(() => {
+      alert('感谢您的留言！我会尽快回复您。');
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
+      setIsSubmitting(false);
+    }, 1500);
+  };
+
+  const contactInfo = [
+    {
+      icon: <Mail className="w-6 h-6 text-white" />,
+      title: "邮箱",
+      content: "your.email@example.com",
+      link: "mailto:your.email@example.com",
+      color: "bg-blue-500"
+    },
+    {
+      icon: <Github className="w-6 h-6 text-white" />,
+      title: "GitHub",
+      content: "github.com/yourusername",
+      link: "https://github.com/yourusername",
+      color: "bg-gray-800"
+    },
+    {
+      icon: <MessageSquare className="w-6 h-6 text-white" />,
+      title: "微信",
+      content: "your-wechat-id",
+      link: null,
+      color: "bg-green-500"
+    },
+    {
+      icon: <MapPin className="w-6 h-6 text-white" />,
+      title: "位置",
+      content: "中国 · 北京",
+      link: null,
+      color: "bg-red-500"
+    }
+  ];
 
   return (
-    <div className="page">
-      <div className="container">
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '2rem',
-          alignItems: 'start'
-        }}>
-          {/* 联系信息 */}
-          <div className="card">
-            <h1 style={{ color: '#667eea', marginBottom: '1rem' }}>联系我</h1>
-            <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '2rem' }}>
-              如果您有任何问题或合作意向，欢迎与我联系！
-            </p>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+            <span className="block">联系我</span>
+            <span className="block text-blue-600 text-2xl mt-4 font-medium">期待与您的交流与合作</span>
+          </h1>
+          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+            如果您有任何问题、建议或合作意向，欢迎随时与我联系。
+          </p>
+        </div>
 
-            <div style={{ display: 'grid', gap: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{
-                  width: '50px',
-                  height: '50px',
-                  background: '#667eea',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '1.2rem'
-                }}>
-                  📧
-                </div>
-                <div>
-                  <h3 style={{ color: '#333', marginBottom: '0.25rem' }}>邮箱</h3>
-                  <p style={{ color: '#666' }}>your.email@example.com</p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{
-                  width: '50px',
-                  height: '50px',
-                  background: '#667eea',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '1.2rem'
-                }}>
-                  💼
-                </div>
-                <div>
-                  <h3 style={{ color: '#333', marginBottom: '0.25rem' }}>GitHub</h3>
-                  <p style={{ color: '#666' }}>
-                    <a 
-                      href="https://github.com/yourusername" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ color: '#667eea', textDecoration: 'none' }}
-                    >
-                      github.com/yourusername
-                    </a>
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{
-                  width: '50px',
-                  height: '50px',
-                  background: '#667eea',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '1.2rem'
-                }}>
-                  💬
-                </div>
-                <div>
-                  <h3 style={{ color: '#333', marginBottom: '0.25rem' }}>微信</h3>
-                  <p style={{ color: '#666' }}>your-wechat-id</p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{
-                  width: '50px',
-                  height: '50px',
-                  background: '#667eea',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '1.2rem'
-                }}>
-                  📍
-                </div>
-                <div>
-                  <h3 style={{ color: '#333', marginBottom: '0.25rem' }}>位置</h3>
-                  <p style={{ color: '#666' }}>中国 · 北京</p>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Contact Info Section */}
+          <div className="space-y-8">
+            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">联系方式</h2>
+              <div className="grid gap-6">
+                {contactInfo.map((item, index) => (
+                  <div key={index} className="flex items-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-300">
+                    <div className={`flex-shrink-0 w-12 h-12 ${item.color} rounded-full flex items-center justify-center shadow-lg`}>
+                      {item.icon}
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">{item.title}</h3>
+                      {item.link ? (
+                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-500">
+                          {item.content}
+                        </a>
+                      ) : (
+                        <p className="text-gray-500">{item.content}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div style={{ 
-              marginTop: '2rem', 
-              padding: '1.5rem', 
-              background: '#f8f9fa', 
-              borderRadius: '8px' 
-            }}>
-              <h3 style={{ color: '#333', marginBottom: '1rem' }}>响应时间</h3>
-              <p style={{ color: '#666', lineHeight: '1.6' }}>
-                我通常会在 24 小时内回复邮件。如果您有紧急事务，可以通过其他方式联系我。
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-8 text-white">
+              <h3 className="text-xl font-bold mb-4">响应时间</h3>
+              <p className="text-blue-100 leading-relaxed mb-6">
+                我通常会在 24 小时内回复所有邮件和消息。如果您有紧急事务，建议通过微信联系以便获得更快的响应。
               </p>
+              <div className="flex space-x-4">
+                <a href="#" className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
+                  <Twitter className="w-5 h-5" />
+                </a>
+                <a href="#" className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
+                  <Linkedin className="w-5 h-5" />
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* 联系表单 */}
-          <div className="card">
-            <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>发送消息</h2>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label 
-                  htmlFor="name" 
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    color: '#333',
-                    fontWeight: '500'
-                  }}
-                >
-                  姓名 *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    fontSize: '1rem',
-                    transition: 'border-color 0.3s'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                  onBlur={(e) => e.target.style.borderColor = '#ddd'}
-                />
+          {/* Contact Form Section */}
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">发送消息</h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    姓名 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
+                    placeholder="您的姓名"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    邮箱 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
+                    placeholder="your@email.com"
+                  />
+                </div>
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label 
-                  htmlFor="email" 
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    color: '#333',
-                    fontWeight: '500'
-                  }}
-                >
-                  邮箱 *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    fontSize: '1rem',
-                    transition: 'border-color 0.3s'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                  onBlur={(e) => e.target.style.borderColor = '#ddd'}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1rem' }}>
-                <label 
-                  htmlFor="subject" 
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    color: '#333',
-                    fontWeight: '500'
-                  }}
-                >
-                  主题 *
+              <div>
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                  主题 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -235,30 +169,14 @@ const Contact = () => {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    fontSize: '1rem',
-                    transition: 'border-color 0.3s'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                  onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
+                  placeholder="消息主题"
                 />
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label 
-                  htmlFor="message" 
-                  style={{ 
-                    display: 'block', 
-                    marginBottom: '0.5rem', 
-                    color: '#333',
-                    fontWeight: '500'
-                  }}
-                >
-                  消息 *
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                  消息 <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="message"
@@ -267,34 +185,37 @@ const Contact = () => {
                   onChange={handleChange}
                   required
                   rows="6"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    fontSize: '1rem',
-                    resize: 'vertical',
-                    transition: 'border-color 0.3s',
-                    fontFamily: 'inherit'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                  onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white resize-y"
+                  placeholder="请输入您的消息内容..."
                 />
               </div>
 
-              <button 
-                type="submit" 
-                className="btn"
-                style={{ width: '100%' }}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full flex items-center justify-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-lg hover:shadow-xl ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''}`}
               >
-                发送消息
+                {isSubmitting ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    发送中...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <Send className="w-5 h-5 mr-2" />
+                    发送消息
+                  </span>
+                )}
               </button>
             </form>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Contact
+export default Contact;
