@@ -1,0 +1,4252 @@
+Subject: [PATCH] 文章查询分页
+---
+Index: .trae/rules/项目后端通用开发规范.md
+===================================================================
+diff --git a/.trae/rules/项目后端通用开发规范.md b/.trae/rules/项目后端通用开发规范.md
+deleted file mode 100644
+--- a/.trae/rules/项目后端通用开发规范.md	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ /dev/null	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
+@@ -1,458 +0,0 @@
+-# 个人博客系统通用开发规范
+-
+-## 概述
+-本规范适用于个人博客系统的全栈开发，涵盖后端（Java + Spring Boot + DDD）、前端（React + Vite）及基础设施。旨在为AI生成代码、团队协作和代码审查提供统一标准。
+-
+----
+-
+-## 一、目录结构组织原则
+-
+-### 1.1 总体项目结构
+-```
+-personal-portfolio/
+-├── backend/                    # 后端项目（Maven多模块）
+-│   ├── domain/                # 领域层
+-│   ├── application/           # 应用层
+-│   ├── infrastructure/        # 基础设施层
+-│   ├── interface/             # 用户界面层（Web控制器）
+-│   └── startup/               # 启动模块
+-├── frontend/                  # 前端项目（React + Vite）
+-│   ├── src/
+-│   │   ├── components/        # 可复用组件
+-│   │   ├── pages/             # 页面组件
+-│   │   ├── services/          # API服务层
+-│   │   ├── hooks/             # 自定义Hooks
+-│   │   └── utils/             # 工具函数
+-│   └── public/                # 静态资源
+-├── docs/                      # 项目文档
+-├── scripts/                   # 部署与构建脚本
+-└── config/                    # 配置文件（可选）
+-```
+-
+-### 1.2 后端DDD分层规范
+-- **领域层（domain）**：核心业务逻辑，包含实体、值对象、领域服务、仓储接口、领域事件、工厂。
+-  - 禁止依赖任何外部层（应用层、基础设施层、界面层）。
+-- **应用层（application）**：协调领域对象完成用例，包含应用服务、命令/查询对象、DTO、应用事件。
+-  - 仅依赖领域层，通过依赖倒置使用基础设施。
+-- **基础设施层（infrastructure）**：技术实现，包含持久化实现、外部服务调用、消息队列、配置、工具类。
+-  - 实现领域层定义的接口（如仓储接口）。
+-- **界面层（interface）**：用户界面，包含Web控制器、RPC接口、DTO、异常处理器。
+-  - 依赖应用层，不直接访问领域层。
+-
+-### 1.3 前端模块化组织
+-- **组件分类**：
+-  - `components/common`：全局通用组件（按钮、输入框等）
+-  - `components/layout`：布局组件（导航栏、页脚等）
+-  - `components/features`：业务功能组件
+-- **页面组织**：每个页面对应一个目录，包含主组件、子组件和样式文件。
+-- **服务层**：按业务模块划分，每个模块一个Service文件。
+-- **Hooks**：提取可复用逻辑，命名以 `use` 开头。
+-
+-### 1.4 配置文件管理
+-- 配置文件统一放在 `resources/` 目录下。
+-- 区分环境：`application-dev.properties`、`application-prod.properties`。
+-- 敏感信息（密码、密钥）使用环境变量或配置中心，禁止硬编码。
+-
+-### 1.5 资源文件组织
+-- 静态资源（图片、字体）放在 `frontend/public/` 或 `backend/src/main/resources/static/`。
+-- 国际化文件按语言分目录存放。
+-- 模板文件放在 `resources/templates/`。
+-
+----
+-
+-## 二、代码规范
+-
+-### 2.1 命名规范
+-
+-#### 包名（Package）
+-- 全部小写，使用公司域名反写（如 `com.personal.portfolio`）。
+-- 分层包结构：`com.personal.portfolio.blog.domain.model`。
+-
+-#### 类名（Class）
+-- 大驼峰（PascalCase），名词或名词短语。
+-- 实体类：`BlogPost`、`User`
+-- 接口：`BlogPostRepository`（后缀为能力，如Repository、Service）
+-- 抽象类：`BaseEntity`、`AbstractHandler`
+-- 异常类：以 `Exception` 结尾，如 `BusinessException`
+-- 测试类：以 `Test` 结尾，如 `BlogPostServiceTest`
+-
+-#### 方法名（Method）
+-- 小驼峰（camelCase），动词或动词短语。
+-- 获取方法：`getBlogPostById()`、`findAll()`
+-- 布尔方法：`isPublished()`、`hasPermission()`
+-- 业务方法：`publish()`、`cancelOrder()`
+-- 工厂方法：`create()`、`fromCommand()`
+-
+-#### 变量名（Variable）
+-- 小驼峰，有意义的名词。
+-- 集合类型使用复数：`blogPosts`、`users`
+-- 临时变量：`i`、`j`、`entry`（仅限局部作用域）
+-- 常量：全大写，下划线分隔，如 `MAX_RETRY_COUNT`
+-
+-#### 前端特定命名
+-- React组件：大驼峰，与文件名一致。
+-- 自定义Hook：以 `use` 开头，如 `useAuth`
+-- CSS类名：短横线分隔（kebab-case），如 `.blog-card`
+-- 枚举：全大写，下划线分隔，如 `POST_STATUS.PUBLISHED`
+-
+-### 2.2 类设计规范
+-- **单一职责**：每个类只做一件事。
+-- **类大小限制**：单个类不超过300行（理想200行），超过应拆分。
+-- **字段顺序**：
+-  1. 静态常量
+-  2. 实例变量
+-  3. 构造函数
+-  4. 公共方法
+-  5. 受保护方法
+-  6. 私有方法
+-- **访问修饰符**：最小化暴露，优先使用 `private`，必要时使用 `protected`，避免 `public` 字段。
+-
+-### 2.3 方法设计规范
+-- **方法长度**：不超过30行（推荐15行以内）。
+-- **参数数量**：不超过4个，超过时使用对象封装（命令对象、参数对象）。
+-- **圈复杂度**：不超过10，过高需拆分子方法。
+-- **抽象级别一致**：方法内所有语句应在同一抽象级别。
+-- **返回值**：避免返回 `null`，使用 `Optional` 或空集合。
+-
+-### 2.4 注释规范
+-- **类注释**：说明类职责、作者、版本。
+-- **方法注释**：说明功能、参数、返回值、异常。
+-- **复杂逻辑注释**：解释业务规则和算法。
+-- **TODO/FIXME**：使用 `// TODO:` 或 `// FIXME:` 标注待办事项。
+-- **禁止无用注释**：如 `// setter`、`// getter`。
+-
+-### 2.5 格式规范
+-- **缩进**：2个空格（前端）、4个空格（后端Java）。
+-- **行宽**：不超过120字符。
+-- **空行**：方法之间、逻辑块之间用空行分隔。
+-- **花括号**：K&R风格，左括号不换行。
+-- **导入顺序**：IDE自动优化，分组：静态导入、第三方库、项目内部。
+-
+----
+-
+-## 三、代码质量原则
+-
+-### 3.1 SOLID设计原则
+-1. **单一职责（SRP）**：每个类/模块只做一件事。
+-2. **开闭原则（OCP）**：对扩展开放，对修改关闭，使用接口和抽象。
+-3. **里氏替换（LSP）**：子类必须能替换父类而不影响程序。
+-4. **接口隔离（ISP）**：接口要小而专，避免臃肿。
+-5. **依赖倒置（DIP）**：高层模块不依赖低层模块，二者都依赖抽象。
+-
+-### 3.2 DRY原则（Don't Repeat Yourself）
+-- 重复代码提取为方法、类或工具函数。
+-- 业务规则在领域层集中定义，避免散落。
+-- 前端重复UI组件提取为可复用组件。
+-
+-### 3.3 可读性、可维护性、可扩展性
+-- **可读性**：命名清晰、结构清晰、注释恰当。
+-- **可维护性**：模块化、低耦合、高内聚。
+-- **可扩展性**：预留扩展点，使用策略模式、插件架构。
+-
+-### 3.4 设计模式应用指南
+-- **工厂模式**：复杂对象创建。
+-- **仓储模式**：数据访问抽象。
+-- **策略模式**：可替换的算法。
+-- **观察者模式**：事件驱动。
+-- **装饰器模式**：动态增强功能。
+-- **前端容器/展示组件模式**：分离逻辑与UI。
+-
+-### 3.5 代码审查检查清单
+-- [ ] 类是否超过300行？
+-- [ ] 方法是否超过30行？
+-- [ ] 方法参数是否超过4个？
+-- [ ] 圈复杂度是否过高？
+-- [ ] 是否有重复代码？
+-- [ ] 命名是否准确表达意图？
+-- [ ] 注释是否必要且清晰？
+-- [ ] 异常处理是否得当？
+-- [ ] 测试是否覆盖核心逻辑？
+-- [ ] 是否符合DDD分层依赖规则？
+-
+----
+-
+-## 四、异常处理原则
+-
+-### 4.1 异常分类
+-- **业务异常（BusinessException）**：用户操作错误、业务规则违反，应给出友好提示。
+-- **系统异常（SystemException）**：系统内部错误（数据库连接失败、外部服务异常），需记录日志并告警。
+-- **校验异常（ValidationException）**：参数校验失败，返回详细字段错误。
+-- **安全异常（SecurityException）**：权限不足、认证失败。
+-
+-### 4.2 异常处理最佳实践
+-- 早抛出，晚捕获。
+-- 受检异常仅用于基础设施层（如IO、SQL）。
+-- 领域层和应用层使用运行时异常。
+-- 禁止空的catch块，至少记录日志。
+-- 异常信息中避免敏感数据（密码、密钥）。
+-
+-### 4.3 错误信息设计
+-- 错误码：全局唯一，便于定位。
+-- 错误消息：用户友好，可读性强。
+-- 错误详情：开发调试用，包含请求ID、时间戳。
+-- 多语言支持：根据客户端语言返回相应消息。
+-
+-### 4.4 日志记录规范
+-- 使用SLF4J + Logback。
+-- 日志级别：
+-  - `ERROR`：系统异常，需立即处理。
+-  - `WARN`：潜在问题，需要关注。
+-  - `INFO`：关键业务操作。
+-  - `DEBUG`：调试信息，开发环境开启。
+-  - `TRACE`：详细跟踪。
+-- 日志格式：包含时间、级别、线程、类名、消息、异常栈。
+-- 敏感信息脱敏：手机号、邮箱、身份证号等。
+-
+-### 4.5 全局异常处理机制
+-- 使用 `@ControllerAdvice` 或全局中间件统一处理异常。
+-- 返回统一格式的响应：
+-```json
+-{
+-  "code": "ERROR_CODE",
+-  "message": "错误描述",
+-  "data": null,
+-  "timestamp": "2025-12-15T15:30:00"
+-}
+-```
+-
+----
+-
+-## 五、测试规范
+-
+-### 5.1 测试金字塔原则
+-- **单元测试（70%）**：测试独立功能单元，快速执行。
+-- **集成测试（20%）**：测试模块间交互，涉及数据库、外部服务。
+-- **端到端测试（10%）**：测试完整业务流程，模拟用户操作。
+-
+-### 5.2 单元测试规范
+-- 使用JUnit 5 + Mockito。
+-- 测试类命名：`被测类名 + Test`，如 `BlogPostServiceTest`。
+-- 测试方法命名：`should_预期结果_when_条件` 或 `given_条件_when_操作_then_结果`。
+-- 每个测试方法只验证一个行为。
+-- 使用Given-When-Then结构。
+-- 避免测试私有方法，通过公共方法间接测试。
+-- 测试覆盖率目标：行覆盖率 ≥ 80%，分支覆盖率 ≥ 70%。
+-
+-### 5.3 集成测试规范
+-- 使用 `@SpringBootTest` 启动容器。
+-- 使用测试数据库（如H2）或容器化数据库（Testcontainers）。
+-- 每个测试类结束后清理数据。
+-- 测试API接口时使用 `MockMvc` 或 `TestRestTemplate`。
+-
+-### 5.4 端到端测试规范
+-- 使用Cypress或Playwright进行前端E2E测试。
+-- 模拟真实用户操作：点击、输入、导航。
+-- 测试关键用户路径：注册、登录、发布博客、评论。
+-- 运行在独立测试环境，避免影响生产数据。
+-
+-### 5.5 测试代码质量要求
+-- 测试代码与生产代码同标准，保持整洁可维护。
+-- 避免硬编码，使用工厂方法创建测试数据。
+-- 测试用例独立，不依赖执行顺序。
+-- 失败时提供清晰错误信息。
+-
+-### 5.6 测试类型总结
+-| 测试类型 | 测试对象 | 工具 | 执行频率 |
+-|----------|----------|------|----------|
+-| 单元测试 | 类、方法 | JUnit, Mockito | 每次提交 |
+-| 集成测试 | 模块交互 | SpringBootTest, Testcontainers | 每次合并 |
+-| 端到端测试 | 完整业务流程 | Cypress, Playwright | 每日/发布前 |
+-| 性能测试 | 关键接口响应时间 | JMeter, Gatling | 每周/版本发布 |
+-
+----
+-
+-## 六、DDD特定规范
+-
+-### 6.1 充血模型实现规范
+-- 实体包含数据和行为，业务逻辑内聚在实体内部。
+-- 每个业务方法不超过30行，参数不超过4个。
+-- 保护不变式：任何状态变更都经过验证。
+-- 无公开setter，使用有业务意义的方法（如 `publish()`、`cancel()`）。
+-- 发布领域事件：重要状态变更通过事件通知其他组件。
+-
+-### 6.2 聚合根设计原则
+-- 聚合根是聚合的入口，控制内部实体的一致性。
+-- 聚合边界内强一致性，边界间最终一致性。
+-- 暴露不可变视图：`Collections.unmodifiableList()`。
+-- 工厂方法创建复杂聚合。
+-
+-### 6.3 值对象使用规范
+-- 不可变：所有字段final，构造函数设置全部属性。
+-- 实现 `equals()` 和 `hashCode()`，基于所有字段。
+-- 包含丰富的业务方法：计算、验证、格式化。
+-- 优先使用值对象替代基本类型（如 `Money` 替代 `BigDecimal`）。
+-
+-### 6.4 领域服务与应用服务职责划分
+-- **领域服务**：处理跨多个实体的业务逻辑，无状态。
+-- **应用服务**：协调领域对象，事务管理，DTO转换，不包含业务逻辑。
+-- 应用服务方法不超过15行，只做编排。
+-
+-### 6.5 仓储模式实现
+-- 仓储接口定义在领域层。
+-- 实现类在基础设施层。
+-- 仓储方法返回聚合根或值对象，而非实体。
+-- 使用规范命名：`save()`、`findById()`、`delete()`。
+-
+----
+-
+-## 七、API设计规范
+-
+-### 7.1 RESTful API设计
+-- 资源命名：使用名词复数，如 `/blog-posts`、`/users`。
+-- HTTP方法：
+-  - `GET`：获取资源
+-  - `POST`：创建资源
+-  - `PUT`：全量更新资源
+-  - `PATCH`：部分更新资源
+-  - `DELETE`：删除资源
+-- 版本管理：URL路径包含版本号，如 `/api/v1/blog-posts`。
+-- 过滤、排序、分页：使用查询参数，如 `?page=1&size=10&sort=createdAt,desc`。
+-
+-### 7.2 请求/响应格式
+-- 请求体：JSON格式，使用小驼峰命名。
+-- 响应体：统一封装，包含状态码、消息、数据、时间戳。
+-- 日期时间：ISO 8601格式，如 `"2025-12-15T15:30:00"`。
+-
+-### 7.3 错误码设计
+-- 全局错误码：4位数字，前两位表示模块，后两位表示具体错误。
+-- 示例：`1001`（用户模块-用户不存在）、`2001`（博客模块-标题不能为空）。
+-- HTTP状态码映射：业务错误返回200，错误信息在body中。
+-
+-### 7.4 安全规范
+-- 认证：JWT令牌，有效期不宜过长。
+-- 授权：基于角色的访问控制（RBAC）。
+-- 输入校验：服务端必须校验，防止SQL注入、XSS攻击。
+-- 敏感接口限流、防刷。
+-- API文档使用OpenAPI 3.0（Swagger）。
+-
+----
+-
+-## 八、数据库规范
+-
+-### 8.1 表设计规范
+-- 表名：小写，下划线分隔，如 `blog_post`、`user_profile`。
+-- 字段名：小写，下划线分隔，如 `created_at`、`author_id`。
+-- 主键：使用BIGINT自增或雪花算法生成。
+-- 必备字段：`id`、`created_at`、`updated_at`、`deleted`（逻辑删除）。
+-- 索引：为查询条件字段建立索引，避免过多索引影响写性能。
+-
+-### 8.2 数据一致性保证
+-- 事务范围：尽量小，避免长事务。
+-- 乐观锁：使用 `version` 字段防止并发更新。
+-- 逻辑删除：使用 `deleted` 标志位，避免物理删除。
+-- 外键约束：数据库层或应用层保证。
+-
+-### 8.3 迁移脚本管理
+-- 使用Flyway或Liquibase管理数据库版本。
+-- 脚本命名：`V{版本号}__{描述}.sql`，如 `V1.0__create_blog_post_table.sql`。
+-- 回滚脚本：每个变更提供回滚脚本。
+-
+----
+-
+-## 九、部署与运维规范
+-
+-### 9.1 环境配置
+-- 环境变量管理：使用配置中心或K8s ConfigMap。
+-- 配置文件分离：`application-dev.yml`、`application-prod.yml`。
+-- 密钥管理：使用Vault或云服务密钥管理。
+-
+-### 9.2 日志收集
+-- 日志集中收集：ELK（Elasticsearch, Logstash, Kibana）或Loki。
+-- 结构化日志：输出JSON格式，便于解析。
+-- 日志保留策略：生产环境至少保留30天。
+-
+-### 9.3 监控指标
+-- 应用监控：Spring Boot Actuator + Prometheus + Grafana。
+-- 业务监控：关键业务指标（注册数、发布数、访问量）。
+-- 告警规则：设置错误率、响应时间、系统资源告警。
+-
+-### 9.4 性能优化
+-- 数据库查询优化：避免N+1查询，使用连接或批量查询。
+-- 缓存策略：Redis缓存热点数据，设置过期时间。
+-- 前端性能：代码分割、懒加载、图片优化、CDN加速。
+-
+----
+-
+-## 十、AI生成代码提示模板
+-
+-### 10.1 实体类生成提示
+-```
+-请生成充血模型的DDD实体代码，要求：
+-1. 数据+行为一体：实体包含丰富的业务方法
+-2. 每个业务方法不超过30行代码
+-3. 方法参数不超过4个
+-4. 保护不变式：所有状态变更都经过验证
+-5. 使用值对象替换基本类型
+-6. 提供工厂方法创建实例
+-7. 发布领域事件
+-8. 暴露不可变视图的内部集合
+-9. 包含业务计算属性（如isOverdue()）
+-10. 无公开setter方法，只有有业务意义的修改方法
+-```
+-
+-### 10.2 应用服务生成提示
+-```
+-请生成DDD应用服务代码，要求：
+-1. 类名以AppService结尾，如BlogPostAppService
+-2. 每个方法对应一个用例，不超过15行
+-3. 使用命令对象封装参数
+-4. 委托给领域对象执行业务逻辑，不在应用服务实现业务规则
+-5. 事务管理使用@Transactional
+-6. 返回统一响应对象
+-7. 发布应用事件
+-8. 异常处理使用全局异常处理器
+-```
+-
+-### 10.3 前端组件生成提示
+-```
+-请生成React组件代码，要求：
+-1. 使用函数组件和Hooks
+-2. 组件单一职责，不超过200行
+-3. 使用TypeScript定义Props和State
+-4. 错误处理使用try-catch或错误边界
+-5. 加载状态使用Suspense或自定义loading状态
+-6. 样式使用CSS Modules或Styled Components
+-7. 组件可复用，通过Props配置
+-8. 包含必要的PropTypes或TypeScript接口
+-```
+-
+-### 10.4 API接口生成提示
+-```
+-请生成RESTful API控制器代码，要求：
+-1. 使用@RestController，路径前缀/api/v1
+-2. 每个端点对应一个HTTP方法
+-3. 参数校验使用@Valid和自定义注解
+-4. 返回统一响应对象ApiResponse
+-5. 异常由全局异常处理器处理
+-6. 接口文档使用@Operation、@ApiResponse注解
+-7. 安全控制使用@PreAuthorize或自定义注解
+-8. 日志记录关键操作
+-```
+-
+----
+-
+-## 附录：检查清单汇总
+-
+-### 代码提交前自查清单
+-- [ ] 代码编译通过，无语法错误
+-- [ ] 单元测试通过，覆盖率达标
+-- [ ] 集成测试通过
+-- [ ] 代码符合命名规范
+-- [ ] 无硬编码敏感信息
+-- [ ] 日志记录恰当
+-- [ ] 异常处理完善
+-- [ ] 文档更新（如有必要）
+-
+-### 代码审查重点清单
+-- [ ] 架构符合DDD分层依赖
+-- [ ] 业务逻辑内聚在领域层
+-- [ ] 无重复代码
+-- [ ] 性能无潜在问题
+-- [ ] 安全无漏洞
+-- [ ] 测试覆盖充分
+-- [ ] 代码可读性高
+-
+----
+-
+-**版本历史**
+-- v1.0 (2025-12-15)：初始版本，基于现有DDD规范和项目实践制定。
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/CreateBlogPostRequest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/CreateBlogPostRequest.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/CreateBlogPostRequest.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/CreateBlogPostRequest.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/CreateBlogPostRequest.java	(date 1766480502051)
+@@ -32,8 +32,6 @@
+     @Size(max = 500, message = "摘要长度不能超过500个字符")
+     private String summary;
+     
+-    private String coverImage;
+-    
+     @Size(max = 50, message = "分类长度不能超过50个字符")
+     private String category;
+     
+Index: frontend/src/components/creator/ArticleList.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/creator/ArticleList.jsx b/frontend/src/components/creator/ArticleList.jsx
+--- a/frontend/src/components/creator/ArticleList.jsx	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/frontend/src/components/creator/ArticleList.jsx	(date 1766457281481)
+@@ -14,7 +14,7 @@
+   return (
+     <div className="space-y-6">
+       <div className="flex justify-between items-center">
+-        <h2 className="text-2xl font-bold text-gray-800">Manage Content</h2>
++        <h2 className="text-2xl font-bold text-gray-800">Manage Article</h2>
+         <button 
+           onClick={onCreateClick}
+           className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition flex items-center gap-2"
+Index: .trae/rules/项目全栈开发规范.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.trae/rules/项目全栈开发规范.md b/.trae/rules/项目全栈开发规范.md
+new file mode 100644
+--- /dev/null	(date 1766480498638)
++++ b/.trae/rules/项目全栈开发规范.md	(date 1766480498638)
+@@ -0,0 +1,147 @@
++# 个人博客系统全栈开发规范
++
++## 0. 规范索引
++本文件为项目核心总览规范，详细专项规范请参考：
++- **技术栈详情**: [技术栈分析.md](./技术栈分析.md)
++- **前端开发细节**: [项目前端开发规范.md](./项目前端开发规范.md)
++- **DDD设计细节**: [代码DDD规范.md](./代码DDD规范.md)
++- **充血模型指南**: [充血模型规范.md](./充血模型规范.md)
++
++---
++
++## 概述
++本规范适用于个人博客系统的全栈开发，涵盖后端（Java + Spring Boot + DDD）、前端（React + Vite）及基础设施。所有代码贡献必须遵循此规范。
++
++---
++
++## 一、 核心硬性指标 (Mandatory)
++以下指标为**一票否决**项，Code Review时必须严格检查：
++
++1.  **类长度**: 单个类源码 **< 300行** (理想 < 200行)。
++2.  **方法长度**: 单个方法源码 **< 30行** (理想 < 15行)。
++3.  **参数数量**: 方法参数 **< 4个** (超过需封装为Command/DTO)。
++4.  **圈复杂度**: 方法圈复杂度 **< 10** (超过需拆分)。
++5.  **分层依赖**: 
++    - 领域层 **严禁** 依赖应用层/基础设施层。
++    - 界面层 **严禁** 直接访问领域层（必须通过应用层）。
++6.  **充血模型**: 实体类 **必须** 包含业务行为，**严禁** 只有Getter/Setter的贫血模型。
++
++---
++
++## 二、 架构与目录规范
++
++### 2.1 后端DDD分层架构
++```
++backend/
++├── domain/                # [核心] 领域层：实体、值对象、领域服务、仓储接口
++├── application/           # [协调] 应用层：应用服务、DTO、Command、Event
++├── infrastructure/        # [支撑] 基础设施层：持久化、外部接口实现、配置
++├── interface/             # [接入] 用户界面层：Controller、RPC接口
++└── startup/               # [启动] 启动入口、全局配置
++```
++
++### 2.2 前端模块化架构
++```
++frontend/src/
++├── components/            # 展示组件 (UI Only)
++├── pages/                 # 容器组件 (State & Logic)
++├── hooks/                 # 逻辑复用 (Custom Hooks)
++├── services/              # API调用封装
++└── context/               # 全局状态
++```
++
++---
++
++## 三、 命名规范
++
++### 3.1 Java后端
++- **类名**: `PascalCase` (名词), 如 `BlogPost`, `OrderService`。
++- **方法**: `camelCase` (动词开头), 如 `createOrder`, `findActiveUsers`。
++- **测试类**: `TargetClass + Test`, 如 `OrderServiceTest`。
++- **实现类**: `Interface + Impl` (仅用于基础设施层), 领域层优先使用具体含义命名。
++
++### 3.2 React前端
++- **组件文件**: `PascalCase.jsx`, 如 `ArticleList.jsx`。
++- **Hooks**: `use + PascalCase`, 如 `useAuth`。
++- **常量**: `UPPER_SNAKE_CASE`, 如 `MAX_COUNT`。
++
++### 3.3 数据库
++- **表名**: `snake_case`, 如 `blog_post`, `user_role`。
++- **字段**: `snake_case`, 如 `created_at`, `is_deleted`。
++
++---
++
++## 四、 详细开发规范
++
++### 4.1 领域层 (Domain)
++- **实体 (Entity)**: 
++  - 必须包含业务逻辑（如 `publish()`, `changeTitle()`）。
++  - 属性私有，不直接暴露Setter，通过业务方法修改状态。
++  - 维护一致性，发布领域事件。
++- **值对象 (Value Object)**: 
++  - 不可变 (Immutable)。
++  - 包含自验证逻辑和无副作用的计算逻辑。
++- **领域服务 (Domain Service)**: 
++  - 仅处理跨实体的业务逻辑。
++  - 无状态。
++
++### 4.2 应用层 (Application)
++- **应用服务**: 
++  - **只做编排，不做业务**。
++  - 方法体通常很简单：准备数据 -> 调用领域对象 -> 持久化 -> 发布事件。
++  - 事务边界 (`@Transactional`)。
++- **DTO**: 数据传输对象，不包含逻辑。
++
++### 4.3 基础设施层 (Infrastructure)
++- 实现领域层的Repository接口。
++- 封装第三方API调用。
++- 捕获底层异常并转换为业务可理解的异常（或不处理由全局处理）。
++
++### 4.4 异常处理
++- **自定义异常**: 继承 `RuntimeException`，如 `BusinessException`。
++- **全局处理**: 使用 `@RestControllerAdvice` 统一返回标准JSON格式。
++- **原则**: 早抛出，晚捕获（由最外层统一处理）。
++
++---
++
++## 五、 数据库规范
++
++1.  **必备字段**: 
++    - `id` (主键, BIGINT/Snowflake)
++    - `created_at` (创建时间)
++    - `updated_at` (更新时间)
++    - `deleted` (逻辑删除标记, TINYINT)
++2.  **索引**: 外键字段必须加索引；经常作为查询条件的字段加索引。
++3.  **外键**: 生产环境通常禁用物理外键，由代码保证一致性。
++
++---
++
++## 六、 API设计规范 (RESTful)
++
++- **URL**: 名词复数，kebab-case。
++  - `GET /api/v1/articles`
++  - `POST /api/v1/articles`
++  - `GET /api/v1/articles/{id}`
++- **状态码**: 
++  - 200 OK: 成功
++  - 201 Created: 创建成功
++  - 400 Bad Request: 校验失败
++  - 401 Unauthorized: 未登录
++  - 403 Forbidden: 无权限
++  - 404 Not Found: 资源不存在
++  - 500 Internal Server Error: 系统错误
++
++---
++
++## 七、 测试规范
++
++- **单元测试**: 覆盖核心业务逻辑（领域层实体、服务）。
++- **Mock**: 外部依赖（DB、Redis、API）必须Mock。
++- **命名**: `should_ExpectedBehavior_when_State`。
++
++---
++
++## 八、 AI代码生成提示词 (Prompt Template)
++
++在请求AI生成代码时，请附带以下约束：
++> "请遵循项目DDD规范：类<300行，方法<30行，参数<4个。使用充血模型，业务逻辑封装在实体中。领域层不依赖外部。React组件使用函数式+Hooks。所有命名符合规范。"
+Index: backend/domain/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/pom.xml b/backend/domain/pom.xml
+--- a/backend/domain/pom.xml	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/domain/pom.xml	(date 1766480498674)
+@@ -36,5 +36,9 @@
+             <version>3.5.14</version>
+             <scope>compile</scope>
+         </dependency>
++        <dependency>
++            <groupId>org.springframework</groupId>
++            <artifactId>spring-web</artifactId>
++        </dependency>
+     </dependencies>
+ </project>
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/WebMvcConfig.java	(date 1766543063169)
+@@ -19,5 +19,12 @@
+ 
+         registry.addInterceptor(profileInterceptor).addPathPatterns(patternsAll);
+ 
++    }
++
++    @Override
++    public void addResourceHandlers(org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry registry) {
++        // Map /uploads/** to the local uploads directory
++        registry.addResourceHandler("/uploads/**")
++                .addResourceLocations("file:uploads/");
+     }
+ }
+Index: backend/application/pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/pom.xml b/backend/application/pom.xml
+--- a/backend/application/pom.xml	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/application/pom.xml	(date 1766480498649)
+@@ -39,5 +39,9 @@
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-validation</artifactId>
+         </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-web</artifactId>
++        </dependency>
+     </dependencies>
+ </project>
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/LocalFileStorageService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/LocalFileStorageService.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/LocalFileStorageService.java
+new file mode 100644
+--- /dev/null	(date 1766480502046)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/LocalFileStorageService.java	(date 1766480502046)
+@@ -0,0 +1,42 @@
++package com.personal.portfolio.blog.infrastructure.service;
++
++import com.personal.portfolio.blog.domain.service.FileStorageService;
++import lombok.extern.slf4j.Slf4j;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.stereotype.Service;
++
++import java.io.IOException;
++import java.io.InputStream;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.nio.file.StandardCopyOption;
++
++/**
++ * 本地文件存储服务实现
++ */
++@Service
++@Slf4j
++public class LocalFileStorageService implements FileStorageService {
++
++    @Value("${file.upload-dir:uploads}")
++    private String uploadDir;
++
++    @Override
++    public void store(String relativePath, InputStream content) {
++        try {
++            Path targetLocation = Paths.get(uploadDir).resolve(relativePath).normalize();
++            
++            // 确保目录存在
++            Files.createDirectories(targetLocation.getParent());
++            
++            // 保存文件
++            Files.copy(content, targetLocation, StandardCopyOption.REPLACE_EXISTING);
++            
++            log.info("文件已保存至: {}", targetLocation);
++        } catch (IOException e) {
++            log.error("无法保存文件: {}", relativePath, e);
++            throw new RuntimeException("文件存储失败", e);
++        }
++    }
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/PathUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/PathUtil.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/PathUtil.java
+new file mode 100644
+--- /dev/null	(date 1766475788959)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/PathUtil.java	(date 1766475788959)
+@@ -0,0 +1,35 @@
++package com.personal.portfolio.blog.infrastructure.util;
++
++/**
++ * 路径工具类
++ * 用于生成统一的文件路径格式
++ */
++public class PathUtil {
++    
++    /**
++     * 生成博客封面图片路径
++     * 格式: {blog_id}/cover/{filename}
++     *
++     * @param blogId 博客ID
++     * @param originalFilename 原始文件名
++     * @return 格式化后的路径字符串
++     */
++    public static String generateCoverPath(Long blogId, String originalFilename) {
++        if (blogId == null) {
++            throw new IllegalArgumentException("Blog ID cannot be null");
++        }
++        
++        // 确保文件名不包含路径分隔符，防止目录遍历
++        String safeFilename = originalFilename;
++        if (originalFilename != null) {
++            int lastSeparatorIndex = Math.max(originalFilename.lastIndexOf('/'), originalFilename.lastIndexOf('\\'));
++            if (lastSeparatorIndex >= 0) {
++                safeFilename = originalFilename.substring(lastSeparatorIndex + 1);
++            }
++        } else {
++            safeFilename = "cover.jpg"; // 默认文件名
++        }
++        
++        return String.format("%d/cover/%s", blogId, safeFilename);
++    }
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/FileUploadServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/FileUploadServiceImpl.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/FileUploadServiceImpl.java
+new file mode 100644
+--- /dev/null	(date 1766543063169)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/FileUploadServiceImpl.java	(date 1766543063169)
+@@ -0,0 +1,38 @@
++package com.personal.portfolio.blog.infrastructure.service;
++
++import com.personal.portfolio.blog.domain.model.BlogPost;
++import com.personal.portfolio.blog.domain.service.FileStorageService;
++import com.personal.portfolio.blog.domain.service.FileUploadService;
++import com.personal.portfolio.blog.infrastructure.util.PathUtil;
++import lombok.RequiredArgsConstructor;
++import lombok.extern.slf4j.Slf4j;
++import org.springframework.stereotype.Service;
++import org.springframework.web.multipart.MultipartFile;
++
++import java.io.IOException;
++
++/**
++ * 文件上传服务实现
++ */
++@Service
++@RequiredArgsConstructor
++@Slf4j
++public class FileUploadServiceImpl implements FileUploadService {
++    
++    private final FileStorageService fileStorageService;
++    
++    @Override
++    public String uploadCoverForBlog(BlogPost blogPost, MultipartFile coverFile) {
++        try (var inputStream = coverFile.getInputStream()) {
++            String originalFilename = coverFile.getOriginalFilename();
++            String coverPath = PathUtil.generateCoverPath(blogPost.getId(), originalFilename);
++            
++            fileStorageService.store(coverPath, inputStream);
++            return coverPath;
++            
++        } catch (IOException e) {
++            log.error("封面文件上传失败", e);
++            throw new RuntimeException("封面文件上传失败", e);
++        }
++    }
++}
+Index: .trae/rules/AI开发注意要点.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.trae/rules/AI开发注意要点.md b/.trae/rules/AI开发注意要点.md
+new file mode 100644
+--- /dev/null	(date 1766544552376)
++++ b/.trae/rules/AI开发注意要点.md	(date 1766544552376)
+@@ -0,0 +1,1425 @@
++# AI 开发注意要点
++
++## 概述
++
++本文档专注于 AI 生成代码时容易忽视或出错的地方，特别是 import 导入、依赖配置、注解使用等细节问题。旨在帮助开发者在使用 AI 辅助编程时避免常见陷阱，提高代码质量。
++
++---
++
++## 一、Import 导入常见问题
++
++### 1.1 缺少必要的 Spring 注解导入
++
++**问题示例：**
++```java
++// ❌ 错误：缺少 import 语句
++@Service
++public class UserService {
++    @Autowired
++    private UserRepository userRepository;
++    
++    // 编译错误：找不到 @Service、@Autowired 等注解
++}
++
++// ✅ 正确：完整的 import 语句
++import org.springframework.stereotype.Service;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.transaction.annotation.Transactional;
++
++@Service
++@Transactional
++public class UserService {
++    @Autowired
++    private UserRepository userRepository;
++}
++```
++
++**必须导入的常见 Spring 注解：**
++```java
++// 核心注解
++import org.springframework.stereotype.Service;
++import org.springframework.stereotype.Component;
++import org.springframework.stereotype.Repository;
++import org.springframework.stereotype.Controller;
++import org.springframework.web.bind.annotation.RestController;
++
++// 依赖注入
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.beans.factory.annotation.Qualifier;
++import org.springframework.beans.factory.annotation.Value;
++import javax.annotation.Resource;
++
++// 事务管理
++import org.springframework.transaction.annotation.Transactional;
++import org.springframework.transaction.annotation.Propagation;
++import org.springframework.transaction.annotation.Isolation;
++
++// Web 相关
++import org.springframework.web.bind.annotation.*;
++```
++
++### 1.2 Lombok 注解导入错误
++
++**问题示例：**
++```java
++// ❌ 错误：缺少 Lombok 注解处理器
++@Data  // 编译错误：找不到符号
++@Builder
++@AllArgsConstructor
++@NoArgsConstructor
++public class UserDTO {
++    private Long id;
++    private String name;
++}
++
++// ✅ 正确：确保项目中已添加 Lombok 依赖
++// pom.xml 中添加：
++// <dependency>
++//     <groupId>org.projectlombok</groupId>
++//     <artifactId>lombok</artifactId>
++//     <scope>provided</scope>
++// </dependency>
++
++// IDE 中需要安装 Lombok 插件
++```
++
++### 1.3 静态导入遗漏
++
++**问题示例：**
++```java
++// ❌ 错误：未使用静态导入
++@Test
++void testUserCreation() {
++    User user = new User();
++    user.setName("John");
++    
++    // 冗长的写法
++    org.assertj.core.api.Assertions.assertThat(user.getName()).isEqualTo("John");
++}
++
++// ✅ 正确：使用静态导入
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.junit.jupiter.api.Assertions.*;
++import static org.mockito.Mockito.*;
++
++@Test
++void testUserCreation() {
++    User user = new User();
++    user.setName("John");
++    
++    // 简洁的写法
++    assertThat(user.getName()).isEqualTo("John");
++}
++```
++
++### 1.4 包路径错误
++
++**问题示例：**
++```java
++// ❌ 错误：错误的包路径
++import java.until.Date;  // 拼写错误
++import org.springframwork.stereotype.Service;  // 拼写错误
++
++// ✅ 正确：正确的包路径
++import java.util.Date;
++import org.springframework.stereotype.Service;
++
++// 检查技巧：
++// 1. 使用 IDE 的自动导入功能
++// 2. 检查 Maven/Gradle 依赖是否正确
++// 3. 查看官方文档确认包名
++```
++
++### 1.5 去除无效引用
++
++// ❌ 错误：存在无效的import或者没有使用的字段
++---
++
++## 二、依赖注入配置陷阱
++
++### 2.1 @Autowired vs @Resource vs @Inject
++
++**使用场景对比：**
++
++| 注解 | 来源 | 特点 | 使用场景 |
++|------|------|------|----------|
++| `@Autowired` | Spring | 按类型注入，支持 required=false | Spring 项目首选 |
++| `@Resource` | JSR-250 | 按名称注入，支持 name 属性 | 需要按名称注入时 |
++| `@Inject` | JSR-330 | 按类型注入，需要 javax.inject 依赖 | 需要标准化注入时 |
++
++**代码示例：**
++```java
++// ✅ 推荐：使用构造器注入（Spring 4.3+）
++@Service
++@RequiredArgsConstructor  // Lombok 生成构造器
++public class UserService {
++    private final UserRepository userRepository;
++    private final PasswordEncoder passwordEncoder;
++    
++    // 无需 @Autowired，Spring 会自动注入
++}
++
++// ✅ 备选：使用字段注入（简单场景）
++@Service
++public class UserService {
++    @Autowired
++    private UserRepository userRepository;
++}
++
++// ✅ 按名称注入：使用 @Resource
++@Service
++public class OrderService {
++    @Resource(name = "alipayPaymentService")
++    private PaymentService paymentService;
++}
++```
++
++### 2.2 循环依赖处理
++
++**问题示例：**
++```java
++// ❌ 错误：循环依赖
++@Service
++public class ServiceA {
++    @Autowired
++    private ServiceB serviceB;  // ServiceB 依赖 ServiceA
++}
++
++@Service
++public class ServiceB {
++    @Autowired
++    private ServiceA serviceA;  // ServiceA 依赖 ServiceB
++}
++// 启动时报错：Requested bean is currently in creation
++
++// ✅ 解决方案：
++// 1. 使用构造器注入 + @Lazy
++@Service
++public class ServiceA {
++    private final ServiceB serviceB;
++    
++    public ServiceA(@Lazy ServiceB serviceB) {
++        this.serviceB = serviceB;
++    }
++}
++
++// 2. 使用方法注入
++@Service
++public class ServiceA {
++    private ServiceB serviceB;
++    
++    @Autowired
++    public void setServiceB(ServiceB serviceB) {
++        this.serviceB = serviceB;
++    }
++}
++
++// 3. 重构代码，消除循环依赖（推荐）
++// 提取公共逻辑到第三个服务中
++```
++
++### 2.3 Bean 名称冲突
++
++**问题示例：**
++```java
++// ❌ 错误：相同类型的多个 Bean
++@Configuration
++public class Config {
++    @Bean
++    public DataSource dataSource1() {
++        return new HikariDataSource();
++    }
++    
++    @Bean
++    public DataSource dataSource2() {
++        return new HikariDataSource();
++    }
++    // 报错：No qualifying bean of type 'DataSource' available
++}
++
++// ✅ 解决方案：
++// 1. 使用 @Qualifier
++@Configuration
++public class Config {
++    @Bean("primaryDataSource")
++    public DataSource dataSource1() {
++        return new HikariDataSource();
++    }
++    
++    @Bean("secondaryDataSource")
++    public DataSource dataSource2() {
++        return new HikariDataSource();
++    }
++}
++
++@Service
++public class UserService {
++    @Autowired
++    @Qualifier("primaryDataSource")
++    private DataSource dataSource;
++}
++
++// 2. 使用 @Primary 指定主 Bean
++@Configuration
++public class Config {
++    @Bean
++    @Primary  // 优先使用
++    public DataSource primaryDataSource() {
++        return new HikariDataSource();
++    }
++    
++    @Bean
++    public DataSource secondaryDataSource() {
++        return new HikariDataSource();
++    }
++}
++```
++
++---
++
++## 三、注解使用注意事项
++
++### 3.1 事务注解 @Transactional
++
++**常见陷阱：**
++```java
++// ❌ 错误：事务注解在私有方法上
++@Service
++public class OrderService {
++    @Transactional  // 不生效：Spring 使用代理，私有方法无法被代理
++    private void updateOrder(Order order) {
++        // 事务不会生效
++    }
++}
++
++// ❌ 错误：自调用问题
++@Service
++public class OrderService {
++    public void processOrder(Long orderId) {
++        updateOrderStatus(orderId);  // 事务不生效：自调用绕过代理
++    }
++    
++    @Transactional
++    public void updateOrderStatus(Long orderId) {
++        // 事务不会生效
++    }
++}
++
++// ✅ 正确用法：
++@Service
++@Transactional  // 类级别注解，所有公共方法都有事务
++public class OrderService {
++    // 方法可以覆盖类级别的事务配置
++    @Transactional(propagation = Propagation.REQUIRES_NEW)
++    public void updateOrderStatus(Long orderId) {
++        // 新事务中执行
++    }
++    
++    @Transactional(readOnly = true)  // 只读事务，优化性能
++    public Order getOrder(Long orderId) {
++        return orderRepository.findById(orderId);
++    }
++}
++
++// ✅ 解决自调用问题：
++@Service
++public class OrderService {
++    @Autowired
++    private OrderService selfProxy;  // 注入自身代理
++    
++    public void processOrder(Long orderId) {
++        selfProxy.updateOrderStatus(orderId);  // 通过代理调用，事务生效
++    }
++    
++    @Transactional
++    public void updateOrderStatus(Long orderId) {
++        // 事务生效
++    }
++}
++```
++
++### 3.2 验证注解 @Valid
++
++**常见错误：**
++```java
++// ❌ 错误：缺少 @Valid 或验证不生效
++@RestController
++public class UserController {
++    @PostMapping("/users")
++    public User createUser(@RequestBody UserRequest request) {  // 缺少 @Valid
++        // 请求体不会被验证
++        return userService.createUser(request);
++    }
++}
++
++// ✅ 正确：使用 @Valid 进行验证
++@RestController
++public class UserController {
++    @PostMapping("/users")
++    public User createUser(@Valid @RequestBody UserRequest request) {
++        // 请求体验证通过后执行
++        return userService.createUser(request);
++    }
++    
++    // 嵌套对象验证
++    @PostMapping("/orders")
++    public Order createOrder(@Valid @RequestBody OrderRequest request) {
++        return orderService.createOrder(request);
++    }
++}
++
++// 嵌套验证示例：
++public class OrderRequest {
++    @NotBlank
++    private String orderNo;
++    
++    @Valid  // 必须加在嵌套对象上
++    private List<OrderItemRequest> items;
++    
++    @Valid  // 必须加在嵌套对象上
++    private AddressRequest address;
++}
++
++public class OrderItemRequest {
++    @NotNull
++    private Long productId;
++    
++    @Min(1)
++    @Max(100)
++    private Integer quantity;
++}
++```
++
++### 3.3 Spring Boot 启动类注解
++
++**正确配置：**
++```java
++// ✅ 正确：Spring Boot 启动类
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++import org.springframework.boot.autoconfigure.domain.EntityScan;
++import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
++
++// 扫描多个包
++@SpringBootApplication(
++    scanBasePackages = {
++        "com.personal.portfolio.blog",
++        "com.personal.portfolio.common"
++    }
++)
++@EntityScan(basePackages = "com.personal.portfolio.blog.domain.model")
++@EnableJpaRepositories(basePackages = "com.personal.portfolio.blog.domain.repository")
++public class PersonalPortfolioApplication {
++    public static void main(String[] args) {
++        SpringApplication.run(PersonalPortfolioApplication.class, args);
++    }
++}
++
++// ❌ 错误：缺少必要的注解
++// 如果项目使用 JPA，但未添加 @EnableJpaRepositories 或 @EntityScan
++// 可能导致 Repository 或 Entity 无法被扫描到
++```
++
++---
++
++## 四、异常处理细节
++
++### 4.1 受检异常 vs 非受检异常
++
++**使用原则：**
++```java
++// ✅ 正确：业务异常使用非受检异常
++public class BusinessException extends RuntimeException {
++    private String errorCode;
++    
++    public BusinessException(String errorCode, String message) {
++        super(message);
++        this.errorCode = errorCode;
++    }
++    
++    // 业务异常应该包含错误码，便于前端处理
++}
++
++// 使用示例：
++@Service
++public class UserService {
++    public User getUser(Long userId) {
++        return userRepository.findById(userId)
++                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "用户不存在"));
++    }
++}
++
++// ✅ 正确：技术异常可考虑受检异常
++public class FileUploadException extends Exception {
++    // 文件上传失败，调用者可能需要处理
++}
++
++// ❌ 错误：过度使用受检异常
++public void processFile() throws IOException, SQLException, ParseException {
++    // 多个受检异常，调用者处理困难
++}
++
++// ✅ 改进：包装为运行时异常
++public void processFile() {
++    try {
++        // 文件处理逻辑
++    } catch (IOException e) {
++        throw new BusinessException("FILE_PROCESS_ERROR", "文件处理失败", e);
++    }
++}
++```
++
++### 4.2 全局异常处理器配置
++
++**完整配置示例：**
++```java
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.ExceptionHandler;
++import org.springframework.web.bind.annotation.RestControllerAdvice;
++import org.springframework.web.context.request.WebRequest;
++import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
++
++@RestControllerAdvice
++@Slf4j
++public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
++    
++    // 处理业务异常
++    @ExceptionHandler(BusinessException.class)
++    public ResponseEntity<ApiResponse<?>> handleBusinessException(
++            BusinessException ex, WebRequest request) {
++        log.warn("业务异常: {} - {}", ex.getErrorCode(), ex.getMessage());
++        
++        ApiResponse<?> response = ApiResponse.error(
++                ex.getErrorCode(),
++                ex.getMessage()
++        );
++        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
++    }
++    
++    // 处理验证异常
++    @ExceptionHandler(MethodArgumentNotValidException.class)
++    public ResponseEntity<ApiResponse<?>> handleValidationException(
++            MethodArgumentNotValidException ex) {
++        log.warn("参数验证失败: {}", ex.getMessage());
++        
++        List<String> errors = ex.getBindingResult()
++                .getFieldErrors()
++                .stream()
++                .map(error -> error.getField() + ": " + error.getDefaultMessage())
++                .collect(Collectors.toList());
++        
++        ApiResponse<?> response = ApiResponse.error(
++                "VALIDATION_FAILED",
++                "参数验证失败",
++                errors
++        );
++        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
++    }
++    
++    // 处理所有其他异常
++    @ExceptionHandler(Exception.class)
++    public ResponseEntity<ApiResponse<?>> handleAllExceptions(
++            Exception ex, WebRequest request) {
++        log.error("系统异常: ", ex);
++        
++        // 生产环境隐藏详细错误信息
++        String message = "prod".equals(env) ? 
++                "系统内部错误" : ex.getMessage();
++        
++        ApiResponse<?> response = ApiResponse.error(
++                "INTERNAL_SERVER_ERROR",
++                message
++        );
++        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
++                .body(response);
++    }
++}
++```
++
++### 4.3 异常消息国际化
++
++**配置示例：**
++```java
++// 1. 定义错误码枚举
++public enum ErrorCode {
++    USER_NOT_FOUND("user.not.found", "用户不存在"),
++    INVALID_PASSWORD("invalid.password", "密码错误"),
++    DUPLICATE_USERNAME("duplicate.username", "用户名已存在");
++    
++    private final String code;
++    private final String defaultMessage;
++    
++    // 构造函数、getter...
++}
++
++// 2. 使用 MessageSource 获取国际化消息
++@Service
++public class ErrorMessageService {
++    @Autowired
++    private MessageSource messageSource;
++    
++    public String getMessage(ErrorCode errorCode, Locale locale, Object... args) {
++        return messageSource.getMessage(
++                errorCode.getCode(),
++                args,
++                errorCode.getDefaultMessage(),
++                locale
++        );
++    }
++}
++
++// 3. 在异常处理器中使用
++@ExceptionHandler(BusinessException.class)
++public ResponseEntity<ApiResponse<?>> handleBusinessException(
++        BusinessException ex, 
++        HttpServletRequest request) {
++    
++    Locale locale = request.getLocale();
++    String message = errorMessageService.getMessage(
++            ex.getErrorCode(), 
++            locale,
++            ex.getArgs()
++    );
++    
++    // 返回国际化后的消息
++}
++```
++
++---
++
++## 五、类型转换和空值处理
++
++### 5.1 Optional 的正确使用
++
++**常见错误：**
++```java
++// ❌ 错误：Optional 使用不当
++public String getUserName(Long userId) {
++    Optional<User> user = userRepository.findById(userId);
++    
++    if (user.isPresent()) {
++        return user.get().getName();  // 直接使用 get()
++    }
++    return null;
++}
++
++// ❌ 错误：不必要的 Optional
++public Optional<String> getUserName(Long userId) {
++    User user = userRepository.findById(userId).orElse(null);
++    return Optional.ofNullable(user).map(User::getName);
++    // 过于复杂，直接返回 null 或 Optional 即可
++}
++
++// ✅ 正确：简洁的 Optional 使用
++public String getUserName(Long userId) {
++    return userRepository.findById(userId)
++            .map(User::getName)
++            .orElse(null);  // 或 orElse("默认值")
++}
++
++public Optional<String> getUserNameOptional(Long userId) {
++    return userRepository.findById(userId)
++            .map(User::getName);
++}
++
++// ✅ 正确：链式调用
++public String getUserEmail(Long userId) {
++    return userRepository.findById(userId)
++            .flatMap(User::getProfile)  // profile 也是 Optional
++            .map(Profile::getEmail)
++            .orElse("default@example.com");
++}
++```
++
++### 5.2 空指针防护
++
++**防御性编程：**
++```java
++// ❌ 错误：多层嵌套的空值检查
++public String getCityName(User user) {
++    if (user != null) {
++        Address address = user.getAddress();
++        if (address != null) {
++            return address.getCity();
++        }
++    }
++    return null;
++}
++
++// ✅ 正确：使用 Optional 链
++public String getCityName(User user) {
++    return Optional.ofNullable(user)
++            .map(User::getAddress)
++            .map(Address::getCity)
++            .orElse(null);
++}
++
++// ✅ 正确：使用 Objects.requireNonNull
++public void updateUser(User user, String newName) {
++    Objects.requireNonNull(user, "用户不能为空");
++    Objects.requireNonNull(newName, "新名称不能为空");
++    
++    user.setName(newName);
++}
++
++// ✅ 正确：使用 @NonNull 注解（Lombok 或 Spring）
++public void updateUser(@NonNull User user, @NonNull String newName) {
++    // Lombok 或 Spring 会在编译时或运行时检查空值
++    user.setName(newName);
++}
++```
++
++### 5.3 集合的空值处理
++
++**安全处理集合：**
++```java
++// ❌ 错误：可能返回 null 的集合
++public List<String> getUserNames() {
++    if (someCondition) {
++        return null;  // 返回 null 会导致调用者 NPE
++    }
++    return Arrays.asList("Alice", "Bob");
++}
++
++// ✅ 正确：返回空集合
++public List<String> getUserNames() {
++    if (someCondition) {
++        return Collections.emptyList();  // 不可变空列表
++    }
++    return Arrays.asList("Alice", "Bob");
++}
++
++// ✅ 正确：处理可能为 null 的集合
++public void processNames(List<String> names) {
++    // 使用 CollectionUtils 或 Stream API
++    List<String> safeNames = Optional.ofNullable(names)
++            .orElse(Collections.emptyList());
++    
++    safeNames.stream()
++            .filter(Objects::nonNull)
++            .forEach(this::processName);
++}
++
++// ✅ 正确：使用 Apache Commons 或 Spring 工具类
++import org.apache.commons.collections4.CollectionUtils;
++import org.springframework.util.CollectionUtils;
++
++public void processNames(List<String> names) {
++    if (CollectionUtils.isEmpty(names)) {
++        return;  // 安全处理空集合
++    }
++    // 处理逻辑
++}
++```
++
++---
++
++## 六、测试中的常见陷阱
++
++### 6.1 Mockito 配置错误
++
++**常见问题：**
++```java
++// ❌ 错误：Mockito 注解未生效
++public class UserServiceTest {
++    @Mock
++    private UserRepository userRepository;  // 未初始化
++    
++    @InjectMocks
++    private UserService userService;  // 依赖未注入
++    
++    @Test
++    void testGetUser() {
++        // userRepository 为 null，导致 NPE
++        userService.getUser(1L);
++    }
++}
++
++// ✅ 正确：初始化 Mockito 注解
++@ExtendWith(MockitoExtension.class)  // JUnit 5
++// 或 @RunWith(MockitoJUnitRunner.class)  // JUnit 4
++public class UserServiceTest {
++    @Mock
++    private UserRepository userRepository;
++    
++    @InjectMocks
++    private UserService userService;
++    
++    @BeforeEach
++    void setUp() {
++        // 如果有额外初始化，可以在这里进行
++        // MockitoAnnotations.openMocks(this);  // 手动初始化
++    }
++    
++    @Test
++    void testGetUser() {
++        // 配置 Mock
++        when(userRepository.findById(1L))
++                .thenReturn(Optional.of(new User()));
++        
++        // 执行测试
++        User user = userService.getUser(1L);
++        
++        // 验证
++        assertNotNull(user);
++        verify(userRepository).findById(1L);
++    }
++}
++```
++
++### 6.2 测试数据清理
++
++**数据库测试注意事项：**
++```java
++// ❌ 错误：测试数据未清理
++@DataJpaTest
++@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
++public class UserRepositoryTest {
++    @Autowired
++    private UserRepository userRepository;
++    
++    @Test
++    void testSaveUser() {
++        User user = new User("test");
++        userRepository.save(user);
++        // 测试后数据留在数据库中，影响其他测试
++    }
++}
++
++// ✅ 正确：使用事务回滚
++@DataJpaTest
++@Transactional  // 测试后自动回滚
++@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
++public class UserRepositoryTest {
++    @Autowired
++    private UserRepository userRepository;
++    
++    @Test
++    void testSaveUser() {
++        User user = new User("test");
++        userRepository.save(user);
++        
++        // 验证
++        assertTrue(userRepository.existsById(user.getId()));
++        // 测试结束后自动回滚，数据库状态不变
++    }
++}
++
++// ✅ 正确：使用 @DirtiesContext
++@SpringBootTest
++@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
++public class IntegrationTest {
++    // 每个测试方法后重新加载 Spring 上下文
++    // 注意：性能开销较大
++}
++
++// ✅ 正确：手动清理
++@DataJpaTest
++public class UserRepositoryTest {
++    @Autowired
++    private UserRepository userRepository;
++    
++    @AfterEach
++    void tearDown() {
++        userRepository.deleteAll();  // 手动清理
++    }
++}
++```
++
++### 6.3 集成测试环境配置
++
++**多环境测试配置：**
++```java
++// ✅ 正确：测试配置文件
++// src/test/resources/application-test.yml
++spring:
++  datasource:
++    url: jdbc:h2:mem:testdb;MODE=MySQL
++    driver-class-name: org.h2.Driver
++    username: sa
++    password: 
++  jpa:
++    database-platform: org.hibernate.dialect.H2Dialect
++    hibernate:
++      ddl-auto: create-drop
++    show-sql: true
++
++// 使用 Testcontainers 进行真实数据库测试
++@Testcontainers
++@DataJpaTest
++@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
++public class UserRepositoryTest {
++    @Container
++    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13")
++            .withDatabaseName("testdb")
++            .withUsername("test")
++            .withPassword("test");
++    
++    @DynamicPropertySource
++    static void properties(DynamicPropertyRegistry registry) {
++        registry.add("spring.datasource.url", postgres::getJdbcUrl);
++        registry.add("spring.datasource.username", postgres::getUsername);
++        registry.add("spring.datasource.password", postgres::getPassword);
++    }
++    
++    // 测试方法...
++}
++```
++
++---
++
++## 七、配置文件细节
++
++### 7.1 YAML 格式问题
++
++**常见错误：**
++```yaml
++# ❌ 错误：缩进不一致
++spring:
++  datasource:
++    url: jdbc:mysql://localhost:3306/db
++      username: root  # 错误：缩进多了
++    password: 123456
++
++# ❌ 错误：错误的值类型
++server:
++  port: "8080"  # 应该是数字，不是字符串
++
++# ✅ 正确：规范的 YAML 格式
++spring:
++  datasource:
++    url: jdbc:mysql://localhost:3306/blog_db?useSSL=false&serverTimezone=UTC
++    username: root
++    password: 123456
++    driver-class-name: com.mysql.cj.jdbc.Driver
++    hikari:
++      connection-timeout: 30000
++      maximum-pool-size: 10
++  
++  jpa:
++    hibernate:
++      ddl-auto: update  # 开发环境使用 update，生产环境使用 validate
++    properties:
++      hibernate:
++        dialect: org.hibernate.dialect.MySQL8Dialect
++        format_sql: true
++    show-sql: true
++  
++  # 多环境配置
++  profiles:
++    active: dev
++
++# 使用 --- 分隔文档块
++---
++spring:
++  config:
++    activate:
++      on-profile: prod
++  datasource:
++    url: jdbc:mysql://prod-db:3306/blog_db
++```
++
++### 7.2 环境变量注入
++
++**正确使用环境变量：**
++```java
++// ✅ 正确：使用 @Value 注入
++@Component
++public class ApiConfig {
++    @Value("${api.base-url:https://api.example.com}")  // 默认值
++    private String apiBaseUrl;
++    
++    @Value("${api.timeout:5000}")
++    private int timeout;
++}
++
++// ✅ 正确：使用 @ConfigurationProperties
++@ConfigurationProperties(prefix = "app.mail")
++@Component
++@Data  // Lombok
++public class MailProperties {
++    private String host = "smtp.gmail.com";  // 默认值
++    private int port = 587;
++    private String username;
++    private String password;
++    private boolean debug = false;
++}
++
++// application.yml 配置：
++app:
++  mail:
++    host: smtp.gmail.com
++    port: 587
++    username: ${MAIL_USERNAME:default@gmail.com}  # 环境变量优先
++    password: ${MAIL_PASSWORD}
++    debug: true
++
++// 系统环境变量设置：
++// export MAIL_USERNAME=myemail@gmail.com
++// export MAIL_PASSWORD=mypassword
++```
++
++### 7.3 配置类注意事项
++
++**配置类最佳实践：**
++```java
++// ✅ 正确：使用 @Configuration 和 @Bean
++@Configuration
++@EnableConfigurationProperties(MailProperties.class)  // 启用配置属性
++public class AppConfig {
++    
++    @Bean
++    @ConditionalOnMissingBean  // 如果不存在则创建
++    public ObjectMapper objectMapper() {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
++        mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
++        return mapper;
++    }
++    
++    @Bean
++    @ConditionalOnProperty(name = "app.cache.enabled", havingValue = "true")
++    public CacheManager cacheManager() {
++        // 根据配置决定是否创建缓存管理器
++        return new ConcurrentMapCacheManager("users", "posts");
++    }
++    
++    // 多环境配置
++    @Bean
++    @Profile("dev")  // 仅开发环境
++    public DataSource devDataSource() {
++        // 开发环境数据源
++    }
++    
++    @Bean
++    @Profile("prod")  // 仅生产环境
++    public DataSource prodDataSource() {
++        // 生产环境数据源
++    }
++}
++```
++
++---
++
++## 八、前端开发注意点
++
++### 8.1 React Hooks 依赖项
++
++**useEffect 依赖项问题：**
++```javascript
++// ❌ 错误：缺少依赖项导致 stale closure
++function UserProfile({ userId }) {
++    const [user, setUser] = useState(null);
++    
++    useEffect(() => {
++        // 缺少 userId 依赖，当 userId 变化时不会重新获取
++        fetchUser(userId).then(setUser);
++    }, []);  // 空依赖数组
++    
++    return <div>{user?.name}</div>;
++}
++
++// ✅ 正确：包含所有依赖
++function UserProfile({ userId }) {
++    const [user, setUser] = useState(null);
++    
++    useEffect(() => {
++        if (!userId) return;
++        
++        fetchUser(userId).then(setUser);
++    }, [userId]);  // 包含 userId 依赖
++    
++    return <div>{user?.name}</div>;
++}
++
++// ✅ 正确：使用 useCallback 避免重复创建函数
++function UserProfile({ userId }) {
++    const [user, setUser] = useState(null);
++    
++    const fetchUserData = useCallback(async () => {
++        if (!userId) return;
++        const data = await fetchUser(userId);
++        setUser(data);
++    }, [userId]);  // 依赖项正确
++    
++    useEffect(() => {
++        fetchUserData();
++    }, [fetchUserData]);  // 依赖 fetchUserData
++    
++    return <div>{user?.name}</div>;
++}
++```
++
++### 8.2 状态更新时机
++
++**异步状态更新问题：**
++```javascript
++// ❌ 错误：连续设置状态
++function Counter() {
++    const [count, setCount] = useState(0);
++    
++    const incrementTwice = () => {
++        setCount(count + 1);  // count 是闭包中的旧值
++        setCount(count + 1);  // 仍然是旧值，不会累加
++    };
++    
++    return (
++        <div>
++            <p>Count: {count}</p>
++            <button onClick={incrementTwice}>+2</button>
++        </div>
++    );
++}
++
++// ✅ 正确：使用函数式更新
++function Counter() {
++    const [count, setCount] = useState(0);
++    
++    const incrementTwice = () => {
++        setCount(prev => prev + 1);  // 使用前一个状态
++        setCount(prev => prev + 1);  // 正确累加
++    };
++    
++    return (
++        <div>
++            <p>Count: {count}</p>
++            <button onClick={incrementTwice}>+2</button>
++        </div>
++    );
++}
++
++// ✅ 正确：批量更新
++function UserForm() {
++    const [user, setUser] = useState({ name: '', email: '' });
++    
++    const handleChange = (field, value) => {
++        setUser(prev => ({
++            ...prev,
++            [field]: value
++        }));  // 合并更新
++    };
++    
++    // 而不是：
++    // setUser({ ...user, name: value });  // 可能使用旧状态
++}
++```
++
++### 8.3 API 调用错误处理
++
++**完整的 API 调用模式：**
++```javascript
++// ✅ 正确：使用 async/await 和错误处理
++function useUserData(userId) {
++    const [data, setData] = useState(null);
++    const [loading, setLoading] = useState(false);
++    const [error, setError] = useState(null);
++    
++    useEffect(() => {
++        const fetchData = async () => {
++            if (!userId) return;
++            
++            setLoading(true);
++            setError(null);
++            
++            try {
++                const response = await fetch(`/api/users/${userId}`);
++                
++                if (!response.ok) {
++                    throw new Error(`HTTP ${response.status}`);
++                }
++                
++                const result = await response.json();
++                setData(result);
++            } catch (err) {
++                setError(err.message);
++                console.error('Failed to fetch user:', err);
++            } finally {
++                setLoading(false);
++            }
++        };
++        
++        fetchData();
++    }, [userId]);
++    
++    return { data, loading, error };
++}
++
++// ✅ 正确：使用 AbortController 取消请求
++function useUserData(userId) {
++    const [data, setData] = useState(null);
++    
++    useEffect(() => {
++        const abortController = new AbortController();
++        
++        const fetchData = async () => {
++            try {
++                const response = await fetch(`/api/users/${userId}`, {
++                    signal: abortController.signal
++                });
++                
++                const result = await response.json();
++                setData(result);
++            } catch (err) {
++                if (err.name !== 'AbortError') {
++                    console.error('Failed to fetch user:', err);
++                }
++            }
++        };
++        
++        if (userId) {
++            fetchData();
++        }
++        
++        return () => {
++            abortController.abort();  // 组件卸载时取消请求
++        };
++    }, [userId]);
++    
++    return data;
++}
++```
++
++---
++
++## 九、数据库相关
++
++### 9.1 实体类与数据库映射
++
++**JPA 实体常见问题：**
++```java
++// ❌ 错误：缺少必要的注解
++public class User {
++    private Long id;  // 缺少 @Id
++    private String name;
++    // 默认表名为 user，但在某些数据库中可能是关键字
++}
++
++// ❌ 错误：错误的关联映射
++@Entity
++public class Order {
++    @OneToMany
++    private List<OrderItem> items;  // 缺少 mappedBy，会创建中间表
++    
++    // 未指定级联操作和加载策略
++}
++
++// ✅ 正确：完整的实体定义
++import javax.persistence.*;
++import java.time.LocalDateTime;
++
++@Entity
++@Table(name = "app_user")  // 避免使用数据库关键字
++@Data  // Lombok
++@NoArgsConstructor
++@AllArgsConstructor
++@Builder
++public class User {
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++    
++    @Column(name = "user_name", nullable = false, length = 50)
++    private String name;
++    
++    @Column(unique = true, nullable = false)
++    private String email;
++    
++    @Column(name = "created_at")
++    private LocalDateTime createdAt;
++    
++    @Column(name = "updated_at")
++    private LocalDateTime updatedAt;
++    
++    @PrePersist
++    protected void onCreate() {
++        createdAt = LocalDateTime.now();
++        updatedAt = LocalDateTime.now();
++    }
++    
++    @PreUpdate
++    protected void onUpdate() {
++        updatedAt = LocalDateTime.now();
++    }
++}
++
++// ✅ 正确：关联映射
++@Entity
++public class Order {
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++    
++    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
++    private List<OrderItem> items = new ArrayList<>();
++    
++    @ManyToOne(fetch = FetchType.LAZY)  // 推荐懒加载
++    @JoinColumn(name = "user_id")
++    private User user;
++    
++    // 辅助方法维护双向关联
++    public void addItem(OrderItem item) {
++        items.add(item);
++        item.setOrder(this);
++    }
++}
++```
++
++### 9.2 枚举类型处理
++
++**枚举映射策略：**
++```java
++// ❌ 错误：枚举使用默认映射
++public enum OrderStatus {
++    PENDING,   // 数据库存储为 0
++    PAID,      // 数据库存储为 1
++    SHIPPED,   // 数据库存储为 2
++    DELIVERED  // 数据库存储为 3
++}
++
++@Entity
++public class Order {
++    private OrderStatus status;  // 默认使用 ORDINAL，修改顺序会破坏数据
++}
++
++// ✅ 正确：使用 STRING 类型
++public enum OrderStatus {
++    PENDING("pending"),
++    PAID("paid"),
++    SHIPPED("shipped"),
++    DELIVERED("delivered");
++    
++    private final String code;
++    
++    OrderStatus(String code) {
++        this.code = code;
++    }
++    
++    public String getCode() {
++        return code;
++    }
++}
++
++@Entity
++public class Order {
++    @Enumerated(EnumType.STRING)  // 存储为字符串
++    @Column(name = "status", length = 20)
++    private OrderStatus status;
++}
++
++// ✅ 正确：使用自定义转换器
++@Converter(autoApply = true)
++public class OrderStatusConverter implements AttributeConverter<OrderStatus, String> {
++    @Override
++    public String convertToDatabaseColumn(OrderStatus status) {
++        return status != null ? status.getCode() : null;
++    }
++    
++    @Override
++    public OrderStatus convertToEntityAttribute(String code) {
++        if (code == null) return null;
++        
++        return Arrays.stream(OrderStatus.values())
++                .filter(s -> s.getCode().equals(code))
++                .findFirst()
++                .orElseThrow(() -> new IllegalArgumentException("未知状态: " + code));
++    }
++}
++```
++
++### 9.3 乐观锁配置
++
++**防止并发更新问题：**
++```java
++// ✅ 正确：使用 @Version 实现乐观锁
++@Entity
++public class Product {
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++    
++    private String name;
++    
++    @Column(name = "stock_quantity")
++    private Integer stockQuantity;
++    
++    @Version  // 乐观锁版本字段
++    private Integer version;
++    
++    // 减少库存的方法，考虑并发
++    public boolean reduceStock(Integer quantity) {
++        if (stockQuantity < quantity) {
++            return false;
++        }
++        
++        this.stockQuantity -= quantity;
++        return true;
++    }
++}
++
++// 使用示例：
++@Service
++@Transactional
++public class ProductService {
++    @Autowired
++    private ProductRepository productRepository;
++    
++    public boolean purchase(Long productId, Integer quantity) {
++        Product product = productRepository.findById(productId)
++                .orElseThrow(() -> new BusinessException("PRODUCT_NOT_FOUND"));
++        
++        // 在事务中处理，如果版本冲突会抛出 OptimisticLockingFailureException
++        boolean success = product.reduceStock(quantity);
++        
++        if (success) {
++            productRepository.save(product);  // 保存时会检查版本
++            return true;
++        }
++        
++        return false;
++    }
++}
++
++// 处理乐观锁异常：
++@ExceptionHandler(OptimisticLockingFailureException.class)
++public ResponseEntity<ApiResponse<?>> handleOptimisticLockingFailure(
++        OptimisticLockingFailureException ex) {
++    
++    log.warn("乐观锁异常: {}", ex.getMessage());
++    
++    return ResponseEntity.status(HttpStatus.CONFLICT)
++            .body(ApiResponse.error(
++                    "CONCURRENT_MODIFICATION",
++                    "数据已被其他用户修改，请刷新后重试"
++            ));
++}
++```
++
++---
++
++## 总结
++
++AI 生成代码时容易忽视的细节问题主要集中在：
++
++1. **Import 和依赖**：缺少必要的导入语句，依赖版本冲突
++2. **注解使用**：注解配置错误，作用域不当
++3. **异常处理**：异常类型选择不当，错误信息不完整
++4. **空值处理**：未考虑空值情况，导致 NPE
++5. **测试配置**：测试环境配置错误，测试数据污染
++6. **并发问题**：未考虑线程安全，缺少锁机制
++7. **数据库映射**：ORM 配置错误，性能问题
++8. **前端状态管理**：状态更新时机错误，内存泄漏
++
++开发时应特别注意这些方面，结合本文档提供的示例和解决方案，可以有效避免常见错误，提高代码质量。
++
++**最后提醒：**
++- 始终检查生成的代码是否包含必要的 import 语句
++- 验证注解配置是否符合框架要求
++- 考虑边界情况和异常场景
++- 编写全面的单元测试
++- 进行代码审查，特别是 AI 生成的代码
++
++---
++**文档版本：** v1.0  
++**更新日期：** 2025-12-23  
++**适用范围：** 个人博客项目全栈开发
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileUploadService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileUploadService.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileUploadService.java
+new file mode 100644
+--- /dev/null	(date 1766480502045)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileUploadService.java	(date 1766480502045)
+@@ -0,0 +1,17 @@
++package com.personal.portfolio.blog.domain.service;
++
++import com.personal.portfolio.blog.domain.model.BlogPost;
++import org.springframework.web.multipart.MultipartFile;
++
++/**
++ * 文件上传领域服务接口
++ */
++public interface FileUploadService {
++    /**
++     * 为博客文章上传封面
++     * @param blogPost 博客文章实体
++     * @param coverFile 封面文件
++     * @return 上传后的封面文件路径
++     */
++    String uploadCoverForBlog(BlogPost blogPost, MultipartFile coverFile);
++}
+Index: frontend/src/services/blogService.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/services/blogService.js b/frontend/src/services/blogService.js
+--- a/frontend/src/services/blogService.js	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/frontend/src/services/blogService.js	(date 1766543063188)
+@@ -67,3 +67,17 @@
+ export const deleteBlogPost = async (id) => {
+   return await api.delete(`${API_BASE_PATH}/${id}`);
+ };
++
++/**
++ * Upload blog post cover image
++ */
++export const uploadCover = async (id, file) => {
++  const formData = new FormData();
++  formData.append('file', file);
++  
++  return await api.post(`${API_BASE_PATH}/${id}/cover`, formData, {
++    headers: {
++      'Content-Type': 'multipart/form-data'
++    }
++  });
++};
+Index: .trae/rules/project_rules.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.trae/rules/project_rules.md b/.trae/rules/project_rules.md
+new file mode 100644
+--- /dev/null	(date 1766475030964)
++++ b/.trae/rules/project_rules.md	(date 1766475030964)
+@@ -0,0 +1,28 @@
++# 项目开发规范文档库
++
++本目录存放项目所有的开发规范与技术文档。
++
++## 核心规范
++- **[项目全栈开发规范.md](./项目全栈开发规范.md)** (⭐ **主入口**)
++    - 包含核心硬性指标（代码行数、复杂度等）
++    - 包含前后端架构概览
++    - 包含命名与数据库规范
++
++## 专项规范
++- **[项目前端开发规范.md](./项目前端开发规范.md)**
++    - React + Vite + Tailwind 开发细节
++    - 组件与目录结构详解
++- **[代码DDD规范.md](./代码DDD规范.md)**
++    - 领域驱动设计深度指南
++    - 各层职责与代码示例
++- **[充血模型规范.md](./充血模型规范.md)**
++    - 实体设计与业务行为封装指南
++    - 贫血模型 vs 充血模型对比
++
++## 技术资料
++- **[技术栈分析.md](./技术栈分析.md)**
++    - 当前项目使用的技术栈详细分析
++
++## 注意点
++- **[AI开发注意要点.md](./AI开发注意要点.md)**
++  - AI开发需要注意的事项
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileStorageService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileStorageService.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileStorageService.java
+new file mode 100644
+--- /dev/null	(date 1766480502044)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/FileStorageService.java	(date 1766480502044)
+@@ -0,0 +1,17 @@
++package com.personal.portfolio.blog.domain.service;
++
++import java.io.InputStream;
++
++/**
++ * 文件存储服务接口
++ * 定义在领域层，实现由基础设施层提供
++ */
++public interface FileStorageService {
++    
++    /**
++     * 存储文件
++     * @param path 文件路径
++     * @param content 文件内容流
++     */
++    void store(String path, InputStream content);
++}
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java	(date 1766543063169)
+@@ -2,6 +2,7 @@
+ 
+ import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
+ import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
++import com.personal.portfolio.blog.application.service.BlogCreateAppService;
+ import com.personal.portfolio.blog.application.service.BlogPostAppService;
+ import com.personal.portfolio.blog.domain.common.PageResult;
+ import com.personal.portfolio.blog.domain.context.CurrentUserContext;
+@@ -11,6 +12,7 @@
+ import com.personal.portfolio.blog.interfaces.exception.AuthenticationException;
+ 
+ import org.springframework.web.bind.annotation.*;
++import org.springframework.web.multipart.MultipartFile;
+ 
+ import java.util.List;
+ 
+@@ -27,6 +29,7 @@
+ public class BlogPostController {
+     
+     private final BlogPostAppService blogPostAppService;
++    private final BlogCreateAppService blogcreateAppService;
+     private final CurrentUserContext currentUserContext;
+     private static final Converter converter = new Converter();
+ 
+@@ -43,9 +46,17 @@
+         
+         CreateBlogPostCommand command = converter.convert(request, CreateBlogPostCommand.class);
+         command.setAuthorId(authorId);
+-        
++
+         // 使用命令对象调用应用服务
+-        return blogPostAppService.createBlogPost(command);
++        return blogcreateAppService.createBlogPost(command);
++    }
++
++    /**
++     * 上传博客封面图片
++     */
++    @PostMapping("/{id}/cover")
++    public String uploadCover(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
++        return blogcreateAppService.uploadCover(id, file);
+     }
+     
+     /**
+@@ -105,7 +116,7 @@
+             request.getSlug(), 
+             request.getContent(),
+             request.getSummary(),
+-            request.getCoverImage(),
++            request.getCoverFilePath(),
+             request.getCategory(),
+             request.getTags()
+         );
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/BlogPostEntity.java	(date 1766480502045)
+@@ -36,8 +36,8 @@
+     @TableField("summary")
+     private String summary;
+     
+-    @TableField("cover_image")
+-    private String coverImage;
++    @TableField("cover_file_path")
++    private String coverFilePath;
+     
+     @TableField("category")
+     private String category;
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/UpdateBlogPostRequest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/UpdateBlogPostRequest.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/UpdateBlogPostRequest.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/UpdateBlogPostRequest.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/request/UpdateBlogPostRequest.java	(date 1766543063185)
+@@ -28,7 +28,7 @@
+     @Size(max = 500, message = "摘要长度不能超过500个字符")
+     private String summary;
+     
+-    private String coverImage;
++    private String coverFilePath;
+     
+     @Size(max = 50, message = "分类长度不能超过50个字符")
+     private String category;
+Index: frontend/src/pages/CreatorCenter.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/CreatorCenter.jsx b/frontend/src/pages/CreatorCenter.jsx
+--- a/frontend/src/pages/CreatorCenter.jsx	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/frontend/src/pages/CreatorCenter.jsx	(date 1766544301508)
+@@ -1,5 +1,5 @@
+ import React, { useState, useEffect } from 'react'
+-import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost, publishBlogPost } from '../services/blogService'
++import { getBlogPosts, createBlogPost, updateBlogPost, deleteBlogPost, publishBlogPost, uploadCover } from '../services/blogService'
+ import { useAuth } from '../context/AuthContext'
+ import { LayoutDashboard, PenTool, FileText, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
+ import DashboardStats from '../components/creator/DashboardStats'
+@@ -35,6 +35,12 @@
+     views: 0
+   })
+ 
++  // Editor Settings State
++  const [editorSettings, setEditorSettings] = useState({
++    autoSaveEnabled: true,
++    autoSaveInterval: 30000
++  })
++
+   useEffect(() => {
+     if (activeView === VIEWS.MANAGE || activeView === VIEWS.DASHBOARD) {
+       loadArticles(currentPage)
+@@ -97,7 +103,7 @@
+     }
+   }
+ 
+-  const handleSave = async (formData, isPublish = false) => {
++  const handleSave = async (formData, isPublish = false, isAutoSave = false) => {
+     try {
+       const slug = formData.title
+         .toLowerCase()
+@@ -115,27 +121,50 @@
+       
+       let savedArticle
+       if (editingArticle) {
+-        savedArticle = await updateBlogPost(editingArticle.id, blogPostData)
++        // Only include coverFilePath for updates (to handle clearing/changing existing covers)
++        const updateData = {
++          ...blogPostData,
++          coverFilePath: formData.coverFilePath && formData.coverFilePath.startsWith('data:') ? null : formData.coverFilePath
++        }
++        savedArticle = await updateBlogPost(editingArticle.id, updateData)
+       } else {
+         savedArticle = await createBlogPost(blogPostData)
+       }
+ 
++      // Upload cover image if pending
++      if (formData.coverFile) {
++        try {
++          const coverUrl = await uploadCover(savedArticle.id, formData.coverFile)
++          savedArticle.coverFilePath = coverUrl
++        } catch (uploadError) {
++          console.error('Failed to upload cover image:', uploadError)
++          if (!isAutoSave) alert('Article saved but cover image upload failed.')
++        }
++      }
++
+       if (isPublish) {
+         await publishBlogPost(savedArticle.id)
+         alert('Article published!')
+         setActiveView(VIEWS.MANAGE)
+         setEditingArticle(null)
+       } else {
+-        alert('Draft saved!')
++        if (!isAutoSave) {
++            alert('Draft saved!')
++        }
+         if (!editingArticle) {
+           // If it was a new draft, switch to edit mode for the created draft
+           setEditingArticle(savedArticle)
+         }
+       }
+       
++      return savedArticle
+     } catch (error) {
+-      console.error('Operation failed:', error)
+-      alert('Operation failed, please try again: ' + (error.message || 'Unknown error'))
++      if (!isAutoSave) {
++        console.error('Operation failed:', error)
++        alert('Operation failed, please try again: ' + (error.message || 'Unknown error'))
++      } else {
++        console.warn('Auto-save failed:', error)
++      }
+     }
+   }
+ 
+@@ -164,11 +193,11 @@
+   }
+ 
+   return (
+-    <div className="h-screen overflow-hidden bg-gray-50 flex flex-col md:flex-row transition-all duration-300">
++    <div className="h-[calc(100vh-64px)] overflow-hidden bg-gray-50 flex flex-col md:flex-row transition-all duration-300">
+       {/* Sidebar */}
+-      <aside className={`bg-[#0B1120] text-gray-400 flex flex-col shrink-0 transition-all duration-300 border-r border-gray-800 shadow-2xl relative ${isSidebarCollapsed ? 'w-full md:w-20' : 'w-full md:w-72'}`}>
++      <aside className={`bg-[#0B1120] text-gray-400 flex flex-col shrink-0 transition-all duration-300 border-r border-gray-800 shadow-2xl relative h-full ${isSidebarCollapsed ? 'w-full md:w-20' : 'w-full md:w-64'}`}>
+         {/* Header */}
+-        <div className={`p-6 flex items-center justify-between h-20 border-b border-gray-800/50 ${isSidebarCollapsed ? 'md:justify-center' : ''}`}>
++        <div className={`flex items-center h-20 border-b border-gray-800/50 transition-all duration-300 ${isSidebarCollapsed ? 'justify-center p-2' : 'justify-between p-6'}`}>
+           <div className="flex items-center gap-3 overflow-hidden">
+             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-primary-900/20 shrink-0">
+               <PenTool className="w-5 h-5" />
+@@ -181,7 +210,7 @@
+         </div>
+         
+         {/* Navigation */}
+-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
++        <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0">
+           <div className={`text-xs font-bold text-gray-600 uppercase tracking-wider mb-4 px-3 mt-4 transition-all duration-300 ${isSidebarCollapsed ? 'md:text-center md:text-[10px]' : ''}`}>
+             {isSidebarCollapsed ? 'Menu' : 'Main Menu'}
+           </div>
+@@ -221,11 +250,11 @@
+                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' 
+                 : 'hover:bg-gray-800/50 hover:text-gray-200'
+             } ${isSidebarCollapsed ? 'md:justify-center' : ''}`}
+-            title={isSidebarCollapsed ? "Manage Content" : ""}
++            title={isSidebarCollapsed ? "Manage Article" : ""}
+           >
+             {activeView === VIEWS.MANAGE && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/20 rounded-r-full"></div>}
+             <FileText className={`w-5 h-5 shrink-0 transition-colors ${activeView === VIEWS.MANAGE ? 'text-white' : 'group-hover:text-white'}`} /> 
+-            <span className={`font-medium whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'md:hidden' : 'block'}`}>Manage Content</span>
++            <span className={`font-medium whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'md:hidden' : 'block'}`}>Manage Article</span>
+           </button>
+ 
+           <div className={`text-xs font-bold text-gray-600 uppercase tracking-wider mb-4 px-3 mt-8 transition-all duration-300 ${isSidebarCollapsed ? 'md:text-center md:text-[10px]' : ''}`}>
+@@ -233,16 +262,22 @@
+           </div>
+           
+           <button 
+-            className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-800/50 hover:text-gray-200 transition-all duration-200 ${isSidebarCollapsed ? 'md:justify-center' : ''}`}
++            onClick={() => switchView(VIEWS.SETTINGS)}
++            className={`group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 relative overflow-hidden ${
++              activeView === VIEWS.SETTINGS 
++                ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' 
++                : 'hover:bg-gray-800/50 hover:text-gray-200'
++            } ${isSidebarCollapsed ? 'md:justify-center' : ''}`}
+             title={isSidebarCollapsed ? "Settings" : ""}
+           >
+-            <Settings className="w-5 h-5 shrink-0 group-hover:text-white transition-colors" /> 
++            {activeView === VIEWS.SETTINGS && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white/20 rounded-r-full"></div>}
++            <Settings className={`w-5 h-5 shrink-0 transition-colors ${activeView === VIEWS.SETTINGS ? 'text-white' : 'group-hover:text-white'}`} /> 
+             <span className={`font-medium whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'md:hidden' : 'block'}`}>Settings</span>
+           </button>
+         </nav>
+ 
+         {/* User Profile */}
+-        <div className="p-4 border-t border-gray-800/50 bg-gray-900/50">
++        <div className="relative p-4 border-t border-gray-800/50 bg-gray-900/50 mt-auto">
+           <div className={`flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-800 transition-colors cursor-pointer ${isSidebarCollapsed ? 'md:justify-center' : ''}`}>
+             <div className="relative shrink-0">
+               <img src={user?.avatar_url || "/images/default-avatar.png"} className="w-10 h-10 rounded-full border-2 border-gray-700 shadow-sm" alt="User" />
+@@ -253,19 +288,19 @@
+               <div className="text-xs text-gray-500 truncate">Content Creator</div>
+             </div>
+           </div>
+-        </div>
+-
+-        {/* Collapse Button (Absolute Bottom) */}
+-        <button 
+-          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+-          className="absolute -right-3 bottom-8 z-50 hidden md:flex w-6 h-6 items-center justify-center rounded-full bg-primary-600 hover:bg-primary-500 text-white transition-all shadow-lg border border-primary-400"
+-        >
+-          {isSidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
+-        </button>
++          
++          {/* Collapse Button (Attached to User Profile) */}
++          <button 
++            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
++            className="absolute -right-3 top-1/2 -translate-y-1/2 z-50 hidden md:flex w-6 h-6 items-center justify-center rounded-full bg-primary-600 hover:bg-primary-500 text-white transition-all shadow-lg border border-primary-400"
++          >
++            {isSidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
++          </button>
++        </div>
+       </aside>
+ 
+       {/* Main Content */}
+-      <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8">
++      <main className={`flex-1 overflow-y-auto bg-gray-50 ${activeView === VIEWS.CREATE ? 'p-0' : 'p-4 md:p-8'}`}>
+         
+         {/* Dashboard View */}
+         {activeView === VIEWS.DASHBOARD && (
+@@ -281,6 +316,8 @@
+             initialData={editingArticle}
+             onSave={handleSave}
+             isSaving={loading}
++            autoSaveEnabled={editorSettings.autoSaveEnabled}
++            autoSaveInterval={editorSettings.autoSaveInterval}
+           />
+         )}
+ 
+@@ -300,6 +337,54 @@
+             onCreateClick={() => switchView(VIEWS.CREATE)}
+           />
+         )}
++
++        {/* Settings View */}
++        {activeView === VIEWS.SETTINGS && (
++          <div className="max-w-2xl mx-auto">
++            <h2 className="text-2xl font-bold text-gray-900 mb-8">Settings</h2>
++            
++            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
++              <h3 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-4">Editor Preferences</h3>
++              
++              <div className="flex items-center justify-between">
++                <div>
++                  <div className="font-semibold text-gray-800">Auto Save</div>
++                  <div className="text-sm text-gray-500">Automatically save your draft while writing</div>
++                </div>
++                <button 
++                  onClick={() => setEditorSettings(prev => ({...prev, autoSaveEnabled: !prev.autoSaveEnabled}))}
++                  className={`w-12 h-7 rounded-full transition-colors relative ${editorSettings.autoSaveEnabled ? 'bg-primary-600' : 'bg-gray-200'}`}
++                >
++                  <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${editorSettings.autoSaveEnabled ? 'left-6' : 'left-1'}`} />
++                </button>
++              </div>
++              
++              <div className={`transition-all duration-300 ${editorSettings.autoSaveEnabled ? 'opacity-100 max-h-40' : 'opacity-50 max-h-40 pointer-events-none'}`}>
++                <label className="block text-sm font-bold text-gray-700 mb-3">Save Interval</label>
++                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
++                  {[
++                    { label: '10s', value: 10000 },
++                    { label: '30s', value: 30000 },
++                    { label: '1m', value: 60000 },
++                    { label: '5m', value: 300000 }
++                  ].map((option) => (
++                    <button
++                      key={option.value}
++                      onClick={() => setEditorSettings(prev => ({...prev, autoSaveInterval: option.value}))}
++                      className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
++                        editorSettings.autoSaveInterval === option.value
++                          ? 'bg-primary-50 border-primary-200 text-primary-700'
++                          : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
++                      }`}
++                    >
++                      {option.label}
++                    </button>
++                  ))}
++                </div>
++              </div>
++            </div>
++          </div>
++        )}
+       </main>
+     </div>
+   )
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogCreateAppService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogCreateAppService.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogCreateAppService.java
+new file mode 100644
+--- /dev/null	(date 1766543063168)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogCreateAppService.java	(date 1766543063168)
+@@ -0,0 +1,81 @@
++package com.personal.portfolio.blog.application.service;
++
++import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
++import com.personal.portfolio.blog.application.event.BlogPostCreatedAppEvent;
++import com.personal.portfolio.blog.application.exception.BusinessException;
++import com.personal.portfolio.blog.domain.model.BlogPost;
++import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
++import com.personal.portfolio.blog.domain.service.FileUploadService;
++import org.springframework.web.multipart.MultipartFile;
++
++import io.github.linpeilie.Converter;
++import lombok.RequiredArgsConstructor;
++import org.springframework.context.ApplicationEventPublisher;
++import org.springframework.stereotype.Component;
++import org.springframework.transaction.annotation.Transactional;
++
++/**
++ * 创建博客文章命令处理器
++ */
++@Component
++@RequiredArgsConstructor
++public class BlogCreateAppService {
++    
++    private final BlogPostRepository blogPostRepository;
++    private final ApplicationEventPublisher eventPublisher;
++    private final FileUploadService fileUploadService;
++    private static final Converter converter = new Converter();
++
++    @Transactional
++    public BlogPost createBlogPost(CreateBlogPostCommand command) {
++        // 验证标题唯一性
++        if (blogPostRepository.existsByTitle(command.getTitle())) {
++            throw new BusinessException("博客标题已存在: " + command.getTitle());
++        }
++        
++        // 创建博客文章
++        BlogPost blogPost = converter.convert(command, BlogPost.class);
++        blogPost.registerCreateEvent();
++
++        // 验证博客文章是否有效
++        if (!blogPost.isValid()) {
++            throw new BusinessException("博客文章内容无效");
++        }
++
++        // 保存以获取ID
++        blogPost = blogPostRepository.save(blogPost);
++        
++        publishBlogPostCreatedEvent(blogPost);
++
++        return blogPost;
++    }
++
++    /**
++     * 上传博客封面图片
++     */
++    @Transactional
++    public String uploadCover(Long id, MultipartFile file) {
++        BlogPost blogPost = blogPostRepository.findById(id)
++                .orElseThrow(() -> new BusinessException("博客文章不存在: " + id));
++
++        String coverPath = fileUploadService.uploadCoverForBlog(blogPost, file);
++        
++        blogPost.updateCover(coverPath);
++        blogPostRepository.save(blogPost);
++        
++        return coverPath;
++    }
++
++    /**
++     * 发布博客创建应用事件
++     */
++    private void publishBlogPostCreatedEvent(BlogPost blogPost) {
++        BlogPostCreatedAppEvent event = new BlogPostCreatedAppEvent(
++                blogPost.getId(),
++                blogPost.getTitle(),
++                blogPost.getAuthorId(),
++                blogPost.getCreatedAt()
++        );
++        eventPublisher.publishEvent(event);
++    }
++}
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/BlogPost.java	(date 1766543063168)
+@@ -23,7 +23,7 @@
+     private String slug;
+     private String content;
+     private String summary;
+-    private String coverImage;
++    private String coverFilePath;
+     private String category;
+     private Boolean isPublished;
+     private Integer viewCount;
+@@ -110,18 +110,32 @@
+      * 更新博客内容
+      */
+     public void updateContent(String title, String slug, String content, String summary, 
+-                             String coverImage, String category, List<String> tags) {
++                             String coverFilePath, String category, List<String> tags) {
+         validateCanUpdate();
+         
+         this.title = title;
+         this.slug = slug;
+         this.content = content;
+         this.summary = summary;
+-        this.coverImage = coverImage;
++        this.coverFilePath = coverFilePath;
+         this.category = category;
+         this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
+         this.updatedAt = LocalDateTime.now();
+     }
++    
++    /**
++     * 更新封面图片
++     */
++    public void updateCover(String coverFilePath) {
++        validateCanUpdate();
++        
++        if (coverFilePath == null || coverFilePath.trim().isEmpty()) {
++            throw new IllegalArgumentException("封面路径不能为空");
++        }
++        
++        this.coverFilePath = coverFilePath;
++        this.updatedAt = LocalDateTime.now();
++    }
+     
+     /**
+      * 增加浏览量
+@@ -238,6 +252,25 @@
+         return java.time.Duration.between(createdAt, LocalDateTime.now()).toDays();
+     }
+     
++    /**
++     * 设置封面图片（封装技术细节）
++     * @param coverFilePath 封面文件路径
++     */
++    public void setCoverFromUpload(String coverFilePath) {
++        // 业务规则校验
++        if (coverFilePath == null || coverFilePath.trim().isEmpty()) {
++            throw new IllegalArgumentException("封面路径不能为空");
++        }
++        // 这里可以添加更多校验，例如路径格式等
++        // if (!coverFilePath.matches("...")) { ... }
++        
++        this.coverFilePath = coverFilePath;
++        this.updatedAt = LocalDateTime.now();
++        
++        // 可选：发布领域事件
++        // registerEvent(new BlogPostCoverUpdatedEvent(this.id, coverFilePath));
++    }
++    
+     // 私有验证方法
+     private void validateCanPublish() {
+         if (!isValid()) {
+Index: backend/interface/src/main/resources/schema.sql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/resources/schema.sql b/backend/interface/src/main/resources/schema.sql
+--- a/backend/interface/src/main/resources/schema.sql	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/interface/src/main/resources/schema.sql	(date 1766542053594)
+@@ -5,7 +5,7 @@
+     slug VARCHAR(255) NOT NULL UNIQUE,
+     content TEXT NOT NULL,
+     summary VARCHAR(500),
+-    cover_image VARCHAR(255),
++    cover_file_path VARCHAR(255),
+     is_published BOOLEAN DEFAULT FALSE,
+     published_at TIMESTAMP,
+     view_count INT DEFAULT 0,
+@@ -155,7 +155,7 @@
+ 
+ Spring Boot 3.0 is not just an upgrade; it is a transformation. By embracing Java 17, Jakarta EE, and Native Images, it positions Java as a top-tier language for modern cloud-native and serverless architectures. The migration effort is non-trivial, but the long-term gains in performance, maintainability, and developer joy are well worth the investment. Start planning your upgrade today!',
+ 'An in-depth look at the new features in Spring Boot 3.0, including Java 17 baseline, Native Images, and Jakarta EE.',
+-TRUE, NOW(), 1, 'Technical', 'Java,Spring Boot,Backend', NOW(), NOW()
++FALSE, NOW(), 1, 'Technical', 'Java,Spring Boot,Backend', NOW(), NOW()
+        );
+ 
+ -- 2. React Hooks
+@@ -508,7 +508,7 @@
+ 
+ Rust has a steep learning curve. Fighting the "Borrow Checker" can be frustrating for beginners. However, once it clicks, it changes how you think about memory and system design. If you want to build high-performance systems, CLI tools, or WebAssembly modules, Rust is the language to learn in 2024.',
+ 'An overview of the Rust programming language, focusing on its unique ownership model and memory safety features.',
+-TRUE, NOW(), 1, 'Technical', 'Rust,Programming,Systems Programming', NOW(), NOW()
++FALSE, NOW(), 1, 'Technical', 'Rust,Programming,Systems Programming', NOW(), NOW()
+        );
+ 
+ -- 7. My Journey
+@@ -691,7 +691,7 @@
+ 
+ Building this portfolio was a rewarding project. It forced me to wear all hats: Designer, Frontend Dev, Backend Dev, and DevOps. I hope you enjoy browsing it as much as I enjoyed building it!',
+ 'A behind-the-scenes look at how this portfolio website was built, covering the React/Spring Boot stack and design choices.',
+-TRUE, NOW(), 1, 'Project', 'Portfolio,React,Spring Boot,Web Development', NOW(), NOW()
++FALSE, NOW(), 1, 'Project', 'Portfolio,React,Spring Boot,Web Development', NOW(), NOW()
+        );
+ 
+ -- 10. Productivity
+@@ -807,5 +807,5 @@
+ 
+ The future of coding is exciting. The barrier to entry for *creating* software is lowering, which means we will see more software being built. The job isn''t going away, but it is evolving. Adapt or get left behind.',
+ 'An opinion piece on the impact of AI and LLMs on the software engineering profession and how developers should adapt.',
+-TRUE, NOW(), 1, 'Technical', 'AI,Future,Opinion,Career', NOW(), NOW()
++FALSE, NOW(), 1, 'Technical', 'AI,Future,Opinion,Career', NOW(), NOW()
+        );
+Index: frontend/src/pages/BlogPost.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/BlogPost.jsx b/frontend/src/pages/BlogPost.jsx
+--- a/frontend/src/pages/BlogPost.jsx	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/frontend/src/pages/BlogPost.jsx	(date 1766543063186)
+@@ -45,6 +45,14 @@
+ 
+   const [headings, setHeadings] = useState([])
+ 
++  const getCoverImageUrl = (url) => {
++    if (!url) return null
++    if (url.startsWith('data:') || url.startsWith('http') || url.startsWith('/')) {
++      return url
++    }
++    return `/uploads/${url}`
++  }
++
+   useEffect(() => {
+     if (post && post.content) {
+       // Extract headings
+@@ -84,10 +92,10 @@
+     <div className="min-h-screen bg-gray-50 pb-20">
+       {/* Hero Header */}
+       <div className="relative w-full h-96 bg-gray-900 overflow-hidden mb-10">
+-        {post.coverImage ? (
++        {post.coverFilePath ? (
+           <>
+             <img 
+-              src={post.coverImage} 
++              src={getCoverImageUrl(post.coverFilePath)} 
+               alt={post.title} 
+               className="w-full h-full object-cover opacity-60"
+               onError={(e) => {
+@@ -249,10 +257,10 @@
+                 </div>
+               </div>
+ 
+-              {/* Table of Contents */}
++              {/* Table*/}
+               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
+                 <h2 className="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2 sticky top-0 bg-white z-10 pb-2 border-b border-gray-50">
+-                  Table of Contents
++                  Table
+                 </h2>
+                 <nav className="relative">
+                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-100"></div>
+Index: frontend/src/components/creator/ArticleEditor.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/creator/ArticleEditor.jsx b/frontend/src/components/creator/ArticleEditor.jsx
+--- a/frontend/src/components/creator/ArticleEditor.jsx	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/frontend/src/components/creator/ArticleEditor.jsx	(date 1766543063183)
+@@ -1,8 +1,8 @@
+ import React, { useState, useRef, useEffect } from 'react'
+ import { 
+   Bold, Italic, Heading, Link as LinkIcon, Image, Code, 
+-  Strikethrough, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, BarChart,
+-  Send, Save, UploadCloud, Eye, EyeOff, Maximize, Minimize 
++  Strikethrough, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, BarChart, Table,
++  Send, Save, UploadCloud, Eye, EyeOff, Maximize, Minimize, ChevronDown, Settings, X, Clock
+ } from 'lucide-react'
+ import ReactMarkdown from 'react-markdown'
+ import remarkGfm from 'remark-gfm'
+@@ -11,32 +11,175 @@
+ import MermaidDiagram from '../MermaidDiagram'
+ import 'highlight.js/styles/github-dark.css'
+ 
+-const ArticleEditor = ({ initialData, onSave, isSaving }) => {
++const CHART_TEMPLATES = [
++  { label: 'Flowchart', code: 'graph TD;\n    A-->B;\n    A-->C;\n    B-->D;\n    C-->D;' },
++  { label: 'Sequence', code: 'sequenceDiagram\n    participant Alice\n    participant Bob\n    Alice->>John: Hello John, how are you?\n    loop Healthcheck\n        John->>John: Fight against hypochondria\n    end\n    Note right of John: Rational thoughts <br/>prevail!\n    John-->>Alice: Great!' },
++  { label: 'Class', code: 'classDiagram\n    Animal <|-- Duck\n    Animal <|-- Fish\n    Animal <|-- Zebra\n    Animal : +int age\n    Animal : +String gender\n    Animal: +isMammal()\n    Animal: +mate()' },
++  { label: 'State', code: 'stateDiagram-v2\n    [*] --> Still\n    Still --> [*]\n    Still --> Moving\n    Moving --> Still\n    Moving --> Crash\n    Crash --> [*]' },
++  { label: 'Gantt', code: 'gantt\n    title A Gantt Diagram\n    dateFormat  YYYY-MM-DD\n    section Section\n    A task           :a1, 2014-01-01, 30d\n    Another task     :after a1  , 20d\n    section Another\n    Task in sec      :2014-01-12  , 12d\n    another task      : 24d' },
++  { label: 'Pie', code: 'pie title Pets adopted by volunteers\n    "Dogs" : 386\n    "Cats" : 85\n    "Rats" : 15' },
++  { label: 'ER Diagram', code: 'erDiagram\n    CUSTOMER ||--o{ ORDER : places\n    ORDER ||--|{ LINE-ITEM : contains\n    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses' },
++  { label: 'Mindmap', code: 'mindmap\n  root((mindmap))\n    Origins\n      Long history\n      ::icon(fa fa-book)\n      Popularisation\n        British popular psychology author Tony Buzan\n    Research\n      On effectiveness\n      and features\n      On Automatic creation\n        Uses\n            Creative techniques\n            Strategic planning\n            Argument mapping' }
++]
++
++const ArticleEditor = ({ initialData, onSave, isSaving, autoSaveEnabled = true, autoSaveInterval = 30000 }) => {
+   const [formData, setFormData] = useState({
+     title: '',
+     content: '',
+     category: 'Technology',
+-    tags: ''
++    tags: '',
++    coverFilePath: null
+   })
+   const [showPreview, setShowPreview] = useState(true)
+   const [isFullScreen, setIsFullScreen] = useState(false)
++  const [showChartMenu, setShowChartMenu] = useState(false)
++  const [showTableMenu, setShowTableMenu] = useState(false)
++  const [showPublishModal, setShowPublishModal] = useState(false)
++  const [lastAutoSave, setLastAutoSave] = useState(null)
++  const [tableDims, setTableDims] = useState({ rows: 0, cols: 0 })
++  const [prevArticleId, setPrevArticleId] = useState(null)
+   const contentTextareaRef = useRef(null)
++  const fileInputRef = useRef(null)
++  const lastSavedContentRef = useRef('')
++  const currentContentRef = useRef('')
++
++  // Keep current content ref updated for interval
++  useEffect(() => {
++    currentContentRef.current = formData.content
++  }, [formData.content])
++
++  // Auto-save Effect
++  useEffect(() => {
++    if (!autoSaveEnabled) return
++
++    const timer = setInterval(() => {
++      // Check if content has changed since last save
++      if (currentContentRef.current && currentContentRef.current !== lastSavedContentRef.current) {
++        handleAutoSave()
++      }
++    }, autoSaveInterval)
+ 
++    return () => clearInterval(timer)
++  }, [autoSaveEnabled, autoSaveInterval])
++
++  const getCoverImageUrl = (url) => {
++    if (!url) return null
++    if (url.startsWith('data:') || url.startsWith('http')) {
++      return url
++    }
++    return `/uploads/${url}`
++  }
++
++  const handleAutoSave = () => {
++    // Save to LocalStorage instead of API
++    const draftKey = initialData?.id ? `draft-${initialData.id}` : 'draft-new'
++    const dataToSave = {
++      ...formData,
++      lastModified: new Date().toISOString()
++    }
++    
++    try {
++      localStorage.setItem(draftKey, JSON.stringify(dataToSave))
++      setLastAutoSave(new Date())
++      lastSavedContentRef.current = formData.content
++    } catch (error) {
++      console.warn('Local auto-save failed:', error)
++    }
++  }
++
++  // Load from LocalStorage on mount
+   useEffect(() => {
+-    if (initialData) {
+-      setFormData({
+-        title: initialData.title || '',
+-        content: initialData.content || '',
+-        category: initialData.category || 'Technology',
+-        tags: initialData.tags ? (Array.isArray(initialData.tags) ? initialData.tags.join(', ') : initialData.tags) : ''
+-      })
+-    } else {
+-      setFormData({
+-        title: '',
+-        content: '',
+-        category: 'Technology',
+-        tags: ''
+-      })
++    // If we are creating a new article (no initialData)
++    if (!initialData) {
++      const savedNewDraft = localStorage.getItem('draft-new')
++      if (savedNewDraft) {
++        try {
++          const parsed = JSON.parse(savedNewDraft)
++          // Only restore if user hasn't typed anything yet or it's a fresh mount
++          if (!formData.content && !formData.title) {
++            setFormData(prev => ({
++              ...prev,
++              title: parsed.title || '',
++              content: parsed.content || '',
++              category: parsed.category || 'Technology',
++              tags: parsed.tags || '',
++              coverFilePath: parsed.coverFilePath || null
++            }))
++            lastSavedContentRef.current = parsed.content || ''
++            setLastAutoSave(new Date(parsed.lastModified))
++          }
++        } catch (e) {
++          console.error('Failed to parse local draft', e)
++        }
++      }
++    } 
++    // If we are editing an existing article
++    else {
++      const savedDraft = localStorage.getItem(`draft-${initialData.id}`)
++      if (savedDraft) {
++        try {
++          const parsed = JSON.parse(savedDraft)
++          
++          if (parsed.content !== initialData.content) {
++             setFormData(prev => ({
++              ...prev,
++              title: parsed.title || initialData.title,
++              content: parsed.content || initialData.content,
++              category: parsed.category || initialData.category,
++              tags: parsed.tags || initialData.tags,
++              coverFilePath: parsed.coverFilePath || initialData.coverFilePath
++            }))
++            lastSavedContentRef.current = parsed.content || ''
++            setLastAutoSave(new Date(parsed.lastModified))
++          }
++        } catch (e) {
++          console.error('Failed to parse local draft', e)
++        }
++      } else {
++        // No local draft, just load from initialData
++        setFormData({
++          title: initialData.title || '',
++          content: initialData.content || '',
++          category: initialData.category || 'Technology',
++          tags: initialData.tags ? (Array.isArray(initialData.tags) ? initialData.tags.join(', ') : initialData.tags) : '',
++          coverFilePath: initialData.coverFilePath || null
++        })
++        lastSavedContentRef.current = initialData.content || ''
++      }
++    }
++  }, [initialData])
++
++  useEffect(() => {
++    // If initialData is null, it means we are in "Create New" mode
++    if (!initialData) {
++      // Only reset if we weren't already in "Create New" mode (prevId was not null)
++      // This prevents wiping if we are just starting
++      if (prevArticleId !== null) {
++        setFormData({
++          title: '',
++          content: '',
++          category: 'Technology',
++          tags: '',
++          coverFilePath: null
++        })
++        setPrevArticleId(null)
++        lastSavedContentRef.current = ''
++      }
++      return
++    }
++
++    // If initialData exists, check if it's a different article than what we are tracking
++    if (initialData.id !== prevArticleId) {
++      // Standard Case: Loading a different article from backend
++      // Note: We handled the initial load logic in the previous useEffect for local storage restoration
++      // This part mainly handles updates if the ID changes during session
++      setPrevArticleId(initialData.id)
++      
++      // Only reset form data if we DIDN'T just restore from local storage in the other effect
++      // The other effect runs first or concurrently. 
++      // Actually, this effect might conflict with the local storage restoration one.
++      // Let's rely on the first useEffect to handle ALL data loading logic.
++      // We will remove the redundant setFormData here and just track the ID.
+     }
+   }, [initialData])
+ 
+@@ -50,7 +193,7 @@
+       if (historyIndex === -1 || history[historyIndex] !== formData.content) {
+         saveToHistory(formData.content)
+       }
+-    }, 1000)
++    }, 500)
+     return () => clearTimeout(timer)
+   }, [formData.content])
+ 
+@@ -136,44 +279,71 @@
+     
+     setFormData(prev => ({ ...prev, content: newContent }))
+     
+-    // We don't manually push newContent here; we let the useEffect debounce handle it 
+-    // OR we push it immediately to ensure button clicks are discrete steps.
+-    // Let's push immediately for toolbar actions to make them distinct undo steps.
+-    // But we need to wait for state update... actually we have newContent variable.
+-    // We can't update history state twice in one render cycle easily if we just updated it above.
+-    // Let's rely on the useEffect for the "after" state, or we can use a ref to bypass debounce?
+-    // The useEffect has 1000ms delay. If we rely on it, the "Bold" action won't be in history for 1s.
+-    // If user types immediately after bold, it might merge.
+-    // Ideally, toolbar actions should be instant save points.
+-    
+-    // Let's rely on useEffect for simplicity for now, as 1s is short enough.
+-    
+     setTimeout(() => {
+       textarea.focus()
+       textarea.setSelectionRange(start + prefix.length, end + prefix.length)
+     }, 0)
+   }
+ 
++  // Clear local storage on successful manual save/publish
+   const handleSaveClick = (isPublish) => {
+     if (!formData.title || !formData.content) {
+       alert('Title and content cannot be empty')
+       return
+     }
+     onSave(formData, isPublish)
++    lastSavedContentRef.current = formData.content
++    
++    // Clear the local draft because we just synced with backend
++    const draftKey = initialData?.id ? `draft-${initialData.id}` : 'draft-new'
++    localStorage.removeItem(draftKey)
++    setLastAutoSave(null) // Reset auto-save indicator since it's now fully saved
++  }
++
++  const insertTable = (rows, cols) => {
++    let header = '|';
++    let separator = '|';
++    
++    for (let c = 0; c < cols; c++) {
++      header += ` Header ${c + 1} |`;
++      separator += ' --- |';
++    }
++    
++    let body = '';
++    for (let r = 0; r < rows; r++) {
++      body += '|';
++      for (let c = 0; c < cols; c++) {
++        body += ` Cell ${r + 1}-${c + 1} |`;
++      }
++      body += '\n';
++    }
++    
++    const tableMarkdown = `${header}\n${separator}\n${body}`;
++    insertMarkdown(tableMarkdown, '\n');
++    setShowTableMenu(false);
++    setTableDims({ rows: 0, cols: 0 });
++  }
++
++  const handleImageUpload = (e) => {
++    const file = e.target.files[0]
++    if (!file) return
++
++    // Create a preview URL
++    const reader = new FileReader()
++    reader.onloadend = () => {
++      setFormData(prev => ({ 
++        ...prev, 
++        coverFilePath: reader.result,
++        coverFile: file 
++      }))
++    }
++    reader.readAsDataURL(file)
+   }
+ 
+   return (
+-    <div className="h-full flex flex-col bg-gray-50/50 -m-6 p-6">
+-      <div className="flex justify-between items-center mb-8">
+-        <div>
+-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Writing Studio</h2>
+-          <p className="text-sm text-gray-500 mt-1">Create and share your thoughts with the world</p>
+-        </div>
+-      </div>
+-
+-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 h-full">
+-        {/* Main Editor Area */}
+-        <div className="lg:col-span-9 flex flex-col gap-6 h-full">
++    <div className="h-full flex flex-col bg-gray-50/50 p-6">
++      <div className="flex flex-col gap-6 h-full">
++        <div className="flex justify-between items-start gap-4">
+           {/* Title Input */}
+           <input 
+             type="text" 
+@@ -181,15 +351,148 @@
+             value={formData.title}
+             onChange={handleInputChange}
+             placeholder="Enter article title..." 
+-            className="w-full text-4xl font-extrabold text-gray-900 placeholder-gray-300 bg-transparent border-none focus:ring-0 focus:outline-none px-2 transition-all"
++            className="flex-1 text-2xl font-extrabold text-gray-900 placeholder-gray-300 bg-transparent border-none focus:ring-0 focus:outline-none px-2 transition-all"
+           />
+           
+-          <div className={`${isFullScreen ? 'fixed inset-0 z-50 bg-gray-100 p-6 h-screen' : 'flex-1 min-h-[600px]'} flex flex-col lg:flex-row gap-6 transition-all duration-300`}>
+-            
+-            {/* Editor Container */}
+-            <div className={`bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden flex flex-col flex-1 ${showPreview ? 'lg:w-1/2' : 'w-full'} transition-all duration-300 group hover:shadow-md hover:border-gray-300/80`}>
+-              {/* Toolbar */}
+-              <div className="border-b border-gray-100 p-3 flex gap-2 bg-white flex-wrap items-center justify-between sticky top-0 z-20">
++          {/* Action Buttons */}
++          <div className="flex items-center gap-3">
++              {isSaving && autoSaveEnabled && (
++                <div className="text-xs text-gray-400 hidden lg:flex items-center gap-1 mr-2 animate-pulse">
++                  <Clock className="w-3 h-3" />
++                  <span>Saving...</span>
++                </div>
++              )}
++              <button
++                onClick={() => handleSaveClick(false)}
++                disabled={isSaving}
++                className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition flex items-center gap-2 disabled:opacity-50"
++              >
++                <Save className="w-4 h-4" /> <span className="hidden sm:inline">Draft</span>
++              </button>
++              <button 
++                onClick={() => setShowPublishModal(true)}
++                disabled={isSaving}
++                className="px-4 py-2 bg-gray-900 text-white font-bold rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0"
++              >
++                {isSaving ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span> : <Send className="w-4 h-4" />}
++                <span className="hidden sm:inline">Publish</span>
++              </button>
++          </div>
++        </div>
++        
++        {/* Publish Modal */}
++        {showPublishModal && (
++          <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
++            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
++               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
++                  <div>
++                    <h3 className="text-xl font-bold text-gray-900">Publish Article</h3>
++                    <p className="text-sm text-gray-500 mt-1">Review details before publishing</p>
++                  </div>
++                  <button onClick={() => setShowPublishModal(false)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"><X className="w-5 h-5"/></button>
++               </div>
++               <div className="p-8 space-y-6">
++                  <div>
++                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Category</label>
++                    <div className="relative">
++                      <select 
++                        name="category"
++                        value={formData.category}
++                        onChange={handleInputChange}
++                        className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl p-4 text-base font-medium text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white transition-all cursor-pointer"
++                      >
++                        <option value="Technology">Technology</option>
++                        <option value="Life">Life</option>
++                        <option value="Reading">Reading</option>
++                        <option value="Travel">Travel</option>
++                      </select>
++                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
++                        <ChevronDown className="w-5 h-5" />
++                      </div>
++                    </div>
++                  </div>
++                  
++                  <div>
++                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
++                    <input 
++                      type="text" 
++                      name="tags"
++                      value={formData.tags}
++                      onChange={handleInputChange}
++                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-base font-medium text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white transition-all placeholder-gray-400" 
++                      placeholder="React, Design, Tutorial..." 
++                    />
++                  </div>
++
++                  <div>
++                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Cover Image</label>
++                    <input 
++                      type="file" 
++                      ref={fileInputRef} 
++                      className="hidden" 
++                      accept="image/*"
++                      onChange={handleImageUpload}
++                    />
++                    <div 
++                      onClick={() => fileInputRef.current?.click()}
++                      className="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-50 hover:border-primary-400 hover:text-primary-500 transition-all group overflow-hidden relative"
++                    >
++                      {formData.coverFilePath ? (
++                        <>
++                          <img src={getCoverImageUrl(formData.coverFilePath)} alt="Cover" className="w-full h-full object-cover" />
++                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
++                            <span className="text-white font-medium text-sm">Change Image</span>
++                          </div>
++                          <button 
++                            onClick={(e) => {
++                              e.stopPropagation();
++                              setFormData(prev => ({ ...prev, coverFilePath: null, coverFile: null }));
++                              if (fileInputRef.current) fileInputRef.current.value = '';
++                            }}
++                            className="absolute top-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full transition-all opacity-0 group-hover:opacity-100"
++                            title="Remove image"
++                          >
++                            <X className="w-4 h-4" />
++                          </button>
++                        </>
++                      ) : (
++                        <>
++                          <UploadCloud className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
++                          <span className="text-sm font-medium">Click to upload cover image</span>
++                        </>
++                      )}
++                    </div>
++                  </div>
++               </div>
++               <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
++                  <button 
++                    onClick={() => setShowPublishModal(false)} 
++                    className="px-6 py-2.5 font-bold text-gray-600 hover:bg-gray-200 rounded-xl transition-colors"
++                  >
++                    Cancel
++                  </button>
++                  <button 
++                    onClick={async () => {
++                      await handleSaveClick(true)
++                      setShowPublishModal(false)
++                    }}
++                    disabled={isSaving}
++                    className="px-8 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0"
++                  >
++                    {isSaving ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span> : <Send className="w-4 h-4" />}
++                    Confirm Publish
++                  </button>
++               </div>
++            </div>
++          </div>
++        )}
++        
++        <div className={`${isFullScreen ? 'fixed inset-0 z-50 bg-gray-100 p-6 h-screen' : 'flex-1 min-h-0'} flex flex-col lg:flex-row gap-6 transition-all duration-300`}>
++          
++          {/* Editor Container */}
++          <div className={`bg-white rounded-2xl shadow-sm border border-gray-200/60 overflow-hidden flex flex-col flex-1 ${showPreview ? 'lg:w-1/2' : 'w-full'} transition-all duration-300 group hover:shadow-md hover:border-gray-300/80`}>
++            {/* Toolbar */}
++              <div className="border-b border-gray-100 p-3 flex gap-2 bg-white flex-wrap items-center justify-between sticky top-0 z-20 shrink-0">
+                 <div className="flex gap-1 flex-wrap items-center">
+                   {/* Basic Formatting */}
+                   <div className="flex bg-gray-50 rounded-lg p-1 gap-0.5">
+@@ -216,8 +519,84 @@
+                   <div className="flex bg-gray-50 rounded-lg p-1 gap-0.5">
+                     <button onClick={() => insertMarkdown('[', '](url)')} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all" title="Link"><LinkIcon className="w-4 h-4" /></button>
+                     <button onClick={() => insertMarkdown('![alt](', ')')} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all" title="Image"><Image className="w-4 h-4" /></button>
++                    
++                    <div className="relative">
++                      <button 
++                        onClick={() => setShowTableMenu(!showTableMenu)} 
++                        className={`p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all flex items-center gap-0.5 ${showTableMenu ? 'bg-white shadow-sm text-primary-600' : ''}`} 
++                        title="Insert Table"
++                      >
++                        <Table className="w-4 h-4" />
++                      </button>
++                      
++                      {showTableMenu && (
++                        <>
++                          <div className="fixed inset-0 z-10" onClick={() => setShowTableMenu(false)} />
++                          <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-20 min-w-[240px]">
++                            <div className="text-sm font-semibold text-gray-700 mb-3 text-center border-b border-gray-100 pb-2">
++                              {tableDims.cols > 0 && tableDims.rows > 0 ? (
++                                <span className="text-primary-600">{tableDims.rows} rows × {tableDims.cols} columns</span>
++                              ) : (
++                                'Select Table Size'
++                              )}
++                            </div>
++                            <div className="grid grid-cols-10 gap-1.5" onMouseLeave={() => setTableDims({ rows: 0, cols: 0 })}>
++                              {[...Array(10)].map((_, r) => (
++                                [...Array(10)].map((_, c) => (
++                                  <div
++                                    key={`${r}-${c}`}
++                                    className={`w-5 h-5 rounded-sm cursor-pointer transition-all duration-100 ${
++                                      r < tableDims.rows && c < tableDims.cols 
++                                        ? 'bg-primary-500 scale-110 shadow-sm' 
++                                        : 'bg-gray-100 hover:bg-gray-200'
++                                    }`}
++                                    onMouseEnter={() => setTableDims({ rows: r + 1, cols: c + 1 })}
++                                    onClick={() => insertTable(r + 1, c + 1)}
++                                  />
++                                ))
++                              ))}
++                            </div>
++                            <div className="mt-3 text-xs text-center text-gray-400">
++                              Max 10x10
++                            </div>
++                          </div>
++                        </>
++                      )}
++                    </div>
++
+                     <button onClick={() => insertMarkdown('```\n', '\n```')} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all" title="Code Block"><Code className="w-4 h-4" /></button>
+-                    <button onClick={() => insertMarkdown('```mermaid\ngraph TD;\n    A-->B;\n', '```')} className="p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all" title="Mermaid Chart"><BarChart className="w-4 h-4" /></button>
++                    
++                    <div className="relative">
++                      <button 
++                        onClick={() => setShowChartMenu(!showChartMenu)} 
++                        className={`p-1.5 hover:bg-white hover:shadow-sm rounded-md text-gray-600 transition-all flex items-center gap-0.5 ${showChartMenu ? 'bg-white shadow-sm text-primary-600' : ''}`} 
++                        title="Insert Chart"
++                      >
++                        <BarChart className="w-4 h-4" />
++                        <ChevronDown className="w-3 h-3 opacity-50" />
++                      </button>
++                      
++                      {showChartMenu && (
++                        <>
++                          <div className="fixed inset-0 z-10" onClick={() => setShowChartMenu(false)} />
++                          <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-20 flex flex-col max-h-80 overflow-y-auto">
++                            <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-50 mb-1">Diagram Types</div>
++                            {CHART_TEMPLATES.map((template) => (
++                              <button
++                                key={template.label}
++                                onClick={() => {
++                                  insertMarkdown(`\`\`\`mermaid\n${template.code}\n`, '```');
++                                  setShowChartMenu(false);
++                                }}
++                                className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
++                              >
++                                {template.label}
++                              </button>
++                            ))}
++                          </div>
++                        </>
++                      )}
++                    </div>
+                   </div>
+                 </div>
+ 
+@@ -248,11 +627,19 @@
+                 value={formData.content}
+                 onChange={handleInputChange}
+                 onKeyDown={handleKeyDown}
+-                className="flex-1 p-6 focus:outline-none resize-none font-mono text-gray-800 text-base leading-relaxed selection:bg-primary-100 selection:text-primary-900" 
+-                placeholder="Start writing your story..."
++                className="flex-1 p-6 focus:outline-none resize-none font-mono text-gray-800 text-base leading-relaxed selection:bg-primary-100 selection:text-primary-900 w-full" 
++                placeholder="Start writing"
+               />
+-              <div className="bg-gray-50 px-4 py-2 text-xs text-gray-400 border-t border-gray-100 flex justify-between">
+-                <span>Markdown Supported</span>
++              <div className="bg-gray-50 px-4 py-2 text-xs text-gray-400 border-t border-gray-100 flex justify-between shrink-0">
++                <div className="flex items-center gap-3">
++                  <span>Markdown Supported</span>
++                  {lastAutoSave && (
++                    <span className="flex items-center gap-1.5 text-gray-400 border-l border-gray-200 pl-3">
++                      <Clock className="w-3 h-3" />
++                      Auto-saved at {lastAutoSave.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
++                    </span>
++                  )}
++                </div>
+                 <span>{formData.content.length} chars</span>
+               </div>
+             </div>
+@@ -310,78 +697,7 @@
+             )}
+           </div>
+         </div>
+-
+-        {/* Sidebar Settings */}
+-        <div className="lg:col-span-3 space-y-6">
+-          {/* Publish Card */}
+-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200/60 sticky top-6">
+-            <h4 className="font-bold text-gray-900 mb-6 text-xs uppercase tracking-wider flex items-center gap-2">
+-              <span className="w-1.5 h-1.5 rounded-full bg-primary-500"></span>
+-              Publishing
+-            </h4>
+-            <div className="space-y-3">
+-              <button 
+-                onClick={() => handleSaveClick(true)}
+-                disabled={isSaving}
+-                className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:translate-y-0"
+-              >
+-                {isSaving ? <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span> : <Send className="w-4 h-4" />}
+-                Publish Now
+-              </button>
+-              <button 
+-                onClick={() => handleSaveClick(false)}
+-                disabled={isSaving}
+-                className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition flex items-center justify-center gap-2 disabled:opacity-50"
+-              >
+-                <Save className="w-4 h-4" /> Save Draft
+-              </button>
+-            </div>
+-
+-            <div className="mt-8 pt-6 border-t border-gray-100 space-y-5">
+-              <div>
+-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Category</label>
+-                <div className="relative">
+-                  <select 
+-                    name="category"
+-                    value={formData.category}
+-                    onChange={handleInputChange}
+-                    className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white transition-all cursor-pointer"
+-                  >
+-                    <option value="Technology">Tech</option>
+-                    <option value="Life">Life</option>
+-                    <option value="Reading">Reading</option>
+-                    <option value="Travel">Travel</option>
+-                  </select>
+-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+-                  </div>
+-                </div>
+-              </div>
+-              
+-              <div>
+-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tags</label>
+-                <input 
+-                  type="text" 
+-                  name="tags"
+-                  value={formData.tags}
+-                  onChange={handleInputChange}
+-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white transition-all placeholder-gray-400" 
+-                  placeholder="React, Design, Tutorial..." 
+-                />
+-              </div>
+-
+-              <div>
+-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Cover Image</label>
+-                <div className="border-2 border-dashed border-gray-200 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-50 hover:border-primary-400 hover:text-primary-500 transition-all group">
+-                  <UploadCloud className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
+-                  <span className="text-xs font-medium">Upload Cover</span>
+-                </div>
+-              </div>
+-            </div>
+-          </div>
+-        </div>
+-      </div>
+-    </div>
++      </div>
+   )
+ }
+ 
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/event/BlogPostCreatedApplicationEvent.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/event/BlogPostCreatedApplicationEvent.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/event/BlogPostCreatedAppEvent.java
+rename from backend/application/src/main/java/com/personal/portfolio/blog/application/event/BlogPostCreatedApplicationEvent.java
+rename to backend/application/src/main/java/com/personal/portfolio/blog/application/event/BlogPostCreatedAppEvent.java
+--- a/backend/application/src/main/java/com/personal/portfolio/blog/application/event/BlogPostCreatedApplicationEvent.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/event/BlogPostCreatedAppEvent.java	(date 1766480476170)
+@@ -9,7 +9,7 @@
+  * 用于跨应用边界的通信
+  */
+ @Getter
+-public class BlogPostCreatedApplicationEvent {
++public class BlogPostCreatedAppEvent {
+     
+     private final Long blogPostId;
+     private final String title;
+@@ -17,7 +17,7 @@
+     private final LocalDateTime createdAt;
+     private final String eventType = "BLOG_POST_CREATED";
+     
+-    public BlogPostCreatedApplicationEvent(Long blogPostId, String title, Long authorId, LocalDateTime createdAt) {
++    public BlogPostCreatedAppEvent(Long blogPostId, String title, Long authorId, LocalDateTime createdAt) {
+         this.blogPostId = blogPostId;
+         this.title = title;
+         this.authorId = authorId;
+Index: frontend/src/pages/BlogHome.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/BlogHome.jsx b/frontend/src/pages/BlogHome.jsx
+--- a/frontend/src/pages/BlogHome.jsx	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/frontend/src/pages/BlogHome.jsx	(date 1766543063184)
+@@ -60,6 +60,15 @@
+     loadBlogPosts(1, keyword);
+   }, []);
+ 
++  // Helper to get cover image URL
++  const getCoverImageUrl = (url) => {
++    if (!url) return '/images/default_article_cover.png'
++    if (url.startsWith('data:') || url.startsWith('http') || url.startsWith('/')) {
++      return url
++    }
++    return `/uploads/${url}`
++  }
++
+   // Handle page change
+   const handlePageChange = (newPage) => {
+     if (newPage >= 1 && newPage <= pagination.pages) {
+@@ -131,13 +140,13 @@
+                   {/* Cover Image */}
+                   <div className="md:w-1/3 bg-gray-200 relative overflow-hidden">
+                     <img 
+-                      src={post.coverImage || '/images/default_article_cover.png'} 
++                      src={getCoverImageUrl(post.coverFilePath)} 
+                       alt={post.title}
+                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                       onError={(e) => {
+-                         e.target.onerror = null;
+-                         e.target.src = '/images/default_article_cover.png'
+-                       }}
++                        e.target.onerror = null;
++                        e.target.src = '/images/default_article_cover.png'
++                      }}
+                     />
+                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary-600 shadow-sm">
+                       {post.category || 'Uncategorized'}
+Index: .trae/rules/技术栈分析.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.trae/rules/技术栈分析.md b/.trae/rules/技术栈分析.md
+new file mode 100644
+--- /dev/null	(date 1766480498638)
++++ b/.trae/rules/技术栈分析.md	(date 1766480498638)
+@@ -0,0 +1,61 @@
++# 项目技术栈详细分析
++
++## 一、 后端技术栈 (Backend)
++
++### 1. 核心框架
++- **语言**: Java 21 (LTS) - 利用最新的语言特性（如Record, Pattern Matching, Virtual Threads等）。
++- **框架**: Spring Boot 3 - 基于Spring Framework 6，支持AOT编译，更好的Observability。
++- **构建工具**: Maven - 多模块构建管理。
++
++### 2. 领域驱动设计 (DDD) 组件
++- **架构模式**: 分层架构 (Interfaces, Application, Domain, Infrastructure)。
++- **ORM**: MyBatis Plus 3.5.14 - 简化持久层开发，支持Lambda查询。
++- **对象映射**: MapStruct Plus 1.4.6 - 高性能的Bean映射，减少手动转换代码。
++- **Lombok**: 简化样板代码 (Getter/Setter/Builder)。
++
++### 3. 数据库与持久化
++- **数据库**: (推测为MySQL/PostgreSQL，根据schema.sql和MyBatis Plus使用情况)。
++- **连接池**: HikariCP (Spring Boot默认)。
++
++### 4. 规范与工具
++- **代码规范**: 严格遵循DDD分层，充血模型。
++- **依赖管理**: 父子POM结构，统一版本管理。
++
++## 二、 前端技术栈 (Frontend)
++
++### 1. 核心框架
++- **框架**: React 18 - 函数式组件，Hooks。
++- **构建工具**: Vite 4 - 极速开发服务器和构建工具。
++- **语言**: JavaScript (ESModule) / JSX。
++
++### 2. UI与样式
++- **CSS框架**: Tailwind CSS 3.4 - 原子化CSS，快速构建UI。
++- **排版插件**: @tailwindcss/typography - 优化文章阅读体验。
++- **图标库**: Lucide React - 统一的图标风格。
++- **图表/图示**: Mermaid - 流程图、时序图渲染。
++
++### 3. 路由与状态
++- **路由**: React Router DOM 6.8 - 单页应用路由。
++- **状态管理**: React Context / Hooks (未见Redux/Zustand，推测使用轻量级状态管理)。
++
++### 4. 交互与功能
++- **HTTP客户端**: Axios 1.3 - API请求封装。
++- **Markdown渲染**: 
++  - react-markdown
++  - rehype-highlight (代码高亮)
++  - rehype-raw (HTML渲染)
++  - rehype-slug (标题锚点)
++  - remark-gfm (GitHub风格Markdown)
++
++## 三、 架构特点分析
++
++1.  **前后端分离**: 标准的RESTful API交互。
++2.  **DDD落地**: 后端严格按照DDD四层架构划分模块，领域层独立，保证业务逻辑纯粹性。
++3.  **充血模型**: 强调实体具备业务行为，避免贫血模型。
++4.  **模块化**: 后端Maven多模块，前端组件化/Hook化。
++
++## 四、 改进建议
++
++1.  **类型安全**: 前端目前使用JS，建议逐步迁移到TypeScript以增强类型安全，与后端DTO对齐。
++2.  **API规范**: 建议引入OpenAPI/Swagger自动生成接口文档，便于前后端对接。
++3.  **测试覆盖**: 建议补充单元测试（JUnit 5）和端到端测试（Cypress/Playwright）。
+Index: .trae/rules/项目前端开发规范.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.trae/rules/项目前端开发规范.md b/.trae/rules/项目前端开发规范.md
+new file mode 100644
+--- /dev/null	(date 1766480498638)
++++ b/.trae/rules/项目前端开发规范.md	(date 1766480498638)
+@@ -0,0 +1,102 @@
++# 个人博客系统前端开发规范
++
++## 一、 架构与目录规范
++
++### 1.1 项目结构
++```
++frontend/src/
++├── assets/                 # 静态资源（图片、字体）
++├── components/             # 组件库
++│   ├── common/             # 通用UI组件（Button, Input, Modal）
++│   ├── layout/             # 布局组件（Navbar, Footer, Sidebar）
++│   ├── features/           # 业务功能组件（ArticleList, CommentSection）
++│   └── ui/                 # 基础原子组件
++├── context/                # 全局上下文（AuthContext, ThemeContext）
++├── hooks/                  # 自定义Hooks（useAuth, useFetch）
++├── layouts/                # 页面布局容器（AuthLayout, MainLayout）
++├── pages/                  # 页面组件（路由入口）
++├── services/               # API服务封装
++├── utils/                  # 工具函数
++├── styles/                 # 全局样式
++├── App.jsx                 # 根组件
++└── main.jsx                # 入口文件
++```
++
++### 1.2 组件设计原则
++- **单一职责**: 每个组件只做一件事。
++- **容器与展示分离**: 
++  - `pages/` 下的组件作为容器，处理数据获取和业务逻辑。
++  - `components/` 下的组件主要负责展示，通过Props接收数据。
++- **组合优于继承**: 使用组件组合来实现复用。
++
++## 二、 代码编写规范
++
++### 2.1 命名规范
++- **组件文件**: 大驼峰命名，如 `ArticleEditor.jsx`。
++- **组件函数**: 大驼峰命名，与文件名一致。
++- **Hooks**: 以 `use` 开头，小驼峰命名，如 `useArticle.js`。
++- **工具函数**: 小驼峰命名，如 `formatDate.js`。
++- **常量**: 全大写，下划线分隔，如 `API_BASE_URL`。
++- **CSS类名**: 使用Tailwind类名，自定义类使用kebab-case。
++
++### 2.2 React最佳实践
++- **函数组件**: 强制使用函数组件 + Hooks。
++- **Props解构**: 在函数参数中直接解构Props。
++  ```jsx
++  // ✅ 推荐
++  const Button = ({ children, onClick, variant = 'primary' }) => { ... }
++  ```
++- **依赖列表**: `useEffect` 和 `useMemo` 必须包含所有依赖项。
++- **避免内联定义**: 避免在渲染函数中定义内部函数或对象，除非使用 `useCallback`/`useMemo` 优化。
++
++### 2.3 状态管理
++- **本地状态**: 使用 `useState` 处理组件内部UI状态。
++- **全局状态**: 使用 `Context` 处理跨组件共享状态（如用户信息、主题）。
++- **服务端状态**: 建议使用 `React Query` 或 `SWR` (可选) 管理API数据缓存。
++
++## 三、 样式规范 (Tailwind CSS)
++
++### 3.1 使用原则
++- **Utility-First**: 优先使用Tailwind预设类。
++- **避免任意值**: 尽量少用 `w-[123px]` 这种写法，保持设计系统一致性。
++- **类名顺序**: 建议遵循 `布局 -> 盒模型 -> 视觉 -> 交互` 的顺序 (或使用Prettier插件自动排序)。
++
++### 3.2 组件样式
++- **复用样式**: 对于重复的样式组合，使用 `@apply` 抽取到 `index.css` 或封装为组件。
++  ```css
++  /* index.css */
++  .btn-primary {
++    @apply px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition;
++  }
++  ```
++
++## 四、 接口调用规范
++
++### 4.1 Service层封装
++- 禁止在组件中直接调用 `axios` 或 `fetch`。
++- 所有API请求必须封装在 `services/` 目录下。
++  ```javascript
++  // services/articleService.js
++  import api from './api';
++
++  export const getArticles = async (params) => {
++    const response = await api.get('/articles', { params });
++    return response.data;
++  };
++  ```
++
++### 4.2 错误处理
++- 统一拦截器处理：在 `api.js` 中配置 Axios 拦截器处理 401/403/500 等通用错误。
++- 组件级处理：使用 `try-catch` 处理特定业务错误，并显示反馈（Toast或Alert）。
++
++## 五、 性能优化
++
++- **代码分割**: 使用 `React.lazy` 和 `Suspense` 对路由组件进行懒加载。
++- **重渲染优化**: 使用 `React.memo`, `useMemo`, `useCallback` 避免不必要的重渲染。
++- **图片优化**: 使用适当格式（WebP）和尺寸，实现懒加载。
++
++## 六、 限制规则 (与后端对齐)
++
++- **文件长度**: 组件文件不超过 300 行。
++- **组件复杂度**: 圈复杂度控制在 10 以内，复杂逻辑抽取为 Hooks。
++- **参数数量**: Props 数量过多时（>5个），考虑合并为配置对象或使用 Context。
+Index: .trae/rules/代码DDD规范.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.trae/rules/代码DDD规范.md b/.trae/rules/代码DDD规范.md
+--- a/.trae/rules/代码DDD规范.md	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/.trae/rules/代码DDD规范.md	(date 1766480498638)
+@@ -58,6 +58,61 @@
+ └── dto/              # 请求/响应对象
+ ```
+ 
++### 1.4 逻辑归属判定指南（代码写在哪一层？）
++
++**核心原则：技术细节下沉，业务逻辑上浮，应用层只做编排。**
++
++#### 1. 领域层 (Domain) - "业务的核心"
++- **写什么**：所有的业务规则、状态判断、核心算法。
++- **特征**：纯净的Java代码，**不包含**任何技术框架依赖（如Spring Web, MyBatis注解, Redis客户端）。
++- **典型逻辑**：
++    - "订单只有在未支付状态下才能取消"（状态校验）。
++    - "计算购物车总金额，满100减10"（计算逻辑）。
++    - "修改密码时需验证旧密码"（业务验证）。
++
++#### 2. 应用层 (Application) - "业务的指挥官"
++- **写什么**：用例的编排、事务控制、DTO转换。
++- **特征**：只负责协调，**不处理**业务细节，**不处理**技术实现。
++- **典型逻辑**：
++    - 开启事务 (`@Transactional`)。
++    - 从数据库查出领域对象 (`repository.findById`)。
++    - 调用领域对象的方法 (`order.cancel()`)。
++    - 保存领域对象 (`repository.save`)。
++    - 发布应用事件或发送邮件通知（调用接口）。
++
++#### 3. 基础设施层 (Infrastructure) - "技术的实现者"
++- **写什么**：所有与外部系统交互的技术细节。
++- **特征**：包含各种SDK、SQL、网络请求。
++- **典型逻辑**：
++    - **数据库**：MyBatis Mapper接口、SQL语句、JPA实现。
++    - **缓存**：Redis的 `set/get` 操作。
++    - **外部接口**：调用支付宝SDK、发送短信、文件上传到S3。
++    - **工具类**：
++        - **技术工具类**：`FileUtils` (文件IO), `HttpUtils` (网络请求), `SystemUtils` (操作系统信息) —— 必须放在 Infrastructure 层。
++        - **通用工具类**：`StringUtils`, `DateUtils`, `MathUtils` (纯内存操作) —— 可放在 Infrastructure 的 `common` 包或独立 `common` 模块，被各层引用（注意：Domain层尽量减少对外部工具类的依赖，优先使用标准库）。
++
++#### 4. 用户界面层 (Interface) - "对外的门户"
++- **写什么**：HTTP请求处理、参数解析、权限检查。
++- **特征**：与Web框架强耦合。
++- **典型逻辑**：
++    - 解析 `@RequestBody`。
++    - 简单的格式校验 (`@NotNull`, `@Email`)。
++    - 获取当前登录用户上下文。
++    - 捕获异常并封装统一返回结果。
++
++#### 常见场景判定表
++| 场景 | 归属层级 | 实现方式                                                                                                    |
++| :--- | :--- |:--------------------------------------------------------------------------------------------------------|
++| **SQL语句编写** | 基础设施层 | 在 `infrastructure` 实现 `domain` 定义的 Repository 接口                                                        |
++| **Redis缓存读写** | 基础设施层 | 在 `infrastructure` 实现缓存接口                                                                               |
++| **文件读写/路径获取** | 基础设施层 | **严禁**在Domain/Application层直接使用`File`或`Path`操作磁盘。应在Domain层定义 `FileStorageService` 接口，在Infrastructure层实现。 |
++| **工具类 (IO/网络)** | 基础设施层 | 如 `HttpUtils`、`FileUtils`，属于技术实现细节。                                                                     |
++| **工具类 (字符串/日期)** | 基础设施层/Common | 纯内存操作的工具类，可被多层引用。                                                                                       |
++| **生成唯一订单号** | 领域层 + 基础设施层 | `domain` 定义生成策略接口，`infrastructure` 提供实现（如雪花算法）                                                          |
++| **发送邮件** | 领域层接口 + 基础设施层实现 | `domain` 定义 `NotificationService`，`infrastructure` 实现 SMTP 发送                                           |
++| **参数非空校验** | 界面层/应用层 | 使用 JSR-303 注解 (`@NotNull`)                                                                              |
++| **库存不足校验** | 领域层 | 在 `Product` 或 `InventoryService` 中校验                                                                    |
++
+ ## 二、代码简洁规范
+ 
+ ### 2.1 类规范
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java
+--- a/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/BlogPostAppService.java	(date 1766543063170)
+@@ -1,121 +1,81 @@
+ package com.personal.portfolio.blog.application.service;
+ 
+-import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
+ import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
+-import com.personal.portfolio.blog.application.event.BlogPostCreatedApplicationEvent;
+-import com.personal.portfolio.blog.application.exception.BusinessException;
+ import com.personal.portfolio.blog.domain.common.PageResult;
+ import com.personal.portfolio.blog.domain.model.BlogPost;
+ import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
+ 
+-import io.github.linpeilie.Converter;
+-import jakarta.validation.Valid;
+-import lombok.RequiredArgsConstructor;
+-import org.springframework.context.ApplicationEventPublisher;
+ import org.springframework.stereotype.Service;
+ import org.springframework.validation.annotation.Validated;
+ 
+ import java.util.List;
+ 
++import jakarta.validation.Valid;
++import lombok.RequiredArgsConstructor;
++import lombok.extern.slf4j.Slf4j;
++
+ /**
+  * 博客文章应用服务 - 协调领域对象和基础设施
+  */
+ @Service
+ @Validated
+ @RequiredArgsConstructor
++@Slf4j
+ public class BlogPostAppService {
+-    
++
+     private final BlogPostRepository blogPostRepository;
+-    private final ApplicationEventPublisher applicationEventPublisher;
+-    private static final Converter converter = new Converter();
+ 
+-    /**
+-     * 创建博客文章（使用命令对象）
+-     */
+-    public BlogPost createBlogPost(@Valid CreateBlogPostCommand command) {
+-        // 检查标题是否已存在 - 业务规则校验
+-        if (blogPostRepository.existsByTitle(command.getTitle())) {
+-            throw new BusinessException("博客标题已存在: " + command.getTitle());
+-        }
+-        
+-        BlogPost blogPost = converter.convert(command, BlogPost.class);
+-        blogPost.registerCreateEvent();
+-        // 验证博客文章是否有效
+-        if (!blogPost.isValid()) {
+-            throw new BusinessException("博客文章内容无效");
+-        }
+-        
+-        // 保存博客文章
+-        BlogPost savedBlogPost = blogPostRepository.save(blogPost);
+-        
+-        // 发布博客创建应用事件
+-        publishBlogPostCreatedEvent(savedBlogPost);
+-        
+-        return savedBlogPost;
+-    }
+-    
+-    /**
+-     * 发布博客创建应用事件
+-     */
+-    private void publishBlogPostCreatedEvent(BlogPost blogPost) {
+-        BlogPostCreatedApplicationEvent event = new BlogPostCreatedApplicationEvent(
+-            blogPost.getId(),
+-            blogPost.getTitle(),
+-            blogPost.getAuthorId(),
+-            blogPost.getCreatedAt()
+-        );
+-        applicationEventPublisher.publishEvent(event);
+-    }
+-    
+     /**
+      * 发布博客文章
+      */
+     public BlogPost publishBlogPost(Long id) {
+         BlogPost blogPost = blogPostRepository.findById(id)
+                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
+-        
++
+         blogPost.publish();
+         return blogPostRepository.save(blogPost);
+     }
+-    
++
+     /**
+      * 获取所有博客文章
++     *
+      * @deprecated 使用分页方法替代
+      */
+     @Deprecated
+     public List<BlogPost> getAllBlogPosts() {
+         return blogPostRepository.findAll();
+     }
+-    
++
+     /**
+      * 获取已发布的博客文章
++     *
+      * @deprecated 使用分页方法替代
+      */
+     @Deprecated
+     public List<BlogPost> getPublishedBlogPosts() {
+         return blogPostRepository.findPublishedPosts();
+     }
+-    
++
+     /**
+      * 分页查询所有博客文章
+      */
+     public PageResult<BlogPost> getAllBlogPosts(@Valid QueryBlogPostCommand command) {
+         PageResult<BlogPost> pageResult = blogPostRepository.findPageWithConditions(
+-            command.getPage(), command.getSize(), command.getTitle(), command.getCategory(), command.getStatus());
+-        
++                command.getPage(), command.getSize(), command.getTitle(), command.getCategory(), command.getStatus());
++
+         return convertToApplicationPageResult(pageResult);
+     }
+-    
++
+     /**
+      * 分页查询已发布的博客文章
+      */
+     public PageResult<BlogPost> getPublishedBlogPosts(@Valid QueryBlogPostCommand command) {
+         PageResult<BlogPost> pageResult = blogPostRepository.findPublishedPage(
+-            command.getPage(), command.getSize(), command.getTitle());
+-        
++                command.getPage(), command.getSize(), command.getTitle());
++
+         return convertToApplicationPageResult(pageResult);
+     }
+-    
++
+     /**
+      * 根据ID获取博客文章
+      */
+@@ -123,25 +83,25 @@
+         return blogPostRepository.findById(id)
+                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
+     }
+-    
++
+     /**
+      * 更新博客文章
+      */
+-    public BlogPost updateBlogPost(Long id, String title, String slug, String content, String summary, String coverImage, String category, List<String> tags) {
++    public BlogPost updateBlogPost(Long id, String title, String slug, String content, String summary, String coverFilePath, String category, List<String> tags) {
+         BlogPost blogPost = blogPostRepository.findById(id)
+                 .orElseThrow(() -> new IllegalArgumentException("博客文章不存在: " + id));
+-        
++
+         // 检查新标题是否与其他文章冲突
+         String currentTitle = blogPost.getTitle();
+         if (currentTitle != null && !currentTitle.equals(title) && blogPostRepository.existsByTitle(title)) {
+             throw new IllegalArgumentException("博客标题已存在: " + title);
+         }
+-        
++
+         // 更新内容
+-        blogPost.updateContent(title, slug, content, summary, coverImage, category, tags);
++        blogPost.updateContent(title, slug, content, summary, coverFilePath, category, tags);
+         return blogPostRepository.save(blogPost);
+     }
+-    
++
+     /**
+      * 删除博客文章
+      */
+@@ -151,16 +111,16 @@
+         }
+         blogPostRepository.delete(id);
+     }
+-    
++
+     /**
+      * 将领域层的分页结果转换为应用层的分页结果
+      */
+     private PageResult<BlogPost> convertToApplicationPageResult(PageResult<BlogPost> domainPageResult) {
+         return new PageResult<>(
+-            domainPageResult.getRecords(),
+-            domainPageResult.getTotal(),
+-            domainPageResult.getPage(),
+-            domainPageResult.getSize()
++                domainPageResult.getRecords(),
++                domainPageResult.getTotal(),
++                domainPageResult.getPage(),
++                domainPageResult.getSize()
+         );
+     }
+ }
+Index: frontend/vite.config.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/vite.config.js b/frontend/vite.config.js
+--- a/frontend/vite.config.js	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/frontend/vite.config.js	(date 1766543066412)
+@@ -27,6 +27,11 @@
+         target: 'http://localhost:8080',
+         changeOrigin: true,
+         secure: false,
++      },
++      '/uploads': {
++        target: 'http://localhost:8080',
++        changeOrigin: true,
++        secure: false,
+       }
+     }
+   },
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java
+--- a/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java	(revision f7a5b7be56d0b62719d0a16e27c86746ec8403cd)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/CreateBlogPostCommand.java	(date 1766544478415)
+@@ -24,8 +24,6 @@
+     
+     private String summary;
+     
+-    private String coverImage;
+-    
+     private String category;
+     
+     private List<String> tags;
