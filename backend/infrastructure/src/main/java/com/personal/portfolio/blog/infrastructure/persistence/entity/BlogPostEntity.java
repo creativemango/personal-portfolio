@@ -32,11 +32,11 @@ public class BlogPostEntity {
 
     @TableField("content")
     private String content;
-    
-    @TableField("summary")
+
+    @TableField(value = "summary", updateStrategy = FieldStrategy.ALWAYS)
     private String summary;
-    
-    @TableField("cover_file_path")
+
+    @TableField(value = "cover_file_path", updateStrategy = FieldStrategy.ALWAYS)
     private String coverFilePath;
     
     @TableField("category")

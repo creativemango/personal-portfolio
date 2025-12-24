@@ -6,6 +6,8 @@ import Pagination from '../Pagination'
 const ArticleList = ({ 
   articles, 
   loading, 
+  filters,
+  onFilterChange,
   pagination, // { currentPage, totalPages, totalItems, onPageChange }
   onEdit, 
   onDelete,
@@ -29,14 +31,20 @@ const ArticleList = ({
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
             <input 
               type="text" 
+              value={filters?.keyword || ''}
+              onChange={(e) => onFilterChange('keyword', e.target.value)}
               placeholder="Search articles..." 
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
-          <select className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white">
-            <option>All Status</option>
-            <option>Published</option>
-            <option>Draft</option>
+          <select 
+            value={filters?.status || ''}
+            onChange={(e) => onFilterChange('status', e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+          >
+            <option value="">All Status</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="DRAFT">Draft</option>
           </select>
         </div>
 

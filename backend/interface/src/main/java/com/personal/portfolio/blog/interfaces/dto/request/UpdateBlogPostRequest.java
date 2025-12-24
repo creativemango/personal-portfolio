@@ -18,7 +18,6 @@ public class UpdateBlogPostRequest {
     private String title;
     
     @NotBlank(message = "博客别名不能为空")
-    @Pattern(regexp = "^[a-z0-9-]+$", message = "别名只能包含小写字母、数字和连字符")
     @Size(min = 1, max = 100, message = "别名长度必须在1-100个字符之间")
     private String slug;
     

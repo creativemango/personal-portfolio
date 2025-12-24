@@ -328,6 +328,13 @@ const ArticleEditor = ({ initialData, onSave, isSaving, autoSaveEnabled = true, 
     const file = e.target.files[0]
     if (!file) return
 
+    // Check file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit')
+      e.target.value = ''
+      return
+    }
+
     // Create a preview URL
     const reader = new FileReader()
     reader.onloadend = () => {
@@ -459,6 +466,7 @@ const ArticleEditor = ({ initialData, onSave, isSaving, autoSaveEnabled = true, 
                         <>
                           <UploadCloud className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
                           <span className="text-sm font-medium">Click to upload cover image</span>
+                          <span className="text-xs text-gray-400 mt-1">Recommended: 1200x600px, Max: 5MB</span>
                         </>
                       )}
                     </div>

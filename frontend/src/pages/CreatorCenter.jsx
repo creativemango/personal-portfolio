@@ -41,12 +41,18 @@ const CreatorCenter = () => {
     autoSaveInterval: 30000
   })
 
+  // Filters State
+  const [filters, setFilters] = useState({
+    keyword: '',
+    status: ''
+  })
+
   useEffect(() => {
     if (activeView === VIEWS.MANAGE || activeView === VIEWS.DASHBOARD) {
       loadArticles(currentPage)
       loadStats()
     }
-  }, [activeView, currentPage])
+  }, [activeView, currentPage, filters])
 
   const loadStats = async () => {
     try {
@@ -71,7 +77,7 @@ const CreatorCenter = () => {
   const loadArticles = async (page = 1) => {
     setLoading(true)
     try {
-      const response = await getBlogPosts(page, pageSize)
+      const response = await getBlogPosts(page, pageSize, filters.keyword, filters.status)
       
       let articlesData = []
       let total = 0
@@ -103,12 +109,22 @@ const CreatorCenter = () => {
     }
   }
 
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+    setCurrentPage(1) // Reset to first page when filtering
+  }
+
   const handleSave = async (formData, isPublish = false, isAutoSave = false) => {
     try {
-      const slug = formData.title
+      let slug = formData.title
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9\u4e00-\u9fa5-]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+
+      if (!slug) {
+        slug = `post-${Date.now()}`
+      }
       
       const blogPostData = {
         title: formData.title,
@@ -326,6 +342,8 @@ const CreatorCenter = () => {
           <ArticleList 
             articles={articles}
             loading={loading}
+            filters={filters}
+            onFilterChange={handleFilterChange}
             pagination={{
               currentPage,
               totalPages,

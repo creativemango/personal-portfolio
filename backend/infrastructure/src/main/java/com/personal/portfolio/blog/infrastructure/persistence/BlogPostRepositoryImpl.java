@@ -202,10 +202,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         
         // 添加关键词条件
         if (keyword != null && !keyword.trim().isEmpty()) {
-            queryWrapper.and(wrapper -> wrapper
-                    .like(BlogPostEntity::getTitle, keyword.trim())
-                    .or()
-                    .like(BlogPostEntity::getContent, keyword.trim()));
+            queryWrapper.like(BlogPostEntity::getTitle, keyword.trim());
         }
         
         // 按创建时间降序排序
