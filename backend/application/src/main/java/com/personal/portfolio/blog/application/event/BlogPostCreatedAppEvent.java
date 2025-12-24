@@ -9,7 +9,7 @@ import lombok.Getter;
  * 用于跨应用边界的通信
  */
 @Getter
-public class BlogPostCreatedApplicationEvent {
+public class BlogPostCreatedAppEvent {
     
     private final Long blogPostId;
     private final String title;
@@ -17,7 +17,7 @@ public class BlogPostCreatedApplicationEvent {
     private final LocalDateTime createdAt;
     private final String eventType = "BLOG_POST_CREATED";
     
-    public BlogPostCreatedApplicationEvent(Long blogPostId, String title, Long authorId, LocalDateTime createdAt) {
+    public BlogPostCreatedAppEvent(Long blogPostId, String title, Long authorId, LocalDateTime createdAt) {
         this.blogPostId = blogPostId;
         this.title = title;
         this.authorId = authorId;

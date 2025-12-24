@@ -20,4 +20,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(profileInterceptor).addPathPatterns(patternsAll);
 
     }
+
+    @Override
+    public void addResourceHandlers(org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry registry) {
+        // Map /uploads/** to the local uploads directory
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:uploads/");
+    }
 }

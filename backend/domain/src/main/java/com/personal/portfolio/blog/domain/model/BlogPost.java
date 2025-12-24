@@ -23,7 +23,7 @@ public class BlogPost {
     private String slug;
     private String content;
     private String summary;
-    private String coverImage;
+    private String coverFilePath;
     private String category;
     private Boolean isPublished;
     private Integer viewCount;
@@ -110,16 +110,30 @@ public class BlogPost {
      * 更新博客内容
      */
     public void updateContent(String title, String slug, String content, String summary, 
-                             String coverImage, String category, List<String> tags) {
+                             String coverFilePath, String category, List<String> tags) {
         validateCanUpdate();
         
         this.title = title;
         this.slug = slug;
         this.content = content;
         this.summary = summary;
-        this.coverImage = coverImage;
+        this.coverFilePath = coverFilePath;
         this.category = category;
         this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    /**
+     * 更新封面图片
+     */
+    public void updateCover(String coverFilePath) {
+        validateCanUpdate();
+        
+        if (coverFilePath == null || coverFilePath.trim().isEmpty()) {
+            throw new IllegalArgumentException("封面路径不能为空");
+        }
+        
+        this.coverFilePath = coverFilePath;
         this.updatedAt = LocalDateTime.now();
     }
     
@@ -236,6 +250,25 @@ public class BlogPost {
             return 0;
         }
         return java.time.Duration.between(createdAt, LocalDateTime.now()).toDays();
+    }
+    
+    /**
+     * 设置封面图片（封装技术细节）
+     * @param coverFilePath 封面文件路径
+     */
+    public void setCoverFromUpload(String coverFilePath) {
+        // 业务规则校验
+        if (coverFilePath == null || coverFilePath.trim().isEmpty()) {
+            throw new IllegalArgumentException("封面路径不能为空");
+        }
+        // 这里可以添加更多校验，例如路径格式等
+        // if (!coverFilePath.matches("...")) { ... }
+        
+        this.coverFilePath = coverFilePath;
+        this.updatedAt = LocalDateTime.now();
+        
+        // 可选：发布领域事件
+        // registerEvent(new BlogPostCoverUpdatedEvent(this.id, coverFilePath));
     }
     
     // 私有验证方法

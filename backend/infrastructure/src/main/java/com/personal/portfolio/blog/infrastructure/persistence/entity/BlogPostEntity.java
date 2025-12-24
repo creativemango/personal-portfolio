@@ -36,8 +36,8 @@ public class BlogPostEntity {
     @TableField("summary")
     private String summary;
     
-    @TableField("cover_image")
-    private String coverImage;
+    @TableField("cover_file_path")
+    private String coverFilePath;
     
     @TableField("category")
     private String category;

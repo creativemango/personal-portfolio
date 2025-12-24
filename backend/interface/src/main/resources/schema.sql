@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     slug VARCHAR(255) NOT NULL UNIQUE,
     content TEXT NOT NULL,
     summary VARCHAR(500),
-    cover_image VARCHAR(255),
+    cover_file_path VARCHAR(255),
     is_published BOOLEAN DEFAULT FALSE,
     published_at TIMESTAMP,
     view_count INT DEFAULT 0,
@@ -155,7 +155,7 @@ This improves interoperability and makes API integration more robust.
 
 Spring Boot 3.0 is not just an upgrade; it is a transformation. By embracing Java 17, Jakarta EE, and Native Images, it positions Java as a top-tier language for modern cloud-native and serverless architectures. The migration effort is non-trivial, but the long-term gains in performance, maintainability, and developer joy are well worth the investment. Start planning your upgrade today!',
 'An in-depth look at the new features in Spring Boot 3.0, including Java 17 baseline, Native Images, and Jakarta EE.',
-TRUE, NOW(), 1, 'Technical', 'Java,Spring Boot,Backend', NOW(), NOW()
+FALSE, NOW(), 1, 'Technical', 'Java,Spring Boot,Backend', NOW(), NOW()
        );
 
 -- 2. React Hooks
@@ -508,7 +508,7 @@ The package registry is called **crates.io**, and the community is vibrant and g
 
 Rust has a steep learning curve. Fighting the "Borrow Checker" can be frustrating for beginners. However, once it clicks, it changes how you think about memory and system design. If you want to build high-performance systems, CLI tools, or WebAssembly modules, Rust is the language to learn in 2024.',
 'An overview of the Rust programming language, focusing on its unique ownership model and memory safety features.',
-TRUE, NOW(), 1, 'Technical', 'Rust,Programming,Systems Programming', NOW(), NOW()
+FALSE, NOW(), 1, 'Technical', 'Rust,Programming,Systems Programming', NOW(), NOW()
        );
 
 -- 7. My Journey
@@ -691,7 +691,7 @@ Authentication was the trickiest part. Implementing a secure JWT flow with refre
 
 Building this portfolio was a rewarding project. It forced me to wear all hats: Designer, Frontend Dev, Backend Dev, and DevOps. I hope you enjoy browsing it as much as I enjoyed building it!',
 'A behind-the-scenes look at how this portfolio website was built, covering the React/Spring Boot stack and design choices.',
-TRUE, NOW(), 1, 'Project', 'Portfolio,React,Spring Boot,Web Development', NOW(), NOW()
+FALSE, NOW(), 1, 'Project', 'Portfolio,React,Spring Boot,Web Development', NOW(), NOW()
        );
 
 -- 10. Productivity
@@ -807,5 +807,5 @@ AI cannot attend a meeting with a client and figure out what they *actually* nee
 
 The future of coding is exciting. The barrier to entry for *creating* software is lowering, which means we will see more software being built. The job isn''t going away, but it is evolving. Adapt or get left behind.',
 'An opinion piece on the impact of AI and LLMs on the software engineering profession and how developers should adapt.',
-TRUE, NOW(), 1, 'Technical', 'AI,Future,Opinion,Career', NOW(), NOW()
+FALSE, NOW(), 1, 'Technical', 'AI,Future,Opinion,Career', NOW(), NOW()
        );

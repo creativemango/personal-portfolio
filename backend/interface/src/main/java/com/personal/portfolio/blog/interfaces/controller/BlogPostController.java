@@ -2,6 +2,7 @@ package com.personal.portfolio.blog.interfaces.controller;
 
 import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
 import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
+import com.personal.portfolio.blog.application.service.BlogCreateAppService;
 import com.personal.portfolio.blog.application.service.BlogPostAppService;
 import com.personal.portfolio.blog.domain.common.PageResult;
 import com.personal.portfolio.blog.domain.context.CurrentUserContext;
@@ -11,6 +12,7 @@ import com.personal.portfolio.blog.interfaces.dto.request.UpdateBlogPostRequest;
 import com.personal.portfolio.blog.interfaces.exception.AuthenticationException;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -27,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class BlogPostController {
     
     private final BlogPostAppService blogPostAppService;
+    private final BlogCreateAppService blogcreateAppService;
     private final CurrentUserContext currentUserContext;
     private static final Converter converter = new Converter();
 
@@ -43,9 +46,17 @@ public class BlogPostController {
         
         CreateBlogPostCommand command = converter.convert(request, CreateBlogPostCommand.class);
         command.setAuthorId(authorId);
-        
+
         // 使用命令对象调用应用服务
-        return blogPostAppService.createBlogPost(command);
+        return blogcreateAppService.createBlogPost(command);
+    }
+
+    /**
+     * 上传博客封面图片
+     */
+    @PostMapping("/{id}/cover")
+    public String uploadCover(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        return blogcreateAppService.uploadCover(id, file);
     }
     
     /**
@@ -105,7 +116,7 @@ public class BlogPostController {
             request.getSlug(), 
             request.getContent(),
             request.getSummary(),
-            request.getCoverImage(),
+            request.getCoverFilePath(),
             request.getCategory(),
             request.getTags()
         );

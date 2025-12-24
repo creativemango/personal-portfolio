@@ -24,8 +24,6 @@ public class CreateBlogPostCommand {
     
     private String summary;
     
-    private String coverImage;
-    
     private String category;
     
     private List<String> tags;

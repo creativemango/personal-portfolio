@@ -67,3 +67,17 @@ export const publishBlogPost = async (id) => {
 export const deleteBlogPost = async (id) => {
   return await api.delete(`${API_BASE_PATH}/${id}`);
 };
+
+/**
+ * Upload blog post cover image
+ */
+export const uploadCover = async (id, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  return await api.post(`${API_BASE_PATH}/${id}/cover`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+};

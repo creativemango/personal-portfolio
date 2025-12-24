@@ -32,8 +32,6 @@ public class CreateBlogPostRequest {
     @Size(max = 500, message = "摘要长度不能超过500个字符")
     private String summary;
     
-    private String coverImage;
-    
     @Size(max = 50, message = "分类长度不能超过50个字符")
     private String category;
     

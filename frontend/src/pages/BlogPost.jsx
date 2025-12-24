@@ -45,6 +45,14 @@ const BlogPost = () => {
 
   const [headings, setHeadings] = useState([])
 
+  const getCoverImageUrl = (url) => {
+    if (!url) return null
+    if (url.startsWith('data:') || url.startsWith('http') || url.startsWith('/')) {
+      return url
+    }
+    return `/uploads/${url}`
+  }
+
   useEffect(() => {
     if (post && post.content) {
       // Extract headings
@@ -84,10 +92,10 @@ const BlogPost = () => {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Hero Header */}
       <div className="relative w-full h-96 bg-gray-900 overflow-hidden mb-10">
-        {post.coverImage ? (
+        {post.coverFilePath ? (
           <>
             <img 
-              src={post.coverImage} 
+              src={getCoverImageUrl(post.coverFilePath)} 
               alt={post.title} 
               className="w-full h-full object-cover opacity-60"
               onError={(e) => {
@@ -249,10 +257,10 @@ const BlogPost = () => {
                 </div>
               </div>
 
-              {/* Table of Contents */}
+              {/* Table*/}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
                 <h2 className="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2 sticky top-0 bg-white z-10 pb-2 border-b border-gray-50">
-                  Table of Contents
+                  Table
                 </h2>
                 <nav className="relative">
                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-100"></div>
