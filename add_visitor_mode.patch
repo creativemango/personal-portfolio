@@ -1,0 +1,2419 @@
+Subject: [PATCH] add visitor mode
+---
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/context/AdminPolicy.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/context/AdminPolicy.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/context/AdminPolicy.java
+new file mode 100644
+--- /dev/null	(date 1766661670196)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/context/AdminPolicy.java	(date 1766661670196)
+@@ -0,0 +1,7 @@
++package com.personal.portfolio.blog.domain.context;
++
++public interface AdminPolicy {
++    boolean isAdminUsername(String username);
++    boolean isAdminGithubId(String githubId);
++}
++
+Index: frontend/src/components/FormInput.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/FormInput.jsx b/frontend/src/components/FormInput.jsx
+--- a/frontend/src/components/FormInput.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/components/FormInput.jsx	(date 1766653483520)
+@@ -16,20 +16,20 @@
+ }) => {
+   return (
+     <div>
+-      <label className="block text-sm font-medium text-gray-700 mb-1">
++      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+         {label} {required && <span className="text-red-500">*</span>}
+       </label>
+       <div className="relative">
+         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+-          {Icon && <Icon className="h-5 w-5 text-gray-400" />}
++          {Icon && <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
+         </div>
+         <input
+           name={name}
+           type={type}
+           required={required}
+           className={`appearance-none block w-full pl-10 pr-3 py-2.5 border ${
+-            error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+-          } rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm transition-colors`}
++            error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500'
++          } rounded-xl shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 sm:text-sm transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+           placeholder={placeholder}
+           value={value}
+           onChange={onChange}
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/dto/RegisterResult.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/RegisterResult.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/RegisterResult.java
+new file mode 100644
+--- /dev/null	(date 1766661670137)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/RegisterResult.java	(date 1766661670137)
+@@ -0,0 +1,13 @@
++package com.personal.portfolio.blog.application.dto;
++
++import lombok.Data;
++
++@Data
++public class RegisterResult {
++    private Long id;
++    private String username;
++    private String email;
++    private String displayName;
++    private String role;
++}
++
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/dto/LoginResult.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/LoginResult.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/LoginResult.java
+new file mode 100644
+--- /dev/null	(date 1766661670127)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/dto/LoginResult.java	(date 1766661670127)
+@@ -0,0 +1,14 @@
++package com.personal.portfolio.blog.application.dto;
++
++import lombok.Data;
++
++@Data
++public class LoginResult {
++    private String token;
++    private Long id;
++    private String username;
++    private String email;
++    private String displayName;
++    private String role;
++}
++
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserAuthAppService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserAuthAppService.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserAuthAppService.java
+new file mode 100644
+--- /dev/null	(date 1766661670161)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/service/UserAuthAppService.java	(date 1766661670161)
+@@ -0,0 +1,66 @@
++package com.personal.portfolio.blog.application.service;
++
++import com.personal.portfolio.blog.application.dto.LoginResult;
++import com.personal.portfolio.blog.application.dto.RegisterResult;
++import com.personal.portfolio.blog.domain.context.AdminPolicy;
++import com.personal.portfolio.blog.application.exception.AuthFailedException;
++import com.personal.portfolio.blog.domain.model.User;
++import com.personal.portfolio.blog.domain.model.UserRole;
++import com.personal.portfolio.blog.domain.repository.UserRepository;
++import com.personal.portfolio.blog.domain.service.AuthenticationService;
++import org.springframework.stereotype.Service;
++
++@Service
++public class UserAuthAppService {
++    private final UserRegistrationService userRegistrationService;
++    private final AuthenticationService authenticationService;
++    private final UserRepository userRepository;
++    private final AdminPolicy adminPolicy;
++
++    public UserAuthAppService(UserRegistrationService userRegistrationService,
++                              AuthenticationService authenticationService,
++                              UserRepository userRepository,
++                              AdminPolicy adminPolicy) {
++        this.userRegistrationService = userRegistrationService;
++        this.authenticationService = authenticationService;
++        this.userRepository = userRepository;
++        this.adminPolicy = adminPolicy;
++    }
++
++    public RegisterResult register(String username, String password, String email) {
++        User user = userRegistrationService.registerUser(username, password, email);
++        if (adminPolicy.isAdminUsername(username)) {
++            user.setRole(UserRole.ADMIN);
++            user = userRepository.save(user);
++        }
++        RegisterResult result = new RegisterResult();
++        result.setId(user.getId());
++        result.setUsername(user.getUsername());
++        result.setEmail(user.getEmail());
++        result.setDisplayName(user.getDisplayName());
++        result.setRole(user.getRole() != null ? user.getRole().name() : "VISITOR");
++        return result;
++    }
++
++    public LoginResult login(String username, String password) {
++        User user = userRegistrationService.authenticate(username, password);
++        if (user == null) {
++            throw new AuthFailedException("Invalid username or password");
++        }
++        // Ensure admin role consistency
++        if (adminPolicy.isAdminUsername(user.getUsername()) && user.getRole() != UserRole.ADMIN) {
++            user.setRole(UserRole.ADMIN);
++            user = userRepository.save(user);
++        }
++        String role = user.getRole() != null ? user.getRole().name() : "VISITOR";
++        String token = authenticationService.generateToken(user.getUsername(), user.getId(), role);
++        LoginResult result = new LoginResult();
++        result.setToken(token);
++        result.setId(user.getId());
++        result.setUsername(user.getUsername());
++        result.setEmail(user.getEmail());
++        result.setDisplayName(user.getDisplayName());
++        result.setRole(role);
++        return result;
++    }
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/AdminProperties.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/AdminProperties.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/AdminProperties.java
+new file mode 100644
+--- /dev/null	(date 1766661670231)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/AdminProperties.java	(date 1766661670231)
+@@ -0,0 +1,27 @@
++package com.personal.portfolio.blog.infrastructure.config;
++
++import com.personal.portfolio.blog.domain.context.AdminPolicy;
++import org.springframework.boot.context.properties.ConfigurationProperties;
++import org.springframework.stereotype.Component;
++
++import lombok.Getter;
++import lombok.Setter;
++
++@Getter
++@Setter
++@Component
++@ConfigurationProperties(prefix = "app.admin")
++public class AdminProperties implements AdminPolicy {
++    private String username;
++    private String githubId;
++
++    @Override
++    public boolean isAdminUsername(String username) {
++        return this.username != null && username != null && this.username.equalsIgnoreCase(username);
++    }
++
++    @Override
++    public boolean isAdminGithubId(String githubId) {
++        return this.githubId != null && githubId != null && this.githubId.equals(githubId);
++    }
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/SecurityConfig.java	(date 1766661670268)
+@@ -7,9 +7,12 @@
+ import org.springframework.context.annotation.Configuration;
+ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+ import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
++import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+ import org.springframework.security.config.http.SessionCreationPolicy;
++import org.springframework.http.HttpMethod;
+ import org.springframework.security.web.SecurityFilterChain;
+ import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
++import jakarta.servlet.http.HttpServletResponse;
+ 
+ import jakarta.servlet.http.Cookie;
+ 
+@@ -18,6 +21,7 @@
+  */
+ @Configuration
+ @EnableWebSecurity
++@EnableMethodSecurity
+ @RequiredArgsConstructor
+ public class SecurityConfig {
+ 
+@@ -46,9 +50,24 @@
+                 .requestMatchers("/", "/login", "/login/oauth2/**", "/oauth2/**", "/blog/**", "/h2-console/**", 
+                                "/api/logout", "/api/register", "/api/login", 
+                                "/api/check-username", "/api/check-email").permitAll()
++                // 访客只读：已发布列表与文章详情
++                .requestMatchers(HttpMethod.GET, "/api/blog/posts/published/**").permitAll()
++                .requestMatchers(HttpMethod.GET, "/api/blog/posts/*").permitAll()
++                // 管理员权限：文章创建/更新/发布/删除/封面上传/查询全部
++                .requestMatchers(HttpMethod.POST, "/api/blog/posts/**").hasRole("ADMIN")
++                .requestMatchers(HttpMethod.PUT, "/api/blog/posts/**").hasRole("ADMIN")
++                .requestMatchers(HttpMethod.DELETE, "/api/blog/posts/**").hasRole("ADMIN")
++                .requestMatchers(HttpMethod.GET, "/api/blog/posts").hasRole("ADMIN")
+                 // 其他请求需要认证
+                 .anyRequest().authenticated()
+             )
++            // API统一返回401/403而不是重定向
++            .exceptionHandling(ex -> ex
++                .authenticationEntryPoint((request, response, authException) ->
++                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
++                .accessDeniedHandler((request, response, accessDeniedException) ->
++                    response.sendError(HttpServletResponse.SC_FORBIDDEN))
++            )
+             // 禁用表单登录（使用 JWT），但保留 OAuth2 登录
+             .formLogin(form -> form.disable())
+             .oauth2Login(oauth2 -> oauth2
+Index: backend/startup/src/test/java/com/personal/portfolio/SecurityAuthorizationTests.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/startup/src/test/java/com/personal/portfolio/SecurityAuthorizationTests.java b/backend/startup/src/test/java/com/personal/portfolio/SecurityAuthorizationTests.java
+new file mode 100644
+--- /dev/null	(date 1766665153667)
++++ b/backend/startup/src/test/java/com/personal/portfolio/SecurityAuthorizationTests.java	(date 1766665153667)
+@@ -0,0 +1,77 @@
++package com.personal.portfolio;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.boot.test.web.client.TestRestTemplate;
++import org.springframework.boot.test.web.server.LocalServerPort;
++import org.springframework.http.*;
++import org.springframework.test.context.TestPropertySource;
++
++import java.util.LinkedHashMap;
++import java.util.Map;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import com.personal.portfolio.blog.domain.common.ApiResponse;
++import com.personal.portfolio.blog.interfaces.dto.response.LoginResponse;
++
++@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
++@TestPropertySource(properties = {
++        "app.admin.username=admin"
++})
++public class SecurityAuthorizationTests {
++
++    @LocalServerPort
++    private int port;
++
++    @Autowired
++    private TestRestTemplate restTemplate;
++
++    private String url(String path) {
++        return "http://localhost:" + port + path;
++    }
++
++    @Test
++    void visitor_can_access_published_list_and_detail_without_auth() {
++        ResponseEntity<String> listResp = restTemplate.getForEntity(url("/api/blog/posts/published?page=1&size=5"), String.class);
++        assertThat(listResp.getStatusCode().is2xxSuccessful()).isTrue();
++
++        // Try get one post detail by ID=2 (schema.sql has published item as second insert)
++        ResponseEntity<String> detailResp = restTemplate.getForEntity(url("/api/blog/posts/2"), String.class);
++        assertThat(detailResp.getStatusCode().is2xxSuccessful()).isTrue();
++    }
++
++    @Test
++    void creating_post_requires_admin_role() {
++        // Without token -> should be 4xx
++        HttpHeaders headers = new HttpHeaders();
++        headers.setContentType(MediaType.APPLICATION_JSON);
++        String body = "{\"title\":\"t\",\"slug\":\"s\",\"content\":\"c\"}";
++        ResponseEntity<String> noAuthResp = restTemplate.exchange(url("/api/blog/posts"), HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
++        assertThat(noAuthResp.getStatusCode().is4xxClientError()).isTrue();
++
++        // Register and login as visitor
++        ResponseEntity<Map> regVisitor = restTemplate.postForEntity(url("/api/register"), Map.of("username", "visitor", "password", "visitorpass", "email", "v@e.com"), Map.class);
++        assertThat(regVisitor.getStatusCode().is2xxSuccessful()).isTrue();
++        ResponseEntity<Map> loginVisitor = restTemplate.postForEntity(url("/api/login"), Map.of("username", "visitor", "password", "visitorpass"), Map.class);
++        assertThat(loginVisitor.getStatusCode().is2xxSuccessful()).isTrue();
++        LinkedHashMap<String, String> visitorResponse = (LinkedHashMap<String, String>) loginVisitor.getBody().get("data");
++        String visitorToken = visitorResponse.get("token");
++
++        headers.set("Authorization", "Bearer " + visitorToken);
++        ResponseEntity<String> visitorResp = restTemplate.exchange(url("/api/blog/posts"), HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
++        assertThat(visitorResp.getStatusCode().value()).isIn(401, 403);
++
++        // Register and login as admin (pre-set via property)
++        ResponseEntity<Map> loginAdmin = restTemplate.postForEntity(url("/api/login"), Map.of("username", "admin", "password", "adminadmin"), Map.class);
++        assertThat(loginAdmin.getStatusCode().is2xxSuccessful()).isTrue();
++        LinkedHashMap<String, String> adminResponse = (LinkedHashMap<String, String>) loginAdmin.getBody().get("data");
++        String adminToken = adminResponse.get("token");
++        headers.set("Authorization", "Bearer " + adminToken);
++        ResponseEntity<String> adminResp = restTemplate.exchange(url("/api/blog/posts"), HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
++        // Either created or validation errors unrelated to auth; must not be 401/403
++        assertThat(adminResp.getStatusCode().is2xxSuccessful() || adminResp.getStatusCode().is4xxClientError()).isTrue();
++        assertThat(adminResp.getStatusCode().value()).isNotIn(401, 403);
++    }
++}
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/config/OAuth2SuccessHandler.java	(date 1766661670233)
+@@ -1,6 +1,7 @@
+ package com.personal.portfolio.blog.infrastructure.config;
+ 
+ import com.personal.portfolio.blog.infrastructure.util.JwtUtil;
++import com.personal.portfolio.blog.domain.context.AdminPolicy;
+ 
+ import org.springframework.security.core.Authentication;
+ import org.springframework.security.oauth2.core.user.OAuth2User;
+@@ -27,6 +28,7 @@
+ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
+ 
+     private final JwtUtil jwtUtil;
++    private final AdminPolicy adminPolicy;
+ 
+     @Override
+     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
+@@ -71,8 +73,15 @@
+                 
+                 log.info("User ID: " + userId);
+                 
+-                // 生成 JWT Token
+-                String token = jwtUtil.generateToken(username, userId);
++                // 判定是否管理员
++                String role = "VISITOR";
++                String oauthGithubId = idAttribute != null ? idAttribute.toString() : null;
++                if (adminPolicy.isAdminUsername(username) || adminPolicy.isAdminGithubId(oauthGithubId)) {
++                    role = "ADMIN";
++                }
++                
++                // 生成携带角色的 JWT Token
++                String token = jwtUtil.generateToken(username, userId, role);
+                 log.info("Generated JWT Token: " + token);
+                 
+                 // 确保用户名不为空
+@@ -89,6 +98,7 @@
+                 userInfo.put("email", email != null ? email : "");
+                 userInfo.put("avatar_url", avatarUrl != null ? avatarUrl : "");
+                 userInfo.put("displayName", name != null ? name : username);
++                userInfo.put("role", role);
+                 
+                 // 构建响应数据
+                 Map<String, Object> responseData = new HashMap<>();
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/filter/JwtAuthenticationFilter.java	(date 1766661670594)
+@@ -70,11 +70,20 @@
+                 
+                 if (username != null && userId != null) {
+                     // 创建认证令牌
++                    String role = jwtUtil.getRoleFromToken(token);
++                    String authority = "ROLE_VISITOR";
++                    if (role != null) {
++                        if ("ADMIN".equalsIgnoreCase(role)) {
++                            authority = "ROLE_ADMIN";
++                        } else {
++                            authority = "ROLE_VISITOR";
++                        }
++                    }
+                     UsernamePasswordAuthenticationToken authentication = 
+                         new UsernamePasswordAuthenticationToken(
+                             username, 
+                             null, 
+-                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
++                            Collections.singletonList(new SimpleGrantedAuthority(authority))
+                         );
+                     
+                     // 设置认证信息到 SecurityContext
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/JwtAuthenticationService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/JwtAuthenticationService.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/JwtAuthenticationService.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/JwtAuthenticationService.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/service/JwtAuthenticationService.java	(date 1766661675966)
+@@ -21,6 +21,11 @@
+         return jwtUtil.generateToken(username, userId);
+     }
+     
++    @Override
++    public String generateToken(String username, Long userId, String role) {
++        return jwtUtil.generateToken(username, userId, role);
++    }
++    
+     @Override
+     public boolean validateToken(String token) {
+         return jwtUtil.validateToken(token);
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/UserRepositoryImpl.java	(date 1766661675862)
+@@ -2,6 +2,7 @@
+ 
+ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+ import com.personal.portfolio.blog.domain.model.User;
++import com.personal.portfolio.blog.domain.model.UserRole;
+ import com.personal.portfolio.blog.domain.repository.UserRepository;
+ import com.personal.portfolio.blog.infrastructure.persistence.entity.UserEntity;
+ import com.personal.portfolio.blog.infrastructure.persistence.mapper.UserMapper;
+@@ -31,6 +32,12 @@
+     @Override
+     public User save(User user) {
+         UserEntity userEntity = converter.convert(user, UserEntity.class);
++        // 显式映射角色以避免类型不匹配
++        if (user.getRole() != null) {
++            userEntity.setRole(user.getRole().name());
++        } else if (userEntity.getRole() == null) {
++            userEntity.setRole("VISITOR");
++        }
+ 
+         if (userEntity.getId() == null) {
+             // 新增
+@@ -42,31 +49,79 @@
+             userMapper.updateById(userEntity);
+         }
+         // 更新ID（如果是新增）
+-        return converter.convert(userEntity, User.class);
++        User saved = converter.convert(userEntity, User.class);
++        if (userEntity.getRole() != null) {
++            try {
++                saved.setRole(UserRole.valueOf(userEntity.getRole()));
++            } catch (IllegalArgumentException ex) {
++                saved.setRole(UserRole.VISITOR);
++            }
++        }
++        return saved;
+     }
+     
+     @Override
+     public Optional<User> findById(Long id) {
+         UserEntity userEntity = userMapper.selectById(id);
+-        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
++        return Optional.ofNullable(userEntity).map(entity -> {
++            User u = converter.convert(entity, User.class);
++            if (entity.getRole() != null) {
++                try {
++                    u.setRole(UserRole.valueOf(entity.getRole()));
++                } catch (IllegalArgumentException ex) {
++                    u.setRole(UserRole.VISITOR);
++                }
++            }
++            return u;
++        });
+     }
+     
+     @Override
+     public Optional<User> findByGithubId(String githubId) {
+         UserEntity userEntity = userMapper.selectByGithubId(githubId);
+-        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
++        return Optional.ofNullable(userEntity).map(entity -> {
++            User u = converter.convert(entity, User.class);
++            if (entity.getRole() != null) {
++                try {
++                    u.setRole(UserRole.valueOf(entity.getRole()));
++                } catch (IllegalArgumentException ex) {
++                    u.setRole(UserRole.VISITOR);
++                }
++            }
++            return u;
++        });
+     }
+     
+     @Override
+     public Optional<User> findByUsername(String username) {
+         UserEntity userEntity = userMapper.selectByUsername(username);
+-        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
++        return Optional.ofNullable(userEntity).map(entity -> {
++            User u = converter.convert(entity, User.class);
++            if (entity.getRole() != null) {
++                try {
++                    u.setRole(UserRole.valueOf(entity.getRole()));
++                } catch (IllegalArgumentException ex) {
++                    u.setRole(UserRole.VISITOR);
++                }
++            }
++            return u;
++        });
+     }
+     
+     @Override
+     public Optional<User> findByEmail(String email) {
+         UserEntity userEntity = userMapper.selectByEmail(email);
+-        return Optional.ofNullable(userEntity).map(entity -> converter.convert(entity, User.class));
++        return Optional.ofNullable(userEntity).map(entity -> {
++            User u = converter.convert(entity, User.class);
++            if (entity.getRole() != null) {
++                try {
++                    u.setRole(UserRole.valueOf(entity.getRole()));
++                } catch (IllegalArgumentException ex) {
++                    u.setRole(UserRole.VISITOR);
++                }
++            }
++            return u;
++        });
+     }
+     
+     @Override
+@@ -75,7 +130,17 @@
+         queryWrapper.orderByDesc(UserEntity::getCreatedAt);
+         List<UserEntity> entities = userMapper.selectList(queryWrapper);
+         return entities.stream()
+-                .map(entity -> converter.convert(entity, User.class))
++                .map(entity -> {
++                    User u = converter.convert(entity, User.class);
++                    if (entity.getRole() != null) {
++                        try {
++                            u.setRole(UserRole.valueOf(entity.getRole()));
++                        } catch (IllegalArgumentException ex) {
++                            u.setRole(UserRole.VISITOR);
++                        }
++                    }
++                    return u;
++                })
+                 .collect(Collectors.toList());
+     }
+     
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/BlogPostController.java	(date 1766661675856)
+@@ -12,6 +12,7 @@
+ import com.personal.portfolio.blog.interfaces.exception.AuthenticationException;
+ 
+ import org.springframework.web.bind.annotation.*;
++import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.multipart.MultipartFile;
+ 
+ import java.util.List;
+@@ -37,6 +38,7 @@
+      * 创建博客文章
+      */
+     @PostMapping
++    @PreAuthorize("hasRole('ADMIN')")
+     public BlogPost createBlogPost(@Valid @RequestBody CreateBlogPostRequest request) {
+         // 从当前用户上下文获取authorId
+         Long authorId = currentUserContext.getCurrentUserId();
+@@ -55,6 +57,7 @@
+      * 上传博客封面图片
+      */
+     @PostMapping("/{id}/cover")
++    @PreAuthorize("hasRole('ADMIN')")
+     public String uploadCover(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+         return blogcreateAppService.uploadCover(id, file);
+     }
+@@ -63,6 +66,7 @@
+      * 分页获取所有博客文章
+      */
+     @GetMapping
++    @PreAuthorize("hasRole('ADMIN')")
+     public PageResult<BlogPost> getAllBlogPosts(
+             @RequestParam(defaultValue = "1") Integer page,
+             @RequestParam(defaultValue = "10") Integer size,
+@@ -99,6 +103,7 @@
+      * 发布博客文章
+      */
+     @PutMapping("/{id}/publish")
++    @PreAuthorize("hasRole('ADMIN')")
+     public BlogPost publishBlogPost(@PathVariable Long id) {
+         return blogPostAppService.publishBlogPost(id);
+     }
+@@ -107,6 +112,7 @@
+      * 更新博客文章
+      */
+     @PutMapping("/{id}")
++    @PreAuthorize("hasRole('ADMIN')")
+     public BlogPost updateBlogPost(
+             @PathVariable Long id, 
+             @Valid @RequestBody UpdateBlogPostRequest request) {
+@@ -126,6 +132,7 @@
+      * 删除博客文章
+      */
+     @DeleteMapping("/{id}")
++    @PreAuthorize("hasRole('ADMIN')")
+     public void deleteBlogPost(@PathVariable Long id) {
+         blogPostAppService.deleteBlogPost(id);
+     }
+@@ -136,6 +143,7 @@
+      */
+     @Deprecated
+     @GetMapping("/all")
++    @PreAuthorize("hasRole('ADMIN')")
+     public List<BlogPost> getAllBlogPostsOld() {
+         return blogPostAppService.getAllBlogPosts();
+     }
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/UserEntity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/UserEntity.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/UserEntity.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/UserEntity.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/persistence/entity/UserEntity.java	(date 1766661675855)
+@@ -67,6 +67,9 @@
+     @TableField("is_local_account")
+     private Boolean isLocalAccount = true;
+ 
++    @TableField("role")
++    private String role = "VISITOR";
++
+     @TableField(value = "created_at", fill = FieldFill.INSERT)
+     private LocalDateTime createdAt;
+ 
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/UserRole.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/UserRole.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/UserRole.java
+new file mode 100644
+--- /dev/null	(date 1766661670196)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/UserRole.java	(date 1766661670196)
+@@ -0,0 +1,7 @@
++package com.personal.portfolio.blog.domain.model;
++
++public enum UserRole {
++    ADMIN,
++    VISITOR
++}
++
+Index: frontend/src/pages/CreatorCenter.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/CreatorCenter.jsx b/frontend/src/pages/CreatorCenter.jsx
+--- a/frontend/src/pages/CreatorCenter.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/CreatorCenter.jsx	(date 1766653481646)
+@@ -316,7 +316,7 @@
+       </aside>
+ 
+       {/* Main Content */}
+-      <main className={`flex-1 overflow-y-auto bg-gray-50 ${activeView === VIEWS.CREATE ? 'p-0' : 'p-4 md:p-8'}`}>
++      <main className={`flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 ${activeView === VIEWS.CREATE ? 'p-0' : 'p-4 md:p-8'}`}>
+         
+         {/* Dashboard View */}
+         {activeView === VIEWS.DASHBOARD && (
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/LoginResponse.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/LoginResponse.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/LoginResponse.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/LoginResponse.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/LoginResponse.java	(date 1766661676280)
+@@ -19,5 +19,6 @@
+         private String username;
+         private String email;
+         private String displayName;
++        private String role;
+     }
+ }
+Index: frontend/src/pages/Home.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/Home.jsx b/frontend/src/pages/Home.jsx
+--- a/frontend/src/pages/Home.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/Home.jsx	(date 1766662619518)
+@@ -7,21 +7,21 @@
+   const { user } = useAuth()
+   
+   return (
+-    <div className="min-h-[calc(100vh-64px)] bg-gray-50">
++    <div className="min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+         
+         {/* Welcome Section */}
+-        <div className="text-center py-20 px-8 bg-white rounded-2xl shadow-sm border border-gray-100 mb-12">
+-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+-            Welcome to My Portfolio
++        <div className="text-center py-20 px-8 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-12 transition-colors duration-300">
++          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">
++            Welcome to DailySpark
+           </h1>
+-          <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
++          <p className="text-xl text-gray-500 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+             This is where I share technology, life, and thoughts. Explore the art of code and record the footprints of growth.
+           </p>
+           
+           {user ? (
+             <div className="flex flex-col items-center">
+-              <p className="text-lg mb-6 font-medium text-gray-700">Welcome back, {user.name || user.login}!</p>
++              <p className="text-lg mb-6 font-medium text-gray-700 dark:text-gray-300">Welcome, {user.displayName || user.username || user.login || 'User'}</p>
+               <Link 
+                 to="/home" 
+                 className="inline-flex items-center gap-2 bg-primary-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-primary-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+@@ -29,67 +29,51 @@
+                 Go to Blog Home <ArrowRight className="w-5 h-5" />
+               </Link>
+             </div>
+-          ) : (
+-            <div className="max-w-md mx-auto bg-gray-900 p-8 rounded-2xl shadow-xl text-center relative overflow-hidden group">
+-              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+-              <h3 className="text-2xl font-bold text-white mb-4 relative z-10">
+-                Start Your Journey
+-              </h3>
+-              <p className="text-gray-300 mb-8 relative z-10">
+-                Log in to access blog articles, post comments, and more creator features.
+-              </p>
+-              <Link 
+-                to="/login" 
+-                className="inline-flex items-center justify-center gap-2 w-full bg-white text-gray-900 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition relative z-10"
+-              >
+-                Login Now
+-              </Link>
+-            </div>
+-          )}
++          ) : null}
+         </div>
+ 
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+           {/* About Section */}
+-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 h-full">
+-            <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
++          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-full transition-colors duration-300">
++            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+               <span className="w-2 h-8 bg-primary-500 rounded-full"></span>
+               About This Site
+             </h2>
+-            <p className="text-gray-600 leading-relaxed">
++            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+               This is a personal technical blog and portfolio website, sharing programming technology, project experience, and life insights.
+               It uses a modern separation of frontend and backend architecture, aiming to provide a smooth user experience and efficient content management.
+             </p>
+           </div>
+ 
+           {/* Tech Stack Section */}
+-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 h-full">
+-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
++          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-full transition-colors duration-300">
++            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+               <span className="w-2 h-8 bg-purple-500 rounded-full"></span>
+               Tech Stack
+             </h2>
+             <div className="grid grid-cols-3 gap-4">
+-              <div className="text-center p-4 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors group">
++              <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-600 transition-colors group">
+                 <Code className="w-8 h-8 mx-auto mb-2 text-gray-400 group-hover:text-primary-500 transition-colors" />
+-                <h3 className="font-bold text-gray-900 mb-1">Frontend</h3>
+-                <p className="text-xs text-gray-500">React + Vite</p>
++                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Frontend</h3>
++                <p className="text-xs text-gray-500 dark:text-gray-400">React + Vite</p>
+               </div>
+-              <div className="text-center p-4 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors group">
++              <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-600 transition-colors group">
+                 <Server className="w-8 h-8 mx-auto mb-2 text-gray-400 group-hover:text-primary-500 transition-colors" />
+-                <h3 className="font-bold text-gray-900 mb-1">Backend</h3>
+-                <p className="text-xs text-gray-500">Spring Boot</p>
++                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Backend</h3>
++                <p className="text-xs text-gray-500 dark:text-gray-400">Spring Boot</p>
+               </div>
+-              <div className="text-center p-4 bg-gray-50 rounded-xl hover:bg-primary-50 transition-colors group">
++              <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-600 transition-colors group">
+                 <Database className="w-8 h-8 mx-auto mb-2 text-gray-400 group-hover:text-primary-500 transition-colors" />
+-                <h3 className="font-bold text-gray-900 mb-1">Database</h3>
+-                <p className="text-xs text-gray-500">H2 / MySQL</p>
++                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Database</h3>
++                <p className="text-xs text-gray-500 dark:text-gray-400">H2 / MySQL</p>
+               </div>
+             </div>
+           </div>
+         </div>
+ 
+         {/* Features Section */}
+-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Key Features</h2>
++        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
++          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">Key Features</h2>
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+             {[
+               'GitHub OAuth2 Login',
+@@ -98,11 +82,11 @@
+               'User Profile Display',
+               'RESTful API'
+             ].map((feature, idx) => (
+-              <div key={idx} className="flex flex-col items-center text-center p-4 bg-gray-50 rounded-xl">
+-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 mb-3">
++              <div key={idx} className="flex flex-col items-center text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl transition-colors duration-300">
++                <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 mb-3">
+                   <Check className="w-6 h-6" />
+                 </div>
+-                <span className="font-medium text-gray-700">{feature}</span>
++                <span className="font-medium text-gray-700 dark:text-gray-300">{feature}</span>
+               </div>
+             ))}
+           </div>
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/RegisterResponse.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/RegisterResponse.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/RegisterResponse.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/RegisterResponse.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/RegisterResponse.java	(date 1766661677097)
+@@ -18,5 +18,6 @@
+         private String username;
+         private String email;
+         private String displayName;
++        private String role;
+     }
+ }
+Index: backend/interface/src/main/resources/schema.sql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/resources/schema.sql b/backend/interface/src/main/resources/schema.sql
+--- a/backend/interface/src/main/resources/schema.sql	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/interface/src/main/resources/schema.sql	(date 1766662619469)
+@@ -39,6 +39,8 @@
+     password VARCHAR(255),
+     -- 标识是否为本地注册账户
+     is_local_account BOOLEAN DEFAULT FALSE,
++    -- 角色字段：ADMIN 或 VISITOR
++    role VARCHAR(16) NOT NULL DEFAULT 'VISITOR',
+     created_at TIMESTAMP NOT NULL,
+     updated_at TIMESTAMP NOT NULL
+ );
+@@ -636,7 +638,7 @@
+ VALUES (
+ 'Building This Portfolio: Tech Stack and Design Decisions',
+ 'building-this-portfolio',
+-'Welcome to my portfolio website! As a developer, having a personal space to showcase your work and thoughts is essential. In this post, I want to pull back the curtain and share how I built this site, the technologies I chose, and the design decisions I made.
++'Welcome to DailySpark! As a developer, having a personal space to showcase your work and thoughts is essential. In this post, I want to pull back the curtain and share how I built this site, the technologies I chose, and the design decisions I made.
+ 
+ ## The Requirements
+ 
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/UserProfileResponse.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/UserProfileResponse.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/UserProfileResponse.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/UserProfileResponse.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/dto/response/UserProfileResponse.java	(date 1766661677097)
+@@ -23,5 +23,6 @@
+     private Integer following;
+     private String createdAt;
+     private String updatedAt;
++    private String role;
+     private String error;
+ }
+Index: backend/application/src/main/java/com/personal/portfolio/blog/application/exception/AuthFailedException.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/application/src/main/java/com/personal/portfolio/blog/application/exception/AuthFailedException.java b/backend/application/src/main/java/com/personal/portfolio/blog/application/exception/AuthFailedException.java
+new file mode 100644
+--- /dev/null	(date 1766661670161)
++++ b/backend/application/src/main/java/com/personal/portfolio/blog/application/exception/AuthFailedException.java	(date 1766661670161)
+@@ -0,0 +1,11 @@
++package com.personal.portfolio.blog.application.exception;
++
++public class AuthFailedException extends RuntimeException {
++    public AuthFailedException() {
++        super("Authentication failed");
++    }
++    public AuthFailedException(String message) {
++        super(message);
++    }
++}
++
+Index: frontend/src/components/Navbar.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/components/Navbar.jsx b/frontend/src/components/Navbar.jsx
+--- a/frontend/src/components/Navbar.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/components/Navbar.jsx	(date 1766661677126)
+@@ -1,10 +1,12 @@
+ import React, { useState } from 'react'
+ import { Link, useNavigate } from 'react-router-dom'
+ import { useAuth } from '../context/AuthContext'
+-import { Search, Moon, Menu, X, LogOut } from 'lucide-react'
++import { useTheme } from '../context/ThemeContext'
++import { Search, Moon, Sun, Menu, X, LogOut } from 'lucide-react'
+ 
+ const Navbar = () => {
+   const { user, logout } = useAuth()
++  const { theme, toggleTheme } = useTheme()
+   const navigate = useNavigate()
+   const [isMenuOpen, setIsMenuOpen] = useState(false)
+ 
+@@ -41,11 +43,9 @@
+           {/* Desktop Menu */}
+           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+             <Link to="/" className="hover:text-primary-600 transition">Home</Link>
+-            {user && (
+-              <>
+-                <Link to="/home" className="hover:text-primary-600 transition">Blog</Link>
+-                <Link to="/creator-center" className="hover:text-primary-600 transition">Creator Center</Link>
+-              </>
++            <Link to="/home" className="hover:text-primary-600 transition">Blog</Link>
++            {user && user.role === 'ADMIN' && (
++              <Link to="/creator-center" className="hover:text-primary-600 transition">Creator Center</Link>
+             )}
+             <Link to="/about" className="hover:text-primary-600 transition">About</Link>
+             <Link to="/contact" className="hover:text-primary-600 transition">Contact</Link>
+@@ -53,11 +53,18 @@
+ 
+           {/* Right Actions */}
+           <div className="flex items-center gap-4">
+-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
++            <button 
++              className="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-full transition"
++              onClick={() => alert("Search functionality is not implemented yet!")}
++            >
+               <Search className="w-5 h-5" />
+             </button>
+-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
+-              <Moon className="w-5 h-5" />
++            <button 
++              onClick={toggleTheme}
++              className="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-full transition"
++              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
++            >
++              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+             </button>
+             
+             {user ? (
+@@ -102,30 +109,28 @@
+ 
+       {/* Mobile Menu Dropdown */}
+       {isMenuOpen && (
+-        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 top-16">
++        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-lg absolute w-full left-0 top-16">
+           <div className="px-4 py-3 space-y-3">
+-            <Link to="/" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
+-            {user && (
+-              <>
+-                <Link to="/home" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Blog</Link>
+-                <Link to="/creator-center" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Creator Center</Link>
+-              </>
++            <Link to="/" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
++            <Link to="/home" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Blog</Link>
++            {user && user.role === 'ADMIN' && (
++              <Link to="/creator-center" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Creator Center</Link>
+             )}
+-            <Link to="/about" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>About</Link>
+-            <Link to="/contact" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>
++            <Link to="/about" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>About</Link>
++            <Link to="/contact" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+             
+-            <div className="border-t border-gray-100 pt-3 mt-2">
++            <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mt-2">
+               {user ? (
+                 <button 
+                   onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+-                  className="w-full text-left text-red-600 font-medium py-2"
++                  className="w-full text-left text-red-600 dark:text-red-400 font-medium py-2"
+                 >
+                   Logout
+                 </button>
+               ) : (
+                 <Link 
+                   to="/login" 
+-                  className="block w-full text-center bg-gray-900 text-white font-medium py-2 rounded-lg"
++                  className="block w-full text-center bg-gray-900 dark:bg-gray-700 text-white font-medium py-2 rounded-lg"
+                   onClick={() => setIsMenuOpen(false)}
+                 >
+                   Login
+Index: frontend/src/App.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/App.jsx b/frontend/src/App.jsx
+--- a/frontend/src/App.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/App.jsx	(date 1766661677125)
+@@ -32,12 +32,7 @@
+           <Route path="/" element={<Home />} />
+           <Route path="/login" element={<Login />} />
+           <Route path="/register" element={<Register />} />
+-          <Route 
+-            path="/home" 
+-            element={
+-              user ? <BlogHome /> : <Navigate to="/login" replace />
+-            } 
+-          />
++          <Route path="/home" element={<BlogHome />} />
+           <Route 
+             path="/post/:id" 
+             element={<BlogPost />} 
+@@ -47,7 +42,7 @@
+           <Route 
+             path="/creator-center" 
+             element={
+-              user ? <CreatorCenter /> : <Navigate to="/login" replace />
++              user && user.role === 'ADMIN' ? <CreatorCenter /> : <Navigate to="/login" replace />
+             } 
+           />
+           <Route 
+Index: frontend/src/pages/BlogPost.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/BlogPost.jsx b/frontend/src/pages/BlogPost.jsx
+--- a/frontend/src/pages/BlogPost.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/BlogPost.jsx	(date 1766661679011)
+@@ -1,6 +1,7 @@
+ import React, { useState, useEffect } from 'react'
+ import { useParams, Link } from 'react-router-dom'
+ import { getBlogPostById } from '../services/blogService'
++import { useAuth } from '../context/AuthContext'
+ import ReactMarkdown from 'react-markdown'
+ import remarkGfm from 'remark-gfm'
+ import rehypeHighlight from 'rehype-highlight'
+@@ -16,6 +17,7 @@
+ 
+ const BlogPost = () => {
+   const { id } = useParams()
++  const { user } = useAuth()
+   const [post, setPost] = useState(null)
+   const [loading, setLoading] = useState(true)
+   const [error, setError] = useState(null)
+@@ -133,8 +135,8 @@
+           
+           {/* Main Content Card */}
+           <main className="col-span-1 lg:col-span-9">
+-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 md:p-12 mb-10">
+-              <div className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-primary-600 hover:prose-a:text-primary-700 prose-img:rounded-2xl prose-img:shadow-md">
++            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 md:p-12 mb-10 transition-colors duration-300">
++              <div className="prose prose-lg prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-600 dark:prose-p:text-gray-300 prose-a:text-primary-600 hover:prose-a:text-primary-700 prose-img:rounded-2xl prose-img:shadow-md">
+                 <ReactMarkdown 
+                   remarkPlugins={[remarkGfm]} 
+                   rehypePlugins={[rehypeHighlight, rehypeRaw]}
+@@ -145,7 +147,7 @@
+                     },
+                     h2: ({children}) => {
+                       const id = String(children).toLowerCase().trim().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '');
+-                      return <h2 id={id} className="scroll-mt-32 border-b border-gray-100 pb-2">{children}</h2>
++                      return <h2 id={id} className="scroll-mt-32 border-b border-gray-100 dark:border-gray-700 pb-2">{children}</h2>
+                     },
+                     h3: ({children}) => {
+                       const id = String(children).toLowerCase().trim().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '');
+@@ -172,13 +174,13 @@
+                           {children}
+                         </code>
+                       ) : (
+-                        <code className="bg-gray-100 text-primary-700 px-1.5 py-0.5 rounded font-mono text-sm border border-gray-200" {...props}>
++                        <code className="bg-gray-100 dark:bg-gray-700 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded font-mono text-sm border border-gray-200 dark:border-gray-600" {...props}>
+                           {children}
+                         </code>
+                       )
+                     },
+                     blockquote: ({children}) => (
+-                      <blockquote className="border-l-4 border-primary-500 bg-primary-50/50 pl-6 py-4 rounded-r-xl italic text-gray-700 my-6">
++                      <blockquote className="border-l-4 border-primary-500 bg-primary-50/50 dark:bg-primary-900/20 pl-6 py-4 rounded-r-xl italic text-gray-700 dark:text-gray-300 my-6">
+                         {children}
+                       </blockquote>
+                     )
+@@ -189,13 +191,13 @@
+               </div>
+ 
+               {/* Tags Section */}
+-              <div className="mt-16 pt-8 border-t border-gray-100">
++              <div className="mt-16 pt-8 border-t border-gray-100 dark:border-gray-700">
+                 <div className="flex flex-wrap items-center gap-3">
+-                  <span className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
++                  <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                     <LinkIcon className="w-4 h-4" /> Tags:
+                   </span>
+                   {post.tags && post.tags.length > 0 ? post.tags.map((tag, idx) => (
+-                     <span key={idx} className="px-4 py-1.5 bg-gray-100 text-sm font-medium text-gray-600 rounded-full hover:bg-primary-50 hover:text-primary-600 transition cursor-pointer">
++                     <span key={idx} className="px-4 py-1.5 bg-gray-100 dark:bg-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-full hover:bg-primary-50 dark:hover:bg-gray-600 hover:text-primary-600 dark:hover:text-primary-400 transition cursor-pointer">
+                        #{tag}
+                      </span>
+                   )) : (
+@@ -205,65 +207,67 @@
+               </div>
+             </div>
+ 
+-            {/* Comments Section */}
+-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 md:p-12">
+-              <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+-                <div className="bg-primary-100 p-2 rounded-lg text-primary-600">
+-                  <MessageSquare className="w-6 h-6" />
+-                </div>
+-                Comments
+-              </h3>
+-              
+-              <div className="flex gap-6 mb-12">
+-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-400 text-xl shrink-0">
+-                  ?
+-                </div>
+-                <div className="flex-1">
+-                  <textarea 
+-                    className="w-full bg-gray-50 border-0 p-4 rounded-xl h-32 focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all resize-none placeholder-gray-400" 
+-                    placeholder="Share your thoughts..."
+-                  ></textarea>
+-                  <div className="mt-4 flex justify-end">
+-                    <button className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-black hover:shadow-lg hover:-translate-y-0.5 transition-all">
+-                      Post Comment
+-                    </button>
+-                  </div>
+-                </div>
+-              </div>
++            {/* Comments Section - Admin Only */}
++            {user && user.role === 'ADMIN' && (
++              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 md:p-12 transition-colors duration-300">
++                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
++                  <div className="bg-primary-100 dark:bg-primary-900/30 p-2 rounded-lg text-primary-600 dark:text-primary-400">
++                    <MessageSquare className="w-6 h-6" />
++                  </div>
++                  Comments
++                </h3>
++                
++                <div className="flex gap-6 mb-12">
++                  <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-400 text-xl shrink-0">
++                    ?
++                  </div>
++                  <div className="flex-1">
++                    <textarea 
++                      className="w-full bg-gray-50 dark:bg-gray-700 border-0 p-4 rounded-xl h-32 focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-gray-600 transition-all resize-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white" 
++                      placeholder="Share your thoughts..."
++                    ></textarea>
++                    <div className="mt-4 flex justify-end">
++                      <button className="px-8 py-3 bg-gray-900 dark:bg-gray-700 text-white font-bold rounded-xl hover:bg-black dark:hover:bg-gray-600 hover:shadow-lg hover:-translate-y-0.5 transition-all">
++                        Post Comment
++                      </button>
++                    </div>
++                  </div>
++                </div>
+ 
+-              <div className="space-y-8">
+-                {/* Empty State */}
+-                <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+-                  <p className="text-gray-500 font-medium">No comments yet. Be the first to share your thoughts!</p>
+-                </div>
+-              </div>
+-            </div>
++                <div className="space-y-8">
++                  {/* Empty State */}
++                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-600">
++                    <p className="text-gray-500 dark:text-gray-400 font-medium">No comments yet.</p>
++                  </div>
++                </div>
++              </div>
++            )}
+           </main>
+ 
+           {/* Right Sidebar (Sticky TOC) */}
+           <aside className="hidden lg:block lg:col-span-3 space-y-8">
+             <div className="sticky top-8">
+               {/* Author Card */}
+-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
++              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 transition-colors duration-300">
+                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Author</h4>
+                 <div className="flex items-center gap-4">
+-                  <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
++                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                     <img src="/images/default-avatar.png" alt="Author" className="w-full h-full object-cover" />
+                   </div>
+                   <div>
+-                    <div className="font-bold text-gray-900">Admin</div>
+-                    <div className="text-xs text-gray-500">Content Creator</div>
++                    <div className="font-bold text-gray-900 dark:text-white">Admin</div>
++                    <div className="text-xs text-gray-500 dark:text-gray-400">Content Creator</div>
+                   </div>
+                 </div>
+               </div>
+ 
+               {/* Table*/}
+-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
+-                <h2 className="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2 sticky top-0 bg-white z-10 pb-2 border-b border-gray-50">
++              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar transition-colors duration-300">
++                <h2 className="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2 sticky top-0 bg-white dark:bg-gray-800 z-10 pb-2 border-b border-gray-50 dark:border-gray-700">
+                   Table
+                 </h2>
+                 <nav className="relative">
+-                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-100"></div>
++                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-100 dark:bg-gray-700"></div>
+                   <ul className="space-y-1 relative">
+                     {headings.length > 0 ? headings.map((heading, index) => (
+                       <li key={index} className={`pl-${(heading.level - 1) * 3}`}>
+@@ -271,8 +275,8 @@
+                           href={`#${heading.id}`} 
+                           className={`block py-1.5 pl-4 border-l-2 text-sm transition-all duration-200 ${
+                             heading.level === 1 
+-                              ? 'border-transparent text-gray-900 font-bold hover:border-primary-500 hover:text-primary-600' 
+-                              : 'border-transparent text-gray-500 hover:border-primary-300 hover:text-primary-600'
++                              ? 'border-transparent text-gray-900 dark:text-gray-200 font-bold hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400' 
++                              : 'border-transparent text-gray-500 dark:text-gray-400 hover:border-primary-300 hover:text-primary-600 dark:hover:text-primary-400'
+                           }`}
+                         >
+                           {heading.text}
+@@ -286,16 +290,16 @@
+               </div>
+               
+               {/* Share Actions */}
+-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
++              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors duration-300">
+                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Share this post</h4>
+                 <div className="flex gap-2">
+-                  <button className="flex-1 py-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-500 transition flex items-center justify-center">
++                  <button className="flex-1 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-500 transition flex items-center justify-center">
+                     <Twitter className="w-5 h-5" />
+                   </button>
+-                  <button className="flex-1 py-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition flex items-center justify-center">
++                  <button className="flex-1 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 transition flex items-center justify-center">
+                     <Facebook className="w-5 h-5" />
+                   </button>
+-                  <button className="flex-1 py-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 transition flex items-center justify-center">
++                  <button className="flex-1 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition flex items-center justify-center">
+                     <LinkIcon className="w-5 h-5" />
+                   </button>
+                 </div>
+Index: backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java
+--- a/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/interface/src/main/java/com/personal/portfolio/blog/interfaces/controller/AuthController.java	(date 1766664606151)
+@@ -1,13 +1,15 @@
+ package com.personal.portfolio.blog.interfaces.controller;
+ 
+ import com.personal.portfolio.blog.application.service.UserRegistrationService;
++import com.personal.portfolio.blog.application.service.UserAuthAppService;
++import com.personal.portfolio.blog.application.dto.LoginResult;
++import com.personal.portfolio.blog.application.dto.RegisterResult;
+ import com.personal.portfolio.blog.domain.model.User;
+ import com.personal.portfolio.blog.domain.repository.UserRepository;
+ import com.personal.portfolio.blog.domain.service.AuthenticationService;
+ import com.personal.portfolio.blog.interfaces.dto.request.LoginRequest;
+ import com.personal.portfolio.blog.interfaces.dto.request.RegisterRequest;
+ import com.personal.portfolio.blog.interfaces.dto.response.*;
+-import com.personal.portfolio.blog.interfaces.exception.InvalidCredentialsException;
+ import org.springframework.security.core.Authentication;
+ import org.springframework.security.core.annotation.AuthenticationPrincipal;
+ import org.springframework.security.core.context.SecurityContextHolder;
+@@ -29,14 +31,15 @@
+ public class AuthController {
+ 
+     private final UserRegistrationService userRegistrationService;
+-    private final AuthenticationService authenticationService;
+     private final UserRepository userRepository;
++    private final UserAuthAppService userAuthAppService;
+ 
+     public AuthController(UserRegistrationService userRegistrationService, 
+                          AuthenticationService authenticationService,
++                         UserAuthAppService userAuthAppService,
+                          UserRepository userRepository) {
+         this.userRegistrationService = userRegistrationService;
+-        this.authenticationService = authenticationService;
++        this.userAuthAppService = userAuthAppService;
+         this.userRepository = userRepository;
+     }
+ 
+@@ -81,6 +84,7 @@
+                 userInfo.setFollowing(oauth2User.getAttribute("following"));
+                 userInfo.setCreatedAt(oauth2User.getAttribute("created_at"));
+                 userInfo.setUpdatedAt(oauth2User.getAttribute("updated_at"));
++                // 角色：OAuth2场景由基础设施成功处理器写入Token与后端判定，这里不重复判定
+             } 
+             // 处理本地用户（JWT 认证）
+             else {
+@@ -117,10 +121,17 @@
+                                 if (user.getId() != null) {
+                                     userInfo.setId(user.getId().toString());
+                                 }
++                                userInfo.setRole(user.getRole() != null ? user.getRole().name() : "VISITOR");
+                             }
+                         } catch (Exception e) {
+                             log.info("Could not fetch user details from database: " + e.getMessage());
+                         }
++                        // 若数据库未获取到角色，尝试根据认证授权判定
++                        if (userInfo.getRole() == null && authentication.getAuthorities() != null) {
++                            boolean isAdmin = authentication.getAuthorities().stream()
++                                    .anyMatch(a -> "ROLE_ADMIN".equalsIgnoreCase(a.getAuthority()));
++                            userInfo.setRole(isAdmin ? "ADMIN" : "VISITOR");
++                        }
+                     } else {
+                         userInfo.setError("用户未登录或匿名用户");
+                     }
+@@ -196,14 +207,14 @@
+             throw new IllegalArgumentException("用户名和密码不能为空");
+         }
+         
+-        User user = userRegistrationService.registerUser(username, password, email);
+-        
++        RegisterResult result = userAuthAppService.register(username, password, email);
+         RegisterResponse response = new RegisterResponse();
+         RegisterResponse.UserInfo userInfo = new RegisterResponse.UserInfo();
+-        userInfo.setId(user.getId());
+-        userInfo.setUsername(user.getUsername());
+-        userInfo.setEmail(user.getEmail());
+-        userInfo.setDisplayName(user.getDisplayName());
++        userInfo.setId(result.getId());
++        userInfo.setUsername(result.getUsername());
++        userInfo.setEmail(result.getEmail());
++        userInfo.setDisplayName(result.getDisplayName());
++        userInfo.setRole(result.getRole());
+         response.setUser(userInfo);
+         
+         return response;
+@@ -222,23 +233,17 @@
+             throw new IllegalArgumentException("用户名和密码不能为空");
+         }
+         
+-        User user = userRegistrationService.authenticate(username, password);
+-        
+-        if (user == null) {
+-            throw new InvalidCredentialsException();
+-        }
+-        
+-        // 生成 JWT Token
+-        String token = authenticationService.generateToken(user.getUsername(), user.getId());
++        LoginResult result = userAuthAppService.login(username, password);
+         
+         LoginResponse response = new LoginResponse();
+-        response.setToken(token);
++        response.setToken(result.getToken());
+         
+         LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo();
+-        userInfo.setId(user.getId());
+-        userInfo.setUsername(user.getUsername());
+-        userInfo.setEmail(user.getEmail());
+-        userInfo.setDisplayName(user.getDisplayName());
++        userInfo.setId(result.getId());
++        userInfo.setUsername(result.getUsername());
++        userInfo.setEmail(result.getEmail());
++        userInfo.setDisplayName(result.getDisplayName());
++        userInfo.setRole(result.getRole());
+         response.setUser(userInfo);
+         
+         return response;
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/model/User.java	(date 1766661670180)
+@@ -5,6 +5,7 @@
+ 
+ import java.time.LocalDateTime;
+ 
++import com.personal.portfolio.blog.domain.model.UserRole;
+ /**
+  * 用户实体类 - 充血模型实现
+  * 纯领域模型，不包含任何持久化注解
+@@ -93,6 +94,11 @@
+      */
+     private Boolean isLocalAccount = true;
+ 
++    /**
++     * 用户角色，默认为访客
++     */
++    private UserRole role = UserRole.VISITOR;
++
+     /**
+      * 创建时间，必填
+      */
+@@ -124,6 +130,7 @@
+         user.avatarUrl = avatarUrl;
+         user.displayName = displayName != null ? displayName : username;
+         user.isLocalAccount = false;
++        user.role = UserRole.VISITOR;
+         
+         return user;
+     }
+@@ -141,6 +148,7 @@
+         user.displayName = username;
+         user.isLocalAccount = true;
+         user.avatarUrl = "/images/default-avatar.png";
++        user.role = UserRole.VISITOR;
+ 
+         return user;
+     }
+Index: frontend/src/index.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/index.css b/frontend/src/index.css
+--- a/frontend/src/index.css	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/index.css	(date 1766653481599)
+@@ -7,6 +7,7 @@
+ @layer base {
+   body {
+     font-family: 'Inter', sans-serif;
++    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-300;
+   }
+ }
+ 
+Index: frontend/src/main.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/main.jsx b/frontend/src/main.jsx
+--- a/frontend/src/main.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/main.jsx	(date 1766653481646)
+@@ -2,6 +2,7 @@
+ import ReactDOM from 'react-dom/client'
+ import { BrowserRouter } from 'react-router-dom'
+ import { AuthProvider } from './context/AuthContext'
++import { ThemeProvider } from './context/ThemeContext'
+ import App from './App.jsx'
+ import './index.css'
+ 
+@@ -9,7 +10,9 @@
+   <React.StrictMode>
+     <BrowserRouter>
+       <AuthProvider>
+-        <App />
++        <ThemeProvider>
++          <App />
++        </ThemeProvider>
+       </AuthProvider>
+     </BrowserRouter>
+   </React.StrictMode>,
+Index: backend/interface/src/main/resources/application.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/interface/src/main/resources/application.properties b/backend/interface/src/main/resources/application.properties
+--- a/backend/interface/src/main/resources/application.properties	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/interface/src/main/resources/application.properties	(date 1766661677102)
+@@ -72,3 +72,7 @@
+ spring.servlet.multipart.max-file-size=10MB
+ spring.servlet.multipart.max-request-size=20MB
+ spring.servlet.multipart.enabled=true
++
++# Admin preset configuration (optional)
++app.admin.username=admin
++app.admin.githubId=
+Index: backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java
+--- a/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/infrastructure/src/main/java/com/personal/portfolio/blog/infrastructure/util/JwtUtil.java	(date 1766661675864)
+@@ -33,11 +33,21 @@
+      * @return JWT Token
+      */
+     public String generateToken(String username, Long userId) {
++        return generateToken(username, userId, null);
++    }
++
++    /**
++     * 生成携带角色的 JWT Token
++     */
++    public String generateToken(String username, Long userId, String role) {
+         Map<String, Object> payload = new HashMap<>();
+         payload.put("username", username);
+         payload.put("userId", userId);
+         payload.put("issuedAt", new Date());
+         payload.put("expiresAt", new Date(System.currentTimeMillis() + jwtProperties.getExpiration() * 60 * 1000));
++        if (role != null) {
++            payload.put("role", role);
++        }
+ 
+         JWTSigner signer = JWTSignerUtil.hs256(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+         return JWTUtil.createToken(payload, signer);
+@@ -96,6 +106,19 @@
+             return null;
+         }
+     }
++
++    /**
++     * 从 Token 中获取角色
++     */
++    public String getRoleFromToken(String token) {
++        try {
++            JWT jwt = JWTUtil.parseToken(token);
++            Object r = jwt.getPayload("role");
++            return r != null ? r.toString() : null;
++        } catch (Exception e) {
++            return null;
++        }
++    }
+ 
+     /**
+      * 检查 Token 是否即将过期（在指定分钟内）
+@@ -125,8 +148,9 @@
+         try {
+             String username = getUsernameFromToken(token);
+             Long userId = getUserIdFromToken(token);
++            String role = getRoleFromToken(token);
+             if (username != null && userId != null) {
+-                return generateToken(username, userId);
++                return generateToken(username, userId, role);
+             }
+             return null;
+         } catch (Exception e) {
+Index: frontend/src/pages/About.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/About.jsx b/frontend/src/pages/About.jsx
+--- a/frontend/src/pages/About.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/About.jsx	(date 1766653483497)
+@@ -60,15 +60,15 @@
+   ];
+ 
+   return (
+-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
++    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+       <div className="max-w-7xl mx-auto">
+         {/* Header Section */}
+         <div className="text-center mb-16">
+-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
++          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
+             <span className="block">About Me</span>
+             <span className="block text-blue-600 text-2xl mt-4 font-medium">Technology • Life • Thoughts</span>
+           </h1>
+-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
++          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400">
+             Welcome to my personal portfolio! This is where I share technology, life, and thoughts.
+           </p>
+         </div>
+@@ -76,11 +76,11 @@
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           {/* Left Column: Profile Card */}
+           <div className="lg:col-span-1">
+-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-8">
++            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden sticky top-8 transition-colors duration-300">
+               <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-32"></div>
+               <div className="px-6 pb-8">
+                 <div className="relative -mt-16 mb-6">
+-                  <div className="w-32 h-32 mx-auto rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
++                  <div className="w-32 h-32 mx-auto rounded-full border-4 border-white dark:border-gray-800 overflow-hidden bg-white shadow-lg">
+                     <img 
+                       src="/images/default-avatar.png" 
+                       alt="Profile" 
+@@ -90,26 +90,26 @@
+                   </div>
+                 </div>
+                 <div className="text-center mb-6">
+-                  <h2 className="text-2xl font-bold text-gray-900">Developer</h2>
++                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Developer</h2>
+                   <p className="text-blue-600 font-medium">Full Stack Engineer & Architect</p>
+                 </div>
+                 
+                 <div className="space-y-4">
+-                  <div className="flex items-center text-gray-600">
++                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                     <Briefcase className="w-5 h-5 mr-3 text-gray-400" />
+                     <span>Focused on solving complex problems</span>
+                   </div>
+-                  <div className="flex items-center text-gray-600">
++                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                     <Globe className="w-5 h-5 mr-3 text-gray-400" />
+                     <span>Passionate about sharing knowledge</span>
+                   </div>
+-                  <div className="flex items-center text-gray-600">
++                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                     <Coffee className="w-5 h-5 mr-3 text-gray-400" />
+                     <span>Love exploring new technologies</span>
+                   </div>
+                 </div>
+ 
+-                <div className="mt-8 pt-8 border-t border-gray-100">
++                <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
+                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+                     Hobbies
+                   </h3>
+@@ -117,7 +117,7 @@
+                     {interests.map((item, index) => (
+                       <span 
+                         key={index}
+-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
++                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                       >
+                         <span className="mr-1.5">{item.icon}</span>
+                         {item.name}
+@@ -132,12 +132,12 @@
+           {/* Right Column: Content */}
+           <div className="lg:col-span-2 space-y-8">
+             {/* Introduction */}
+-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
++            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+               <div className="flex items-center mb-6">
+                 <User className="w-6 h-6 text-blue-600 mr-3" />
+-                <h2 className="text-2xl font-bold text-gray-900">Introduction</h2>
++                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Introduction</h2>
+               </div>
+-              <p className="text-gray-600 leading-relaxed text-lg">
++              <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
+                 I am a developer passionate about technology, focusing on full-stack development and software architecture design.
+                 I like exploring new technologies, solving complex problems, and sharing knowledge and experience.
+                 I believe in the power of technology to change the world and am dedicated to building high-quality, high-performance software systems.
+@@ -145,21 +145,21 @@
+             </div>
+ 
+             {/* Technical Skills */}
+-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
++            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+               <div className="flex items-center mb-8">
+                 <Terminal className="w-6 h-6 text-blue-600 mr-3" />
+-                <h2 className="text-2xl font-bold text-gray-900">Technical Expertise</h2>
++                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Technical Expertise</h2>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 {skills.map((skill, index) => (
+-                  <div key={index} className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow duration-300">
++                  <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:shadow-md transition-shadow duration-300">
+                     <div className="flex items-center mb-4">
+                       {skill.icon}
+-                      <h3 className="ml-3 font-bold text-gray-900">{skill.title}</h3>
++                      <h3 className="ml-3 font-bold text-gray-900 dark:text-white">{skill.title}</h3>
+                     </div>
+                     <ul className="space-y-2">
+                       {skill.items.map((item, idx) => (
+-                        <li key={idx} className="flex items-center text-gray-600 text-sm">
++                        <li key={idx} className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
+                           <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></span>
+                           {item}
+                         </li>
+@@ -171,29 +171,29 @@
+             </div>
+ 
+             {/* Project Experience */}
+-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
++            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+               <div className="flex items-center mb-8">
+                 <Database className="w-6 h-6 text-blue-600 mr-3" />
+-                <h2 className="text-2xl font-bold text-gray-900">Project Experience</h2>
++                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Project Experience</h2>
+               </div>
+               <div className="space-y-8">
+                 {projects.map((project, index) => (
+-                  <div key={index} className="relative pl-8 border-l-2 border-blue-100 last:mb-0">
+-                    <div className="absolute -left-[9px] top-0 w-4 h-4 bg-blue-600 rounded-full border-4 border-white shadow-sm"></div>
++                  <div key={index} className="relative pl-8 border-l-2 border-blue-100 dark:border-gray-700 last:mb-0">
++                    <div className="absolute -left-[9px] top-0 w-4 h-4 bg-blue-600 rounded-full border-4 border-white dark:border-gray-800 shadow-sm"></div>
+                     <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+-                      <h3 className="text-xl font-bold text-gray-900">{project.title}</h3>
+-                      <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full mt-2 sm:mt-0">
++                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{project.title}</h3>
++                      <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-full mt-2 sm:mt-0">
+                         {project.period}
+                       </span>
+                     </div>
+-                    <p className="text-gray-600 mb-4 leading-relaxed">
++                    <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+                       {project.description}
+                     </p>
+                     <div className="flex flex-wrap gap-2">
+                       {project.tags.map((tag, tagIndex) => (
+                         <span 
+                           key={tagIndex}
+-                          className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-600 border border-blue-100"
++                          className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-800"
+                         >
+                           {tag}
+                         </span>
+Index: frontend/src/pages/OAuth2Success.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/OAuth2Success.jsx b/frontend/src/pages/OAuth2Success.jsx
+--- a/frontend/src/pages/OAuth2Success.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/OAuth2Success.jsx	(date 1766653481599)
+@@ -67,18 +67,18 @@
+   }, [navigate, setUser, searchParams])
+ 
+   return (
+-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
++    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+       <div className="max-w-md w-full mx-4 text-center">
+-        <div className="bg-white p-8 rounded-lg shadow-md">
+-          <h1 className="text-2xl font-bold text-purple-600 mb-4">
+-            登录处理中...
++        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md transition-colors duration-300">
++          <h1 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-4">
++            Processing Login...
+           </h1>
+-          <p className="text-gray-600 mb-8">
+-            正在处理您的 GitHub 登录，请稍候...
++          <p className="text-gray-600 dark:text-gray-300 mb-8">
++            Handling your GitHub login, please wait...
+           </p>
+-          <div className="flex justify-center items-center gap-3 text-gray-500">
+-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+-            <span>处理中</span>
++          <div className="flex justify-center items-center gap-3 text-gray-500 dark:text-gray-400">
++            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 dark:border-purple-400"></div>
++            <span>Processing</span>
+           </div>
+         </div>
+       </div>
+Index: frontend/src/pages/Login.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/Login.jsx	(date 1766653481598)
+@@ -64,13 +64,13 @@
+       subtitle="Log in to manage your blog and portfolio" 
+       icon={LogIn}
+     >
+-      <div className="bg-gray-50 p-1 rounded-xl flex">
++      <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded-xl flex transition-colors duration-300">
+         <button
+           onClick={() => setActiveTab('local')}
+           className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+             activeTab === 'local' 
+-              ? 'bg-white text-gray-900 shadow-sm' 
+-              : 'text-gray-500 hover:text-gray-700'
++              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
++              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+           }`}
+         >
+           Account
+@@ -79,8 +79,8 @@
+           onClick={() => setActiveTab('github')}
+           className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+             activeTab === 'github' 
+-              ? 'bg-white text-gray-900 shadow-sm' 
+-              : 'text-gray-500 hover:text-gray-700'
++              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
++              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+           }`}
+         >
+           GitHub Login
+@@ -115,14 +115,14 @@
+           </div>
+ 
+           {errors.submit && (
+-            <div className="rounded-lg bg-red-50 p-4 border border-red-100">
++            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800">
+               <div className="flex">
+                 <div className="flex-shrink-0">
+                   <AlertCircle className="h-5 w-5 text-red-400" />
+                 </div>
+                 <div className="ml-3">
+-                  <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
+-                  <div className="mt-1 text-sm text-red-700">{errors.submit}</div>
++                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Login Failed</h3>
++                  <div className="mt-1 text-sm text-red-700 dark:text-red-300">{errors.submit}</div>
+                 </div>
+               </div>
+             </div>
+@@ -149,7 +149,7 @@
+           </div>
+           
+           <div className="text-center">
+-            <p className="text-sm text-gray-600">
++            <p className="text-sm text-gray-600 dark:text-gray-400">
+               Don't have an account?{' '}
+               <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
+                 Register Now
+@@ -160,10 +160,10 @@
+       ) : (
+         <div className="mt-8 space-y-6">
+           <div className="text-center space-y-4">
+-            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+-              <Github className="w-16 h-16 mx-auto text-gray-800 mb-4" />
+-              <h3 className="text-lg font-medium text-gray-900">GitHub Authorization</h3>
+-              <p className="text-sm text-gray-500 mt-2">
++            <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl border border-gray-200 dark:border-gray-600 transition-colors duration-300">
++              <Github className="w-16 h-16 mx-auto text-gray-800 dark:text-gray-200 mb-4" />
++              <h3 className="text-lg font-medium text-gray-900 dark:text-white">GitHub Authorization</h3>
++              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                 Login quickly with GitHub account, no registration required.
+               </p>
+             </div>
+Index: frontend/src/context/ThemeContext.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/context/ThemeContext.jsx b/frontend/src/context/ThemeContext.jsx
+new file mode 100644
+--- /dev/null	(date 1766637585721)
++++ b/frontend/src/context/ThemeContext.jsx	(date 1766637585721)
+@@ -0,0 +1,45 @@
++import React, { createContext, useContext, useEffect, useState } from 'react';
++
++const ThemeContext = createContext();
++
++export const ThemeProvider = ({ children }) => {
++  const [theme, setTheme] = useState(() => {
++    // Check localStorage first
++    if (typeof window !== 'undefined') {
++      const savedTheme = localStorage.getItem('theme');
++      if (savedTheme) {
++        return savedTheme;
++      }
++      // Check system preference
++      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
++        return 'dark';
++      }
++    }
++    return 'light';
++  });
++
++  useEffect(() => {
++    const root = window.document.documentElement;
++    root.classList.remove('light', 'dark');
++    root.classList.add(theme);
++    localStorage.setItem('theme', theme);
++  }, [theme]);
++
++  const toggleTheme = () => {
++    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
++  };
++
++  return (
++    <ThemeContext.Provider value={{ theme, toggleTheme }}>
++      {children}
++    </ThemeContext.Provider>
++  );
++};
++
++export const useTheme = () => {
++  const context = useContext(ThemeContext);
++  if (context === undefined) {
++    throw new Error('useTheme must be used within a ThemeProvider');
++  }
++  return context;
++};
+Index: frontend/src/pages/Contact.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/Contact.jsx b/frontend/src/pages/Contact.jsx
+--- a/frontend/src/pages/Contact.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/Contact.jsx	(date 1766653481602)
+@@ -66,15 +66,15 @@
+   ];
+ 
+   return (
+-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
++    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+       <div className="max-w-7xl mx-auto">
+         {/* Header Section */}
+         <div className="text-center mb-16">
+-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
++          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
+             <span className="block">Contact Me</span>
+             <span className="block text-blue-600 text-2xl mt-4 font-medium">Looking forward to connecting and collaborating</span>
+           </h1>
+-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
++          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400">
+             If you have any questions, suggestions, or collaboration opportunities, feel free to contact me anytime.
+           </p>
+         </div>
+@@ -82,22 +82,22 @@
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+           {/* Contact Info Section */}
+           <div className="space-y-8">
+-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h2>
++            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
++              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Contact Information</h2>
+               <div className="grid gap-6">
+                 {contactInfo.map((item, index) => (
+-                  <div key={index} className="flex items-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-300">
++                  <div key={index} className="flex items-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300">
+                     <div className={`flex-shrink-0 w-12 h-12 ${item.color} rounded-full flex items-center justify-center shadow-lg`}>
+                       {item.icon}
+                     </div>
+                     <div className="ml-5">
+-                      <h3 className="text-lg font-medium text-gray-900">{item.title}</h3>
++                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">{item.title}</h3>
+                       {item.link ? (
+-                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-500">
++                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
+                           {item.content}
+                         </a>
+                       ) : (
+-                        <p className="text-gray-500">{item.content}</p>
++                        <p className="text-gray-500 dark:text-gray-400">{item.content}</p>
+                       )}
+                     </div>
+                   </div>
+@@ -122,12 +122,12 @@
+           </div>
+ 
+           {/* Contact Form Section */}
+-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Send Message</h2>
++          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
++            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Send Message</h2>
+             <form onSubmit={handleSubmit} className="space-y-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div>
+-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
++                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                     Name <span className="text-red-500">*</span>
+                   </label>
+                   <input
+@@ -137,12 +137,12 @@
+                     value={formData.name}
+                     onChange={handleChange}
+                     required
+-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
++                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600"
+                     placeholder="Your Name"
+                   />
+                 </div>
+                 <div>
+-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
++                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                     Email <span className="text-red-500">*</span>
+                   </label>
+                   <input
+@@ -152,14 +152,14 @@
+                     value={formData.email}
+                     onChange={handleChange}
+                     required
+-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
++                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600"
+                     placeholder="your@email.com"
+                   />
+                 </div>
+               </div>
+ 
+               <div>
+-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
++                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Subject <span className="text-red-500">*</span>
+                 </label>
+                 <input
+@@ -169,13 +169,13 @@
+                   value={formData.subject}
+                   onChange={handleChange}
+                   required
+-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
++                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600"
+                   placeholder="Message Subject"
+                 />
+               </div>
+ 
+               <div>
+-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
++                <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Message <span className="text-red-500">*</span>
+                 </label>
+                 <textarea
+@@ -185,7 +185,7 @@
+                   onChange={handleChange}
+                   required
+                   rows="6"
+-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white resize-y"
++                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 resize-y"
+                   placeholder="Please enter your message here..."
+                 />
+               </div>
+Index: frontend/src/pages/Register.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/Register.jsx b/frontend/src/pages/Register.jsx
+--- a/frontend/src/pages/Register.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/Register.jsx	(date 1766653483496)
+@@ -79,7 +79,9 @@
+        newErrors.username = usernameMessage
+     }
+ 
+-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
++    if (!formData.email) {
++      newErrors.email = 'Email is required'
++    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+       newErrors.email = 'Invalid email format'
+     }
+ 
+@@ -147,9 +149,10 @@
+             type="email"
+             value={formData.email}
+             onChange={handleChange}
+-            placeholder="Optional, used for password recovery"
++            placeholder="Used for password recovery"
+             icon={Mail}
+             error={errors.email}
++            required
+           />
+ 
+           <FormInput
+@@ -178,14 +181,14 @@
+         </div>
+ 
+         {errors.submit && (
+-          <div className="rounded-lg bg-red-50 p-4 border border-red-100">
++          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800">
+             <div className="flex">
+               <div className="flex-shrink-0">
+                 <AlertCircle className="h-5 w-5 text-red-400" />
+               </div>
+               <div className="ml-3">
+-                <h3 className="text-sm font-medium text-red-800">Registration Failed</h3>
+-                <div className="mt-1 text-sm text-red-700">{errors.submit}</div>
++                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Registration Failed</h3>
++                <div className="mt-1 text-sm text-red-700 dark:text-red-300">{errors.submit}</div>
+               </div>
+             </div>
+           </div>
+@@ -212,7 +215,7 @@
+         </div>
+         
+         <div className="text-center">
+-          <p className="text-sm text-gray-600">
++          <p className="text-sm text-gray-600 dark:text-gray-400">
+             Already have an account?{' '}
+             <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
+               Login Now
+Index: frontend/src/pages/BlogHome.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/pages/BlogHome.jsx b/frontend/src/pages/BlogHome.jsx
+--- a/frontend/src/pages/BlogHome.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/pages/BlogHome.jsx	(date 1766662716831)
+@@ -11,6 +11,7 @@
+ 
+ const BlogHome = () => {
+   const { user } = useAuth();
++  const isAdmin = user && user.role === 'ADMIN';
+   const [blogPosts, setBlogPosts] = useState([]);
+   const [pagination, setPagination] = useState({
+     page: 1,
+@@ -22,14 +23,9 @@
+   const [error, setError] = useState(null);
+   const [keyword, setKeyword] = useState('');
+ 
+-  const categories = [
+-    { name: 'Technology', count: 12 },
+-    { name: 'Life', count: 8 },
+-    { name: 'Reading', count: 5 },
+-    { name: 'Travel', count: 3 }
+-  ];
++  const [categories, setCategories] = useState([]);
+ 
+-  const tags = ['#SpringBoot', '#Java', '#Microservices', '#Frontend', '#DevOps'];
++  const [tagsCloud, setTagsCloud] = useState([]);
+ 
+   // Load blog posts
+   const loadBlogPosts = async (page = 1, searchKeyword = '') => {
+@@ -40,6 +36,31 @@
+       const response = await getPublishedBlogPosts(page, pagination.size, searchKeyword);
+       
+       setBlogPosts(response.records || []);
++      const map = new Map();
++      (response.records || []).forEach((p) => {
++        const c = p.category || 'Uncategorized';
++        map.set(c, (map.get(c) || 0) + 1);
++      });
++      const cats = Array.from(map.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
++      setCategories(cats);
++      const tagMap = new Map();
++      (response.records || []).forEach((p) => {
++        let t = p.tags;
++        if (!t) return;
++        if (Array.isArray(t)) {
++          t.forEach(tag => {
++            const key = String(tag).trim();
++            if (!key) return;
++            tagMap.set(key, (tagMap.get(key) || 0) + 1);
++          });
++        } else if (typeof t === 'string') {
++          t.split(',').map(s => s.trim()).filter(Boolean).forEach(tag => {
++            tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
++          });
++        }
++      });
++      const tagList = Array.from(tagMap.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 20);
++      setTagsCloud(tagList);
+       setPagination({
+         page: response.page || 1,
+         size: response.size || 10,
+@@ -90,33 +111,34 @@
+         {/* Left Main Column: Article List */}
+         <div className="col-span-1 lg:col-span-8 space-y-10">
+           
+-          {/* Hero Card */}
+-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+-            <div className="relative">
+-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-purple-500 p-1">
+-                <img 
+-                  src={user?.avatar_url || "/images/default-avatar.png"} 
+-                  alt="Avatar" 
+-                  className="w-full h-full rounded-full bg-white border-2 border-white object-cover"
+-                  onError={(e) => {
+-                    e.target.src = '/images/default-avatar.png'
+-                  }}
+-                />
+-              </div>
+-              <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+-            </div>
+-            <div className="flex-1">
+-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Hello, {user?.name || user?.login || 'Blogger'} 👋</h2>
+-              <p className="text-gray-600 mb-4 leading-relaxed">
+-                {user?.bio || 'Full Stack Developer, loves open source and design. Recording my code, life and some whimsical ideas here.'}
+-              </p>
+-              <div className="flex justify-center md:justify-start gap-3">
+-                <a href={user?.html_url || "#"} target="_blank" rel="noreferrer" className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"><Github className="w-5 h-5" /></a>
+-                <a href="#" className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-50 rounded-full transition"><Twitter className="w-5 h-5" /></a>
+-                <a href={`mailto:${user?.email || ''}`} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Mail className="w-5 h-5" /></a>
+-              </div>
+-            </div>
+-          </div>
++          {isAdmin && (
++            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
++              <div className="relative">
++                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-purple-500 p-1">
++                  <img 
++                    src={user?.avatar_url || "/images/default-avatar.png"} 
++                    alt="Avatar" 
++                    className="w-full h-full rounded-full bg-white border-2 border-white object-cover"
++                    onError={(e) => {
++                      e.target.src = '/images/default-avatar.png'
++                    }}
++                  />
++                </div>
++                <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
++              </div>
++              <div className="flex-1">
++                <h2 className="text-2xl font-bold text-gray-900 mb-2">Hello, {user?.name || user?.login || 'Blogger'} 👋</h2>
++                <p className="text-gray-600 mb-4 leading-relaxed">
++                  {user?.bio || 'Full Stack Developer, loves open source and design. Recording my code, life and some whimsical ideas here.'}
++                </p>
++                <div className="flex justify-center md:justify-start gap-3">
++                  <a href={user?.html_url || "#"} target="_blank" rel="noreferrer" className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"><Github className="w-5 h-5" /></a>
++                  <a href="#" className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-50 rounded-full transition"><Twitter className="w-5 h-5" /></a>
++                  <a href={`mailto:${user?.email || ''}`} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Mail className="w-5 h-5" /></a>
++                </div>
++              </div>
++            </div>
++          )}
+ 
+           {/* Article List Header */}
+           <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+@@ -235,49 +257,45 @@
+             </form>
+           </div>
+ 
+-          {/* Categories */}
+-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+-              <Folder className="w-4 h-4 text-primary-500" /> Categories
+-            </h4>
+-            <ul className="space-y-3">
+-              {categories.map((cat, idx) => (
+-                <li key={idx}>
+-                  <a href="#" className="flex justify-between items-center text-gray-600 hover:text-primary-600 group transition">
+-                    <span>{cat.name}</span> 
+-                    <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full group-hover:bg-primary-50 group-hover:text-primary-600 transition">{cat.count}</span>
+-                  </a>
+-                </li>
+-              ))}
+-            </ul>
+-          </div>
++          {isAdmin && (
++            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
++              <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
++                <Folder className="w-4 h-4 text-primary-500" /> Categories
++              </h4>
++              <ul className="space-y-3">
++                {categories.map((cat, idx) => (
++                  <li key={idx}>
++                    <a href="#" className="flex justify-between items-center text-gray-600 hover:text-primary-600 group transition">
++                      <span>{cat.name}</span> 
++                      <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full group-hover:bg-primary-50 group-hover:text-primary-600 transition">{cat.count}</span>
++                    </a>
++                  </li>
++                ))}
++              </ul>
++            </div>
++          )}
+ 
+-          {/* Tags Cloud */}
+-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+-              <Tag className="w-4 h-4 text-primary-500" /> Tags Cloud
+-            </h4>
+-            <div className="flex flex-wrap gap-2">
+-              {tags.map((tag, idx) => (
+-                <span 
+-                  key={idx} 
+-                  className="px-3 py-1 bg-gray-100 text-sm text-gray-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition cursor-pointer"
+-                >
+-                  {tag}
+-                </span>
+-              ))}
+-            </div>
+-          </div>
+-
+-          {/* Subscribe Card */}
+-          <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white text-center">
+-            <h4 className="font-bold text-lg mb-2">Subscribe</h4>
+-            <p className="text-primary-100 text-sm mb-4">Weekly selected articles delivered to your inbox.</p>
+-            <div className="space-y-2">
+-              <input type="email" placeholder="you@example.com" className="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50" />
+-              <button className="w-full bg-white text-primary-700 font-bold py-2 rounded-lg hover:bg-gray-50 transition">Subscribe</button>
++          {isAdmin && (
++            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
++              <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
++                <Tag className="w-4 h-4 text-primary-500" /> Tags Cloud
++              </h4>
++              <div className="flex flex-wrap gap-2">
++                {tagsCloud.length > 0 ? tagsCloud.map((tag, idx) => (
++                  <span 
++                    key={idx} 
++                    className="px-3 py-1 bg-gray-100 text-sm text-gray-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition cursor-pointer"
++                  >
++                    #{tag.name} <span className="ml-1 text-gray-400">({tag.count})</span>
++                  </span>
++                )) : (
++                  <span className="text-gray-400 text-sm italic">No tags</span>
++                )}
++              </div>
+             </div>
+-          </div>
++          )}
++
++          
+ 
+         </div>
+       </div>
+Index: frontend/tailwind.config.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/tailwind.config.js b/frontend/tailwind.config.js
+--- a/frontend/tailwind.config.js	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/tailwind.config.js	(date 1766637586046)
+@@ -1,5 +1,6 @@
+ /** @type {import('tailwindcss').Config} */
+ export default {
++  darkMode: 'class',
+   content: [
+     "./index.html",
+     "./src/**/*.{js,ts,jsx,tsx}",
+Index: frontend/src/layouts/AuthLayout.jsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/frontend/src/layouts/AuthLayout.jsx b/frontend/src/layouts/AuthLayout.jsx
+--- a/frontend/src/layouts/AuthLayout.jsx	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/frontend/src/layouts/AuthLayout.jsx	(date 1766653481646)
+@@ -2,24 +2,24 @@
+ 
+ const AuthLayout = ({ children, title, subtitle, icon: Icon }) => {
+   return (
+-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
++    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-300">
+       {/* Background decoration */}
+       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+-        <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-primary-100 mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+-        <div className="absolute top-0 -right-40 w-80 h-80 rounded-full bg-purple-100 mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+-        <div className="absolute -bottom-40 left-20 w-80 h-80 rounded-full bg-pink-100 mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
++        <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-primary-100 dark:bg-primary-900/20 mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob"></div>
++        <div className="absolute top-0 -right-40 w-80 h-80 rounded-full bg-purple-100 dark:bg-purple-900/20 mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
++        <div className="absolute -bottom-40 left-20 w-80 h-80 rounded-full bg-pink-100 dark:bg-pink-900/20 mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+       </div>
+ 
+-      <div className="max-w-md w-full space-y-8 relative z-10 bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
++      <div className="max-w-md w-full space-y-8 relative z-10 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+         <div className="text-center">
+           {Icon && (
+             <div className="mx-auto h-12 w-12 bg-primary-600 rounded-xl flex items-center justify-center text-white mb-4 shadow-lg transform rotate-3">
+               <Icon className="w-6 h-6" />
+             </div>
+           )}
+-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">{title}</h2>
++          <h2 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{title}</h2>
+           {subtitle && (
+-            <p className="mt-2 text-sm text-gray-600">
++            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+               {subtitle}
+             </p>
+           )}
+Index: backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/AuthenticationService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/AuthenticationService.java b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/AuthenticationService.java
+--- a/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/AuthenticationService.java	(revision 7d1077eb163175d699d16946a617ea72d512e922)
++++ b/backend/domain/src/main/java/com/personal/portfolio/blog/domain/service/AuthenticationService.java	(date 1766661670195)
+@@ -14,6 +14,15 @@
+      */
+     String generateToken(String username, Long userId);
+     
++    /**
++     * 生成携带角色的用户认证token
++     * @param username 用户名
++     * @param userId 用户ID
++     * @param role 角色（ADMIN/ VISITOR）
++     * @return JWT token
++     */
++    String generateToken(String username, Long userId, String role);
++    
+     /**
+      * 验证token是否有效
+      * @param token JWT token
+diff --git a/frontend/public/images/blogfavicon.png b/frontend/public/images/blogfavicon.png
+index 46d9bdb41a4338dfb555812554dce6821d1801ce..ce69718b4e36a2354f53a5ca2581a2dd38432def
+GIT binary patch
+literal 4956
+zc$~FYdrVVT7(e&XCn8YMBFun~0TvZRQ3SRG!70najJn8TCOU_UE;6P>NH()<*`{vU
+zaPHyskG+zKGtMR3%yf&&qEP{7kZs6g!xy4LYYT1d`<{KLw=M0xw=HNa^z_{CobP<+
+zcYfdZo$u~mUcNL|ovcO(#g;8AT>-xt@SUlop<UG4sDU3<&9djWA*87#U#fRwYCQ-O
+zYL`^hu6%W4ZQc5<RcK}PrkeHJYO7w*UiuGa4V9G^uc}Z{{hG-JDu0I=V@x3mT2K`9
+z#S-aJ4kHRdOHmZZanJ@!M*4nT77>YXp+JlHMsn0U6k&_Ll{v4R3z<WQ!z5|g*XNf&
+zA<IeVVsA_NM#*%_H_ArXsTf(X`N$~4o=`AW-(JF?B%^37D0y8TB@S8{`{vVQ<8l-z
+zM@G4@y7Yr{iNbR!LM&LHjm(EY5@H627!Io|MFbtrjF4%BN5WuCTuMbe8-dHb8SHy&
+z#>K@@?bqBbJ+9_%XZuyRTVyywT!!_7yn2&(@BAi??}$qrPotoZ-HBTNbzSImK-=Bt
+z4#_y8z9dQxa|COIxa2rr|Bi`kzv{}JE`v=xp_9Qs2#pqeq00$7IP<sDK(eZY&xiAN
+zCZ(ueIxZ=ck;0@WvvwDXkAV?tZNtz{&9>`<oX3ME#?j-|)Z@u)@f<~Esd`ziGIb(z
+zOYbpRv7||Xmr(P!8znr}+bPdeyjc;`+2__KFbOf#wE@riJtm`-gHZ^$*{STp40(Qr
+ze9lxE%aHjtCoZlVu-b9tSRm@sj_!Rpcf|?qjAVB6z9EB|OPj=eRTB@m`NMDPb?rZH
+zUDt50uy$bcXU3j>w@OZx<S3&aGPHDrxEvhjZt6LfMnGp}gNZl%bxndMHYB6j9Qf=%
+z&Xa9+=+91*jV3=cDTVdYap{e`>601V6xJ}zow(#U+3o=Tk~K`(JjGNkyZT9W=3}zk
+z1|OHPDynS03RXCB=Du{q2T6i<jU{5MxyuFZf^_1vxAa`)N2YsbP8-jxEL0Wh<dr4r
+zBd;fF<B1P;TqiR#rx1>#=5|`Zr6A5AHsCQMg&n6PGj0yLPhNI_#O*-`o9+);v7AMv
+za|xGsjGWnq!6f)W)Z9M8t0W)8_qpzVH#{!Nl=E_hj3C?pt7X?=^NC9~=ue7gc-{7^
+zWQ$MEQYd6d%%#YOBi@(IUbqX=<vi06l<>H!NL}|_?9yC9<c+&-erD$la>&)o$DjHj
+zDL+##MmfT3)cdlzlc!eBZ|l$>RybH~JiVq^4JrEeJ<re01TjtF{F%fOeB#v9=hcZh
+z)8qn_ftE%7OvHOH$&-{nmwL@#>~VTHlsbt4OLvW&(TZ2SJGi1yP5cj|Lrqq@6K-kz
+z@g_}HsvK5&=R4!#9Cgtw#evrnm(<-hSvc`gGfDZ|eTVFo5|n{l>>U8d0e4MGV0vzO
+zy86grTI{%`%W<*W)!OX<lMGEv7H2DA<}05Vj<wi+|I=2It4h)^kf&O^>|%CV-;q)x
+zl$5`!<M6o-XZBRt%TLFor!bI`I&L`o27L&?<i0Hv3Umsm8*SRFKi}a1c~O=!O-oij
+z^OsGMJ}ReX(1#6=AQluNz|+w;5+UOUj=*BWZM{w~U!+s&Qe|MWszKk{<p9N!xyn78
+zConX6>sw>vX^TWL1cv9<=!Mm~)P2d)xKO76#Iw`nS*fydDk`u8V12`fdN^~K`OHG~
+z?kWx34Lci6-~46{S5ZW%n*y!NjZR;-H(hq{l4+Bff|-i?)p5|@`{Qtn7v-}B>RlVi
+zOVFMlh6E-Bks?($g|A}+Gkg0z2Txi14J3B6(jZ^r@&fhF7m3LO$A<U+B19?VHM@F1
+zz^mkqD6u(&AQeD(0ENJ4UWNiBUmiEV|Gg=yt{>~@>R18d^H&^Ozc7G5@Fp8iSp+5}
+zbiJvD%HA@7{l$aNhr_sl<Qc%<yczPfPsKL1*^ZvIM%U%5Xku0LekrN;kfVHc=)ZHu
+zQpZMME2?gAq|lP@ml1Xy?x-Vi87$%a@j4naqkI>VMv19_<M0wXa$H7#uN@7_p!-`?
+zH$7r5Lvzz3;xgDhgX^*oAASffA3&EDtBsXQ>8KTP$>#&UUy+jTIs9qwOQc`6q`dU#
+I;&pHT58-o0IsgCw
+
