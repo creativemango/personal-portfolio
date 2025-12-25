@@ -16,20 +16,20 @@ const FormInput = ({
 }) => {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          {Icon && <Icon className="h-5 w-5 text-gray-400" />}
+          {Icon && <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
         </div>
         <input
           name={name}
           type={type}
           required={required}
           className={`appearance-none block w-full pl-10 pr-3 py-2.5 border ${
-            error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
-          } rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm transition-colors`}
+            error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500'
+          } rounded-xl shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 sm:text-sm transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
           placeholder={placeholder}
           value={value}
           onChange={onChange}

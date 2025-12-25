@@ -23,5 +23,6 @@ public class UserProfileResponse {
     private Integer following;
     private String createdAt;
     private String updatedAt;
+    private String role;
     private String error;
 }

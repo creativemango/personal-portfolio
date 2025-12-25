@@ -60,15 +60,15 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
             <span className="block">About Me</span>
             <span className="block text-blue-600 text-2xl mt-4 font-medium">Technology • Life • Thoughts</span>
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400">
             Welcome to my personal portfolio! This is where I share technology, life, and thoughts.
           </p>
         </div>
@@ -76,11 +76,11 @@ const About = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden sticky top-8 transition-colors duration-300">
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-32"></div>
               <div className="px-6 pb-8">
                 <div className="relative -mt-16 mb-6">
-                  <div className="w-32 h-32 mx-auto rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
+                  <div className="w-32 h-32 mx-auto rounded-full border-4 border-white dark:border-gray-800 overflow-hidden bg-white shadow-lg">
                     <img 
                       src="/images/default-avatar.png" 
                       alt="Profile" 
@@ -90,26 +90,26 @@ const About = () => {
                   </div>
                 </div>
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Developer</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Developer</h2>
                   <p className="text-blue-600 font-medium">Full Stack Engineer & Architect</p>
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300">
                     <Briefcase className="w-5 h-5 mr-3 text-gray-400" />
                     <span>Focused on solving complex problems</span>
                   </div>
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300">
                     <Globe className="w-5 h-5 mr-3 text-gray-400" />
                     <span>Passionate about sharing knowledge</span>
                   </div>
-                  <div className="flex items-center text-gray-600">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300">
                     <Coffee className="w-5 h-5 mr-3 text-gray-400" />
                     <span>Love exploring new technologies</span>
                   </div>
                 </div>
 
-                <div className="mt-8 pt-8 border-t border-gray-100">
+                <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
                     Hobbies
                   </h3>
@@ -117,7 +117,7 @@ const About = () => {
                     {interests.map((item, index) => (
                       <span 
                         key={index}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                       >
                         <span className="mr-1.5">{item.icon}</span>
                         {item.name}
@@ -132,12 +132,12 @@ const About = () => {
           {/* Right Column: Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Introduction */}
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
               <div className="flex items-center mb-6">
                 <User className="w-6 h-6 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">Introduction</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Introduction</h2>
               </div>
-              <p className="text-gray-600 leading-relaxed text-lg">
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
                 I am a developer passionate about technology, focusing on full-stack development and software architecture design.
                 I like exploring new technologies, solving complex problems, and sharing knowledge and experience.
                 I believe in the power of technology to change the world and am dedicated to building high-quality, high-performance software systems.
@@ -145,21 +145,21 @@ const About = () => {
             </div>
 
             {/* Technical Skills */}
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
               <div className="flex items-center mb-8">
                 <Terminal className="w-6 h-6 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">Technical Expertise</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Technical Expertise</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {skills.map((skill, index) => (
-                  <div key={index} className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow duration-300">
+                  <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:shadow-md transition-shadow duration-300">
                     <div className="flex items-center mb-4">
                       {skill.icon}
-                      <h3 className="ml-3 font-bold text-gray-900">{skill.title}</h3>
+                      <h3 className="ml-3 font-bold text-gray-900 dark:text-white">{skill.title}</h3>
                     </div>
                     <ul className="space-y-2">
                       {skill.items.map((item, idx) => (
-                        <li key={idx} className="flex items-center text-gray-600 text-sm">
+                        <li key={idx} className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                           <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></span>
                           {item}
                         </li>
@@ -171,29 +171,29 @@ const About = () => {
             </div>
 
             {/* Project Experience */}
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
               <div className="flex items-center mb-8">
                 <Database className="w-6 h-6 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-900">Project Experience</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Project Experience</h2>
               </div>
               <div className="space-y-8">
                 {projects.map((project, index) => (
-                  <div key={index} className="relative pl-8 border-l-2 border-blue-100 last:mb-0">
-                    <div className="absolute -left-[9px] top-0 w-4 h-4 bg-blue-600 rounded-full border-4 border-white shadow-sm"></div>
+                  <div key={index} className="relative pl-8 border-l-2 border-blue-100 dark:border-gray-700 last:mb-0">
+                    <div className="absolute -left-[9px] top-0 w-4 h-4 bg-blue-600 rounded-full border-4 border-white dark:border-gray-800 shadow-sm"></div>
                     <div className="mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <h3 className="text-xl font-bold text-gray-900">{project.title}</h3>
-                      <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full mt-2 sm:mt-0">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{project.title}</h3>
+                      <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-full mt-2 sm:mt-0">
                         {project.period}
                       </span>
                     </div>
-                    <p className="text-gray-600 mb-4 leading-relaxed">
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
                       {project.description}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {project.tags.map((tag, tagIndex) => (
                         <span 
                           key={tagIndex}
-                          className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-600 border border-blue-100"
+                          className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-800"
                         >
                           {tag}
                         </span>

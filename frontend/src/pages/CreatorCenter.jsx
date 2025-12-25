@@ -316,7 +316,7 @@ const CreatorCenter = () => {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 overflow-y-auto bg-gray-50 ${activeView === VIEWS.CREATE ? 'p-0' : 'p-4 md:p-8'}`}>
+      <main className={`flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 ${activeView === VIEWS.CREATE ? 'p-0' : 'p-4 md:p-8'}`}>
         
         {/* Dashboard View */}
         {activeView === VIEWS.DASHBOARD && (

@@ -7,9 +7,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 
 import jakarta.servlet.http.Cookie;
 
@@ -18,6 +21,7 @@ import jakarta.servlet.http.Cookie;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -46,8 +50,23 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/login/oauth2/**", "/oauth2/**", "/blog/**", "/h2-console/**", 
                                "/api/logout", "/api/register", "/api/login", 
                                "/api/check-username", "/api/check-email").permitAll()
+                // 访客只读：已发布列表与文章详情
+                .requestMatchers(HttpMethod.GET, "/api/blog/posts/published/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/blog/posts/*").permitAll()
+                // 管理员权限：文章创建/更新/发布/删除/封面上传/查询全部
+                .requestMatchers(HttpMethod.POST, "/api/blog/posts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/blog/posts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/blog/posts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/blog/posts").hasRole("ADMIN")
                 // 其他请求需要认证
                 .anyRequest().authenticated()
+            )
+            // API统一返回401/403而不是重定向
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) ->
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN))
             )
             // 禁用表单登录（使用 JWT），但保留 OAuth2 登录
             .formLogin(form -> form.disable())

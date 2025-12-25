@@ -15,6 +15,15 @@ public interface AuthenticationService {
     String generateToken(String username, Long userId);
     
     /**
+     * 生成携带角色的用户认证token
+     * @param username 用户名
+     * @param userId 用户ID
+     * @param role 角色（ADMIN/ VISITOR）
+     * @return JWT token
+     */
+    String generateToken(String username, Long userId, String role);
+    
+    /**
      * 验证token是否有效
      * @param token JWT token
      * @return 是否有效

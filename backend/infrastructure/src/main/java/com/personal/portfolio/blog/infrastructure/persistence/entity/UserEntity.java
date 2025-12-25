@@ -67,6 +67,9 @@ public class UserEntity {
     @TableField("is_local_account")
     private Boolean isLocalAccount = true;
 
+    @TableField("role")
+    private String role = "VISITOR";
+
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

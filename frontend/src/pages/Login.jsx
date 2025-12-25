@@ -64,13 +64,13 @@ const Login = () => {
       subtitle="Log in to manage your blog and portfolio" 
       icon={LogIn}
     >
-      <div className="bg-gray-50 p-1 rounded-xl flex">
+      <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded-xl flex transition-colors duration-300">
         <button
           onClick={() => setActiveTab('local')}
           className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
             activeTab === 'local' 
-              ? 'bg-white text-gray-900 shadow-sm' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
           Account
@@ -79,8 +79,8 @@ const Login = () => {
           onClick={() => setActiveTab('github')}
           className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
             activeTab === 'github' 
-              ? 'bg-white text-gray-900 shadow-sm' 
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
           GitHub Login
@@ -115,14 +115,14 @@ const Login = () => {
           </div>
 
           {errors.submit && (
-            <div className="rounded-lg bg-red-50 p-4 border border-red-100">
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
-                  <div className="mt-1 text-sm text-red-700">{errors.submit}</div>
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Login Failed</h3>
+                  <div className="mt-1 text-sm text-red-700 dark:text-red-300">{errors.submit}</div>
                 </div>
               </div>
             </div>
@@ -149,7 +149,7 @@ const Login = () => {
           </div>
           
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
               <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
                 Register Now
@@ -160,10 +160,10 @@ const Login = () => {
       ) : (
         <div className="mt-8 space-y-6">
           <div className="text-center space-y-4">
-            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-              <Github className="w-16 h-16 mx-auto text-gray-800 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">GitHub Authorization</h3>
-              <p className="text-sm text-gray-500 mt-2">
+            <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl border border-gray-200 dark:border-gray-600 transition-colors duration-300">
+              <Github className="w-16 h-16 mx-auto text-gray-800 dark:text-gray-200 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">GitHub Authorization</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 Login quickly with GitHub account, no registration required.
               </p>
             </div>

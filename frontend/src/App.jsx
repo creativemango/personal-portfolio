@@ -32,12 +32,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route 
-            path="/home" 
-            element={
-              user ? <BlogHome /> : <Navigate to="/login" replace />
-            } 
-          />
+          <Route path="/home" element={<BlogHome />} />
           <Route 
             path="/post/:id" 
             element={<BlogPost />} 
@@ -47,7 +42,7 @@ function App() {
           <Route 
             path="/creator-center" 
             element={
-              user ? <CreatorCenter /> : <Navigate to="/login" replace />
+              user && user.role === 'ADMIN' ? <CreatorCenter /> : <Navigate to="/login" replace />
             } 
           />
           <Route 

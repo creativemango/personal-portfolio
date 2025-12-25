@@ -79,7 +79,9 @@ const Register = () => {
        newErrors.username = usernameMessage
     }
 
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email) {
+      newErrors.email = 'Email is required'
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Invalid email format'
     }
 
@@ -147,9 +149,10 @@ const Register = () => {
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Optional, used for password recovery"
+            placeholder="Used for password recovery"
             icon={Mail}
             error={errors.email}
+            required
           />
 
           <FormInput
@@ -178,14 +181,14 @@ const Register = () => {
         </div>
 
         {errors.submit && (
-          <div className="rounded-lg bg-red-50 p-4 border border-red-100">
+          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800">
             <div className="flex">
               <div className="flex-shrink-0">
                 <AlertCircle className="h-5 w-5 text-red-400" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Registration Failed</h3>
-                <div className="mt-1 text-sm text-red-700">{errors.submit}</div>
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Registration Failed</h3>
+                <div className="mt-1 text-sm text-red-700 dark:text-red-300">{errors.submit}</div>
               </div>
             </div>
           </div>
@@ -212,7 +215,7 @@ const Register = () => {
         </div>
         
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
             <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 transition-colors">
               Login Now

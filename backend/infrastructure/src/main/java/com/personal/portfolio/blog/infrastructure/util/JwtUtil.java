@@ -33,11 +33,21 @@ public class JwtUtil {
      * @return JWT Token
      */
     public String generateToken(String username, Long userId) {
+        return generateToken(username, userId, null);
+    }
+
+    /**
+     * 生成携带角色的 JWT Token
+     */
+    public String generateToken(String username, Long userId, String role) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("username", username);
         payload.put("userId", userId);
         payload.put("issuedAt", new Date());
         payload.put("expiresAt", new Date(System.currentTimeMillis() + jwtProperties.getExpiration() * 60 * 1000));
+        if (role != null) {
+            payload.put("role", role);
+        }
 
         JWTSigner signer = JWTSignerUtil.hs256(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
         return JWTUtil.createToken(payload, signer);
@@ -98,6 +108,19 @@ public class JwtUtil {
     }
 
     /**
+     * 从 Token 中获取角色
+     */
+    public String getRoleFromToken(String token) {
+        try {
+            JWT jwt = JWTUtil.parseToken(token);
+            Object r = jwt.getPayload("role");
+            return r != null ? r.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
      * 检查 Token 是否即将过期（在指定分钟内）
      *
      * @param token JWT Token
@@ -125,8 +148,9 @@ public class JwtUtil {
         try {
             String username = getUsernameFromToken(token);
             Long userId = getUserIdFromToken(token);
+            String role = getRoleFromToken(token);
             if (username != null && userId != null) {
-                return generateToken(username, userId);
+                return generateToken(username, userId, role);
             }
             return null;
         } catch (Exception e) {

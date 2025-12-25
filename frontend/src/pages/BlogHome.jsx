@@ -11,6 +11,7 @@ import {
 
 const BlogHome = () => {
   const { user } = useAuth();
+  const isAdmin = user && user.role === 'ADMIN';
   const [blogPosts, setBlogPosts] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -22,14 +23,9 @@ const BlogHome = () => {
   const [error, setError] = useState(null);
   const [keyword, setKeyword] = useState('');
 
-  const categories = [
-    { name: 'Technology', count: 12 },
-    { name: 'Life', count: 8 },
-    { name: 'Reading', count: 5 },
-    { name: 'Travel', count: 3 }
-  ];
+  const [categories, setCategories] = useState([]);
 
-  const tags = ['#SpringBoot', '#Java', '#Microservices', '#Frontend', '#DevOps'];
+  const [tagsCloud, setTagsCloud] = useState([]);
 
   // Load blog posts
   const loadBlogPosts = async (page = 1, searchKeyword = '') => {
@@ -40,6 +36,31 @@ const BlogHome = () => {
       const response = await getPublishedBlogPosts(page, pagination.size, searchKeyword);
       
       setBlogPosts(response.records || []);
+      const map = new Map();
+      (response.records || []).forEach((p) => {
+        const c = p.category || 'Uncategorized';
+        map.set(c, (map.get(c) || 0) + 1);
+      });
+      const cats = Array.from(map.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+      setCategories(cats);
+      const tagMap = new Map();
+      (response.records || []).forEach((p) => {
+        let t = p.tags;
+        if (!t) return;
+        if (Array.isArray(t)) {
+          t.forEach(tag => {
+            const key = String(tag).trim();
+            if (!key) return;
+            tagMap.set(key, (tagMap.get(key) || 0) + 1);
+          });
+        } else if (typeof t === 'string') {
+          t.split(',').map(s => s.trim()).filter(Boolean).forEach(tag => {
+            tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+          });
+        }
+      });
+      const tagList = Array.from(tagMap.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 20);
+      setTagsCloud(tagList);
       setPagination({
         page: response.page || 1,
         size: response.size || 10,
@@ -90,33 +111,34 @@ const BlogHome = () => {
         {/* Left Main Column: Article List */}
         <div className="col-span-1 lg:col-span-8 space-y-10">
           
-          {/* Hero Card */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-purple-500 p-1">
-                <img 
-                  src={user?.avatar_url || "/images/default-avatar.png"} 
-                  alt="Avatar" 
-                  className="w-full h-full rounded-full bg-white border-2 border-white object-cover"
-                  onError={(e) => {
-                    e.target.src = '/images/default-avatar.png'
-                  }}
-                />
+          {isAdmin && (
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-purple-500 p-1">
+                  <img 
+                    src={user?.avatar_url || "/images/default-avatar.png"} 
+                    alt="Avatar" 
+                    className="w-full h-full rounded-full bg-white border-2 border-white object-cover"
+                    onError={(e) => {
+                      e.target.src = '/images/default-avatar.png'
+                    }}
+                  />
+                </div>
+                <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Hello, {user?.name || user?.login || 'Blogger'} 👋</h2>
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                {user?.bio || 'Full Stack Developer, loves open source and design. Recording my code, life and some whimsical ideas here.'}
-              </p>
-              <div className="flex justify-center md:justify-start gap-3">
-                <a href={user?.html_url || "#"} target="_blank" rel="noreferrer" className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"><Github className="w-5 h-5" /></a>
-                <a href="#" className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-50 rounded-full transition"><Twitter className="w-5 h-5" /></a>
-                <a href={`mailto:${user?.email || ''}`} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Mail className="w-5 h-5" /></a>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Hello, {user?.name || user?.login || 'Blogger'} 👋</h2>
+                <p className="text-gray-600 mb-4 leading-relaxed">
+                  {user?.bio || 'Full Stack Developer, loves open source and design. Recording my code, life and some whimsical ideas here.'}
+                </p>
+                <div className="flex justify-center md:justify-start gap-3">
+                  <a href={user?.html_url || "#"} target="_blank" rel="noreferrer" className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"><Github className="w-5 h-5" /></a>
+                  <a href="#" className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-50 rounded-full transition"><Twitter className="w-5 h-5" /></a>
+                  <a href={`mailto:${user?.email || ''}`} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Mail className="w-5 h-5" /></a>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Article List Header */}
           <div className="flex items-center justify-between border-b border-gray-200 pb-4">
@@ -235,49 +257,45 @@ const BlogHome = () => {
             </form>
           </div>
 
-          {/* Categories */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Folder className="w-4 h-4 text-primary-500" /> Categories
-            </h4>
-            <ul className="space-y-3">
-              {categories.map((cat, idx) => (
-                <li key={idx}>
-                  <a href="#" className="flex justify-between items-center text-gray-600 hover:text-primary-600 group transition">
-                    <span>{cat.name}</span> 
-                    <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full group-hover:bg-primary-50 group-hover:text-primary-600 transition">{cat.count}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Tags Cloud */}
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Tag className="w-4 h-4 text-primary-500" /> Tags Cloud
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag, idx) => (
-                <span 
-                  key={idx} 
-                  className="px-3 py-1 bg-gray-100 text-sm text-gray-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition cursor-pointer"
-                >
-                  {tag}
-                </span>
-              ))}
+          {isAdmin && (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+              <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Folder className="w-4 h-4 text-primary-500" /> Categories
+              </h4>
+              <ul className="space-y-3">
+                {categories.map((cat, idx) => (
+                  <li key={idx}>
+                    <a href="#" className="flex justify-between items-center text-gray-600 hover:text-primary-600 group transition">
+                      <span>{cat.name}</span> 
+                      <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full group-hover:bg-primary-50 group-hover:text-primary-600 transition">{cat.count}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          )}
 
-          {/* Subscribe Card */}
-          <div className="bg-gradient-to-br from-primary-600 to-indigo-700 rounded-xl shadow-lg p-6 text-white text-center">
-            <h4 className="font-bold text-lg mb-2">Subscribe</h4>
-            <p className="text-primary-100 text-sm mb-4">Weekly selected articles delivered to your inbox.</p>
-            <div className="space-y-2">
-              <input type="email" placeholder="you@example.com" className="w-full px-4 py-2 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50" />
-              <button className="w-full bg-white text-primary-700 font-bold py-2 rounded-lg hover:bg-gray-50 transition">Subscribe</button>
+          {isAdmin && (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+              <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-primary-500" /> Tags Cloud
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {tagsCloud.length > 0 ? tagsCloud.map((tag, idx) => (
+                  <span 
+                    key={idx} 
+                    className="px-3 py-1 bg-gray-100 text-sm text-gray-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition cursor-pointer"
+                  >
+                    #{tag.name} <span className="ml-1 text-gray-400">({tag.count})</span>
+                  </span>
+                )) : (
+                  <span className="text-gray-400 text-sm italic">No tags</span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          
 
         </div>
       </div>

@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255),
     -- 标识是否为本地注册账户
     is_local_account BOOLEAN DEFAULT FALSE,
+    -- 角色字段：ADMIN 或 VISITOR
+    role VARCHAR(16) NOT NULL DEFAULT 'VISITOR',
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -636,7 +638,7 @@ INSERT INTO blog_posts (title, slug, content, summary, is_published, published_a
 VALUES (
 'Building This Portfolio: Tech Stack and Design Decisions',
 'building-this-portfolio',
-'Welcome to my portfolio website! As a developer, having a personal space to showcase your work and thoughts is essential. In this post, I want to pull back the curtain and share how I built this site, the technologies I chose, and the design decisions I made.
+'Welcome to DailySpark! As a developer, having a personal space to showcase your work and thoughts is essential. In this post, I want to pull back the curtain and share how I built this site, the technologies I chose, and the design decisions I made.
 
 ## The Requirements
 

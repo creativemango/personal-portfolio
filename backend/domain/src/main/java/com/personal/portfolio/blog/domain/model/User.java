@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+import com.personal.portfolio.blog.domain.model.UserRole;
 /**
  * 用户实体类 - 充血模型实现
  * 纯领域模型，不包含任何持久化注解
@@ -94,6 +95,11 @@ public class User {
     private Boolean isLocalAccount = true;
 
     /**
+     * 用户角色，默认为访客
+     */
+    private UserRole role = UserRole.VISITOR;
+
+    /**
      * 创建时间，必填
      */
     private LocalDateTime createdAt;
@@ -124,6 +130,7 @@ public class User {
         user.avatarUrl = avatarUrl;
         user.displayName = displayName != null ? displayName : username;
         user.isLocalAccount = false;
+        user.role = UserRole.VISITOR;
         
         return user;
     }
@@ -141,6 +148,7 @@ public class User {
         user.displayName = username;
         user.isLocalAccount = true;
         user.avatarUrl = "/images/default-avatar.png";
+        user.role = UserRole.VISITOR;
 
         return user;
     }

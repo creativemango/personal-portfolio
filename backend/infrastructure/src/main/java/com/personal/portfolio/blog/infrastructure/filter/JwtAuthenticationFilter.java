@@ -70,11 +70,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 if (username != null && userId != null) {
                     // 创建认证令牌
+                    String role = jwtUtil.getRoleFromToken(token);
+                    String authority = "ROLE_VISITOR";
+                    if (role != null) {
+                        if ("ADMIN".equalsIgnoreCase(role)) {
+                            authority = "ROLE_ADMIN";
+                        } else {
+                            authority = "ROLE_VISITOR";
+                        }
+                    }
                     UsernamePasswordAuthenticationToken authentication = 
                         new UsernamePasswordAuthenticationToken(
                             username, 
                             null, 
-                            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                            Collections.singletonList(new SimpleGrantedAuthority(authority))
                         );
                     
                     // 设置认证信息到 SecurityContext

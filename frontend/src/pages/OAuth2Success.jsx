@@ -67,18 +67,18 @@ const OAuth2Success = () => {
   }, [navigate, setUser, searchParams])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-md w-full mx-4 text-center">
-        <div className="bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold text-purple-600 mb-4">
-            登录处理中...
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md transition-colors duration-300">
+          <h1 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-4">
+            Processing Login...
           </h1>
-          <p className="text-gray-600 mb-8">
-            正在处理您的 GitHub 登录，请稍候...
+          <p className="text-gray-600 dark:text-gray-300 mb-8">
+            Handling your GitHub login, please wait...
           </p>
-          <div className="flex justify-center items-center gap-3 text-gray-500">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-            <span>处理中</span>
+          <div className="flex justify-center items-center gap-3 text-gray-500 dark:text-gray-400">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 dark:border-purple-400"></div>
+            <span>Processing</span>
           </div>
         </div>
       </div>

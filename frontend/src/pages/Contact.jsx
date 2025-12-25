@@ -66,15 +66,15 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
             <span className="block">Contact Me</span>
             <span className="block text-blue-600 text-2xl mt-4 font-medium">Looking forward to connecting and collaborating</span>
           </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400">
             If you have any questions, suggestions, or collaboration opportunities, feel free to contact me anytime.
           </p>
         </div>
@@ -82,22 +82,22 @@ const Contact = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Info Section */}
           <div className="space-y-8">
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Contact Information</h2>
               <div className="grid gap-6">
                 {contactInfo.map((item, index) => (
-                  <div key={index} className="flex items-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-300">
+                  <div key={index} className="flex items-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300">
                     <div className={`flex-shrink-0 w-12 h-12 ${item.color} rounded-full flex items-center justify-center shadow-lg`}>
                       {item.icon}
                     </div>
                     <div className="ml-5">
-                      <h3 className="text-lg font-medium text-gray-900">{item.title}</h3>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">{item.title}</h3>
                       {item.link ? (
-                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-500">
+                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                           {item.content}
                         </a>
                       ) : (
-                        <p className="text-gray-500">{item.content}</p>
+                        <p className="text-gray-500 dark:text-gray-400">{item.content}</p>
                       )}
                     </div>
                   </div>
@@ -122,12 +122,12 @@ const Contact = () => {
           </div>
 
           {/* Contact Form Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Send Message</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Send Message</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -137,12 +137,12 @@ const Contact = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600"
                     placeholder="Your Name"
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -152,14 +152,14 @@ const Contact = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600"
                     placeholder="your@email.com"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Subject <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -169,13 +169,13 @@ const Contact = () => {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600"
                   placeholder="Message Subject"
                 />
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Message <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -185,7 +185,7 @@ const Contact = () => {
                   onChange={handleChange}
                   required
                   rows="6"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 focus:bg-white resize-y"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 outline-none bg-gray-50 dark:bg-gray-700 dark:text-white focus:bg-white dark:focus:bg-gray-600 resize-y"
                   placeholder="Please enter your message here..."
                 />
               </div>

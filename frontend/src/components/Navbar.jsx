@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Search, Moon, Menu, X, LogOut } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
+import { Search, Moon, Sun, Menu, X, LogOut } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -41,11 +43,9 @@ const Navbar = () => {
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
             <Link to="/" className="hover:text-primary-600 transition">Home</Link>
-            {user && (
-              <>
-                <Link to="/home" className="hover:text-primary-600 transition">Blog</Link>
-                <Link to="/creator-center" className="hover:text-primary-600 transition">Creator Center</Link>
-              </>
+            <Link to="/home" className="hover:text-primary-600 transition">Blog</Link>
+            {user && user.role === 'ADMIN' && (
+              <Link to="/creator-center" className="hover:text-primary-600 transition">Creator Center</Link>
             )}
             <Link to="/about" className="hover:text-primary-600 transition">About</Link>
             <Link to="/contact" className="hover:text-primary-600 transition">Contact</Link>
@@ -53,11 +53,18 @@ const Navbar = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
+            <button 
+              className="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-full transition"
+              onClick={() => alert("Search functionality is not implemented yet!")}
+            >
               <Search className="w-5 h-5" />
             </button>
-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
-              <Moon className="w-5 h-5" />
+            <button 
+              onClick={toggleTheme}
+              className="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-full transition"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
             
             {user ? (
@@ -102,30 +109,28 @@ const Navbar = () => {
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 top-16">
+        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-lg absolute w-full left-0 top-16">
           <div className="px-4 py-3 space-y-3">
-            <Link to="/" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
-            {user && (
-              <>
-                <Link to="/home" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Blog</Link>
-                <Link to="/creator-center" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Creator Center</Link>
-              </>
+            <Link to="/" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
+            <Link to="/home" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Blog</Link>
+            {user && user.role === 'ADMIN' && (
+              <Link to="/creator-center" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Creator Center</Link>
             )}
-            <Link to="/about" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>About</Link>
-            <Link to="/contact" className="block text-gray-600 hover:text-primary-600 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+            <Link to="/about" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>About</Link>
+            <Link to="/contact" className="block text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>
             
-            <div className="border-t border-gray-100 pt-3 mt-2">
+            <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mt-2">
               {user ? (
                 <button 
                   onClick={() => { handleLogout(); setIsMenuOpen(false); }}
-                  className="w-full text-left text-red-600 font-medium py-2"
+                  className="w-full text-left text-red-600 dark:text-red-400 font-medium py-2"
                 >
                   Logout
                 </button>
               ) : (
                 <Link 
                   to="/login" 
-                  className="block w-full text-center bg-gray-900 text-white font-medium py-2 rounded-lg"
+                  className="block w-full text-center bg-gray-900 dark:bg-gray-700 text-white font-medium py-2 rounded-lg"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Login

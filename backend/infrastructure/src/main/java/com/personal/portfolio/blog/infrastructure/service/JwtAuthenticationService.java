@@ -22,6 +22,11 @@ public class JwtAuthenticationService implements AuthenticationService {
     }
     
     @Override
+    public String generateToken(String username, Long userId, String role) {
+        return jwtUtil.generateToken(username, userId, role);
+    }
+    
+    @Override
     public boolean validateToken(String token) {
         return jwtUtil.validateToken(token);
     }

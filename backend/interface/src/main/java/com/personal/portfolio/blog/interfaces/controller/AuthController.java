@@ -1,13 +1,15 @@
 package com.personal.portfolio.blog.interfaces.controller;
 
 import com.personal.portfolio.blog.application.service.UserRegistrationService;
+import com.personal.portfolio.blog.application.service.UserAuthAppService;
+import com.personal.portfolio.blog.application.dto.LoginResult;
+import com.personal.portfolio.blog.application.dto.RegisterResult;
 import com.personal.portfolio.blog.domain.model.User;
 import com.personal.portfolio.blog.domain.repository.UserRepository;
 import com.personal.portfolio.blog.domain.service.AuthenticationService;
 import com.personal.portfolio.blog.interfaces.dto.request.LoginRequest;
 import com.personal.portfolio.blog.interfaces.dto.request.RegisterRequest;
 import com.personal.portfolio.blog.interfaces.dto.response.*;
-import com.personal.portfolio.blog.interfaces.exception.InvalidCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,14 +31,15 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
 
     private final UserRegistrationService userRegistrationService;
-    private final AuthenticationService authenticationService;
     private final UserRepository userRepository;
+    private final UserAuthAppService userAuthAppService;
 
     public AuthController(UserRegistrationService userRegistrationService, 
                          AuthenticationService authenticationService,
+                         UserAuthAppService userAuthAppService,
                          UserRepository userRepository) {
         this.userRegistrationService = userRegistrationService;
-        this.authenticationService = authenticationService;
+        this.userAuthAppService = userAuthAppService;
         this.userRepository = userRepository;
     }
 
@@ -81,6 +84,7 @@ public class AuthController {
                 userInfo.setFollowing(oauth2User.getAttribute("following"));
                 userInfo.setCreatedAt(oauth2User.getAttribute("created_at"));
                 userInfo.setUpdatedAt(oauth2User.getAttribute("updated_at"));
+                // 角色：OAuth2场景由基础设施成功处理器写入Token与后端判定，这里不重复判定
             } 
             // 处理本地用户（JWT 认证）
             else {
@@ -117,9 +121,16 @@ public class AuthController {
                                 if (user.getId() != null) {
                                     userInfo.setId(user.getId().toString());
                                 }
+                                userInfo.setRole(user.getRole() != null ? user.getRole().name() : "VISITOR");
                             }
                         } catch (Exception e) {
                             log.info("Could not fetch user details from database: " + e.getMessage());
+                        }
+                        // 若数据库未获取到角色，尝试根据认证授权判定
+                        if (userInfo.getRole() == null && authentication.getAuthorities() != null) {
+                            boolean isAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(a -> "ROLE_ADMIN".equalsIgnoreCase(a.getAuthority()));
+                            userInfo.setRole(isAdmin ? "ADMIN" : "VISITOR");
                         }
                     } else {
                         userInfo.setError("用户未登录或匿名用户");
@@ -196,14 +207,14 @@ public class AuthController {
             throw new IllegalArgumentException("用户名和密码不能为空");
         }
         
-        User user = userRegistrationService.registerUser(username, password, email);
-        
+        RegisterResult result = userAuthAppService.register(username, password, email);
         RegisterResponse response = new RegisterResponse();
         RegisterResponse.UserInfo userInfo = new RegisterResponse.UserInfo();
-        userInfo.setId(user.getId());
-        userInfo.setUsername(user.getUsername());
-        userInfo.setEmail(user.getEmail());
-        userInfo.setDisplayName(user.getDisplayName());
+        userInfo.setId(result.getId());
+        userInfo.setUsername(result.getUsername());
+        userInfo.setEmail(result.getEmail());
+        userInfo.setDisplayName(result.getDisplayName());
+        userInfo.setRole(result.getRole());
         response.setUser(userInfo);
         
         return response;
@@ -222,23 +233,17 @@ public class AuthController {
             throw new IllegalArgumentException("用户名和密码不能为空");
         }
         
-        User user = userRegistrationService.authenticate(username, password);
-        
-        if (user == null) {
-            throw new InvalidCredentialsException();
-        }
-        
-        // 生成 JWT Token
-        String token = authenticationService.generateToken(user.getUsername(), user.getId());
+        LoginResult result = userAuthAppService.login(username, password);
         
         LoginResponse response = new LoginResponse();
-        response.setToken(token);
+        response.setToken(result.getToken());
         
         LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo();
-        userInfo.setId(user.getId());
-        userInfo.setUsername(user.getUsername());
-        userInfo.setEmail(user.getEmail());
-        userInfo.setDisplayName(user.getDisplayName());
+        userInfo.setId(result.getId());
+        userInfo.setUsername(result.getUsername());
+        userInfo.setEmail(result.getEmail());
+        userInfo.setDisplayName(result.getDisplayName());
+        userInfo.setRole(result.getRole());
         response.setUser(userInfo);
         
         return response;

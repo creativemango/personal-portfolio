@@ -12,6 +12,7 @@ import com.personal.portfolio.blog.interfaces.dto.request.UpdateBlogPostRequest;
 import com.personal.portfolio.blog.interfaces.exception.AuthenticationException;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class BlogPostController {
      * 创建博客文章
      */
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public BlogPost createBlogPost(@Valid @RequestBody CreateBlogPostRequest request) {
         // 从当前用户上下文获取authorId
         Long authorId = currentUserContext.getCurrentUserId();
@@ -55,6 +57,7 @@ public class BlogPostController {
      * 上传博客封面图片
      */
     @PostMapping("/{id}/cover")
+    @PreAuthorize("hasRole('ADMIN')")
     public String uploadCover(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         return blogcreateAppService.uploadCover(id, file);
     }
@@ -63,6 +66,7 @@ public class BlogPostController {
      * 分页获取所有博客文章
      */
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public PageResult<BlogPost> getAllBlogPosts(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
@@ -99,6 +103,7 @@ public class BlogPostController {
      * 发布博客文章
      */
     @PutMapping("/{id}/publish")
+    @PreAuthorize("hasRole('ADMIN')")
     public BlogPost publishBlogPost(@PathVariable Long id) {
         return blogPostAppService.publishBlogPost(id);
     }
@@ -107,6 +112,7 @@ public class BlogPostController {
      * 更新博客文章
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public BlogPost updateBlogPost(
             @PathVariable Long id, 
             @Valid @RequestBody UpdateBlogPostRequest request) {
@@ -126,6 +132,7 @@ public class BlogPostController {
      * 删除博客文章
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteBlogPost(@PathVariable Long id) {
         blogPostAppService.deleteBlogPost(id);
     }
@@ -136,6 +143,7 @@ public class BlogPostController {
      */
     @Deprecated
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<BlogPost> getAllBlogPostsOld() {
         return blogPostAppService.getAllBlogPosts();
     }

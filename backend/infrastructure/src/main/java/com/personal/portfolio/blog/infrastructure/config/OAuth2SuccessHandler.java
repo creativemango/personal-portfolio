@@ -1,6 +1,7 @@
 package com.personal.portfolio.blog.infrastructure.config;
 
 import com.personal.portfolio.blog.infrastructure.util.JwtUtil;
+import com.personal.portfolio.blog.domain.context.AdminPolicy;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
+    private final AdminPolicy adminPolicy;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, 
@@ -71,8 +73,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 
                 log.info("User ID: " + userId);
                 
-                // 生成 JWT Token
-                String token = jwtUtil.generateToken(username, userId);
+                // 判定是否管理员
+                String role = "VISITOR";
+                String oauthGithubId = idAttribute != null ? idAttribute.toString() : null;
+                if (adminPolicy.isAdminUsername(username) || adminPolicy.isAdminGithubId(oauthGithubId)) {
+                    role = "ADMIN";
+                }
+                
+                // 生成携带角色的 JWT Token
+                String token = jwtUtil.generateToken(username, userId, role);
                 log.info("Generated JWT Token: " + token);
                 
                 // 确保用户名不为空
@@ -89,6 +98,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 userInfo.put("email", email != null ? email : "");
                 userInfo.put("avatar_url", avatarUrl != null ? avatarUrl : "");
                 userInfo.put("displayName", name != null ? name : username);
+                userInfo.put("role", role);
                 
                 // 构建响应数据
                 Map<String, Object> responseData = new HashMap<>();
