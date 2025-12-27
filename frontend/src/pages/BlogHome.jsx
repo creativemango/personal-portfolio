@@ -4,7 +4,7 @@ import Pagination from '../components/Pagination';
 import { getPublishedBlogPosts } from '../services/blogService';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Github, Twitter, Mail, Sparkles, 
+  Sparkles, 
   Calendar, Clock, ArrowRight, ChevronLeft, ChevronRight,
   Search, Folder, Tag, ChevronDown 
 } from 'lucide-react';
@@ -131,11 +131,6 @@ const BlogHome = () => {
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   {user?.bio || 'Full Stack Developer, loves open source and design. Recording my code, life and some whimsical ideas here.'}
                 </p>
-                <div className="flex justify-center md:justify-start gap-3">
-                  <a href={user?.html_url || "#"} target="_blank" rel="noreferrer" className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"><Github className="w-5 h-5" /></a>
-                  <a href="#" className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-50 rounded-full transition"><Twitter className="w-5 h-5" /></a>
-                  <a href={`mailto:${user?.email || ''}`} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Mail className="w-5 h-5" /></a>
-                </div>
               </div>
             </div>
           )}

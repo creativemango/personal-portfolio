@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { Search, Moon, Sun, Menu, X, LogOut } from 'lucide-react'
+import { Moon, Sun, Menu, X, LogOut } from 'lucide-react'
+import UserAvatar from './UserAvatar'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -54,12 +55,6 @@ const Navbar = () => {
           {/* Right Actions */}
           <div className="flex items-center gap-4">
             <button 
-              className="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-full transition"
-              onClick={() => alert("Search functionality is not implemented yet!")}
-            >
-              <Search className="w-5 h-5" />
-            </button>
-            <button 
               onClick={toggleTheme}
               className="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-full transition"
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -69,15 +64,11 @@ const Navbar = () => {
             
             {user ? (
               <div className="hidden md:flex items-center gap-3 pl-2 border-l border-gray-200">
-                <img
-                  src={user.avatar_url || "/images/default-avatar.png"}
-                  alt="User Avatar"
-                  className="w-8 h-8 rounded-full border border-gray-200 object-cover"
-                  onError={(e) => {
-                    if (!e.target.src.includes('via.placeholder.com')) {
-                      e.target.src = `https://via.placeholder.com/35x35/667eea/ffffff?text=${(user.login || user.username || 'U').charAt(0).toUpperCase()}`
-                    }
-                  }}
+                <UserAvatar
+                  src={user.avatar_url}
+                  name={user.login || user.username}
+                  size="sm"
+                  showName
                 />
                 <button 
                   onClick={handleLogout}

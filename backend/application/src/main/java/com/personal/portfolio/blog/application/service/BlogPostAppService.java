@@ -1,7 +1,7 @@
 package com.personal.portfolio.blog.application.service;
 
 import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
-import com.personal.portfolio.blog.domain.common.PageResult;
+import com.personal.portfolio.page.PageResult;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
 

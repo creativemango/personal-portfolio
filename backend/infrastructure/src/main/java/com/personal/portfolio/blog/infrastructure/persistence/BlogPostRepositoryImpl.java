@@ -3,7 +3,7 @@ package com.personal.portfolio.blog.infrastructure.persistence;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.personal.portfolio.blog.domain.common.PageResult;
+import com.personal.portfolio.page.PageResult;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.event.BlogPostCreatedEvent;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;

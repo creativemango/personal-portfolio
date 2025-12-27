@@ -11,6 +11,8 @@ import {
   Share2, Twitter, Facebook, Link as LinkIcon 
 } from 'lucide-react'
 import MermaidDiagram from '../components/MermaidDiagram'
+import CommentList from '../components/CommentList'
+import CommentForm from '../components/CommentForm'
 
 // Import highlight.js styles
 import 'highlight.js/styles/github-dark.css'
@@ -21,6 +23,7 @@ const BlogPost = () => {
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [commentRefreshKey, setCommentRefreshKey] = useState(0)
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -207,41 +210,12 @@ const BlogPost = () => {
               </div>
             </div>
 
-            {/* Comments Section - Admin Only */}
-            {user && user.role === 'ADMIN' && (
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 md:p-12 transition-colors duration-300">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
-                  <div className="bg-primary-100 dark:bg-primary-900/30 p-2 rounded-lg text-primary-600 dark:text-primary-400">
-                    <MessageSquare className="w-6 h-6" />
-                  </div>
-                  Comments
-                </h3>
-                
-                <div className="flex gap-6 mb-12">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-400 text-xl shrink-0">
-                    ?
-                  </div>
-                  <div className="flex-1">
-                    <textarea 
-                      className="w-full bg-gray-50 dark:bg-gray-700 border-0 p-4 rounded-xl h-32 focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-gray-600 transition-all resize-none placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white" 
-                      placeholder="Share your thoughts..."
-                    ></textarea>
-                    <div className="mt-4 flex justify-end">
-                      <button className="px-8 py-3 bg-gray-900 dark:bg-gray-700 text-white font-bold rounded-xl hover:bg-black dark:hover:bg-gray-600 hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                        Post Comment
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-8">
-                  {/* Empty State */}
-                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-600">
-                    <p className="text-gray-500 dark:text-gray-400 font-medium">No comments yet.</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <CommentForm
+              postId={post.id}
+              enabled={Boolean(user) && Boolean(post.isPublished)}
+              onPosted={() => setCommentRefreshKey((k) => k + 1)}
+            />
+            <CommentList postId={post.id} refreshKey={commentRefreshKey} />
           </main>
 
           {/* Right Sidebar (Sticky TOC) */}
@@ -251,8 +225,8 @@ const BlogPost = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 transition-colors duration-300">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Author</h4>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                    <img src="/images/default-avatar.png" alt="Author" className="w-full h-full object-cover" />
+                  <div className="w-12 h-12">
+                    <img src="/images/default-avatar.png" alt="User Avatar" className="w-12 h-12 rounded-full border border-gray-200 object-cover" />
                   </div>
                   <div>
                     <div className="font-bold text-gray-900 dark:text-white">Admin</div>

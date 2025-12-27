@@ -1,6 +1,6 @@
 package com.personal.portfolio.blog.domain.repository;
 
-import com.personal.portfolio.blog.domain.common.PageResult;
+import com.personal.portfolio.page.PageResult;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 
 import java.util.List;

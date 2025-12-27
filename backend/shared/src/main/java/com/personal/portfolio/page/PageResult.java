@@ -1,4 +1,4 @@
-package com.personal.portfolio.blog.domain.common;
+package com.personal.portfolio.page;
 
 import java.util.List;
 

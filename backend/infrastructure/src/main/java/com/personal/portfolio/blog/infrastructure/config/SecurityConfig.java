@@ -53,6 +53,9 @@ public class SecurityConfig {
                 // 访客只读：已发布列表与文章详情
                 .requestMatchers(HttpMethod.GET, "/api/blog/posts/published/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/blog/posts/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/blog/posts/*/comments").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/blog/posts/*/comments").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/comments/*").authenticated()
                 // 管理员权限：文章创建/更新/发布/删除/封面上传/查询全部
                 .requestMatchers(HttpMethod.POST, "/api/blog/posts/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/blog/posts/**").hasRole("ADMIN")

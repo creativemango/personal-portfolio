@@ -4,7 +4,7 @@ import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
 import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
 import com.personal.portfolio.blog.application.service.BlogCreateAppService;
 import com.personal.portfolio.blog.application.service.BlogPostAppService;
-import com.personal.portfolio.blog.domain.common.PageResult;
+import com.personal.portfolio.page.PageResult;
 import com.personal.portfolio.blog.domain.context.CurrentUserContext;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.interfaces.dto.request.CreateBlogPostRequest;
