@@ -11,4 +11,9 @@ public interface CommentRepository {
     Optional<Comment> findById(Long id);
     boolean deleteById(Long id);
     Long countByPostId(Long postId);
+    void incrementLikeCount(Long id);
+    void decrementLikeCount(Long id);
+    boolean hasLiked(Long userId, Long commentId);
+    void addLike(Long userId, Long commentId);
+    void removeLike(Long userId, Long commentId);
 }

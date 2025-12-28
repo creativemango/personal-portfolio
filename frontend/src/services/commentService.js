@@ -15,3 +15,6 @@ export const deleteComment = async (commentId) => {
   return await api.delete(`/comments/${commentId}`)
 }
 
+export const likeComment = async (commentId) => {
+  return await api.post(`/comments/${commentId}/like`)
+}

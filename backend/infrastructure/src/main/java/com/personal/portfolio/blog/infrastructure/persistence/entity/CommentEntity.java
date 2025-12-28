@@ -36,6 +36,9 @@ public class CommentEntity {
     @TableField("parent_id")
     private Long parentId;
 
+    @TableField("like_count")
+    private Integer likeCount;
+
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

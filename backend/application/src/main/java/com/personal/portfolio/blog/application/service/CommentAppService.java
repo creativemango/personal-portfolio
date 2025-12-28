@@ -58,4 +58,21 @@ public class CommentAppService {
         });
         return ok;
     }
+
+    @Transactional
+    public void likeComment(Long commentId) {
+        if (!currentUserContext.isAuthenticated()) {
+            throw new IllegalStateException("User must be logged in to like comments");
+        }
+        Long userId = currentUserContext.getCurrentUserId();
+        if (commentRepository.hasLiked(userId, commentId)) {
+            // If already liked, unlike it (toggle)
+            commentRepository.removeLike(userId, commentId);
+            commentRepository.decrementLikeCount(commentId);
+        } else {
+            // If not liked, like it
+            commentRepository.addLike(userId, commentId);
+            commentRepository.incrementLikeCount(commentId);
+        }
+    }
 }

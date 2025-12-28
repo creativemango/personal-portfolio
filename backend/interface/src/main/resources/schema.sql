@@ -71,7 +71,16 @@ CREATE TABLE IF NOT EXISTS comments (
     updated_at TIMESTAMP NOT NULL,
     blog_post_id BIGINT NOT NULL,
     parent_id BIGINT,
-    user_id BIGINT
+    user_id BIGINT,
+    like_count INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS comment_likes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    comment_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, comment_id)
 );
 
 -- 1. Spring Boot 3.0

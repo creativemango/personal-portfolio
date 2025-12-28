@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { getComments, deleteComment } from '../services/commentService'
+import { getComments, deleteComment, likeComment } from '../services/commentService'
 import { useAuth } from '../context/AuthContext'
-import { MessageSquare, Trash2, Reply } from 'lucide-react'
+import { MessageSquare, Trash2, Reply, ThumbsUp } from 'lucide-react'
 import ConfirmDialog from './ConfirmDialog'
 import UserAvatar from './UserAvatar'
 import CommentForm from './CommentForm'
@@ -22,17 +22,45 @@ const flattenChildren = (children) => {
 const CommentItem = ({ comment, depth = 0, canDelete, onDelete, onReply, replyToId, onCancelReply, onPosted, postId, user }) => {
   const isReplying = replyToId === comment.id
   const isRoot = depth === 0
+  const [likes, setLikes] = useState(comment.likeCount || 0)
+  const [isLiked, setIsLiked] = useState(comment.isLiked || false)
   
   // For root comments, we get all flattened descendants
   // For replies (depth > 0), we don't process children here as they are already in the flattened list of the root
   const replies = isRoot ? flattenChildren(comment.children) : []
+
+  const handleLike = async () => {
+    if (!user) return
+
+    // Optimistic update
+    const newIsLiked = !isLiked
+    const newLikes = newIsLiked ? likes + 1 : Math.max(0, likes - 1)
+    
+    setLikes(newLikes)
+    setIsLiked(newIsLiked)
+
+    try {
+      await likeComment(comment.id)
+    } catch (error) {
+      console.error('Failed to toggle like', error)
+      // Revert on error
+      setLikes(likes)
+      setIsLiked(isLiked)
+      alert(error.response?.data?.message || 'Failed to like comment')
+    }
+  }
+
+  // Use specific avatar for admin
+  const avatarSrc = comment.authorName === 'admin' 
+    ? '/images/default-avatar.png' 
+    : comment.avatarUrl
 
   return (
     <div className={`${isRoot ? 'border-b border-gray-100 dark:border-gray-700/50 last:border-0 pb-6 mb-6 last:pb-0 last:mb-0' : 'mt-4 first:mt-0'}`}>
       <div className="flex gap-3 md:gap-4 items-start group">
         <div className="shrink-0">
            <UserAvatar 
-             src={comment.avatarUrl} 
+             src={avatarSrc} 
              name={comment.authorName} 
              size={isRoot ? "md" : "sm"} 
            />
@@ -60,6 +88,16 @@ const CommentItem = ({ comment, depth = 0, canDelete, onDelete, onReply, replyTo
             </div>
 
             <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                className={`flex items-center gap-1 transition-colors text-xs font-medium ${isLiked ? 'text-primary-600' : 'text-gray-400 hover:text-primary-600'}`}
+                onClick={handleLike}
+                title={isLiked ? "Unlike" : "Like"}
+                disabled={!user}
+              >
+                <ThumbsUp className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} />
+                <span className="hidden sm:inline">{likes > 0 ? likes : 'Like'}</span>
+              </button>
+
               {user && (
                 <button
                   className="flex items-center gap-1 text-gray-400 hover:text-primary-600 transition-colors text-xs font-medium"
@@ -122,6 +160,7 @@ const CommentItem = ({ comment, depth = 0, canDelete, onDelete, onReply, replyTo
               onPosted={onPosted}
               postId={postId}
               user={user}
+              rootId={comment.id}
             />
           ))}
         </div>
