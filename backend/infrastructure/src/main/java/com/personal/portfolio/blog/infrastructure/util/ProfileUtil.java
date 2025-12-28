@@ -60,6 +60,10 @@ public class ProfileUtil {
         return get(LANGUAGE);
     }
 
+    public static String getAvatarUrl() {
+        return get(AVATAR_URL);
+    }
+
     public static void remove() {
         if (Objects.nonNull(PROFILES)) {
             PROFILES.remove();

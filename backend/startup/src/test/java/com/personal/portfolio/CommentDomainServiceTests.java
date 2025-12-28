@@ -20,6 +20,7 @@ class CommentDomainServiceTests {
         public boolean isAuthenticated() { return id != null; }
         public String getCurrentLanguage() { return null; }
         public String getCurrentHost() { return null; }
+        public String getCurrentAvatarUrl() { return null; }
     }
 
     private static class StubAdminPolicy implements AdminPolicy {

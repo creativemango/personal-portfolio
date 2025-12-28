@@ -26,6 +26,7 @@ public class CommentDomainService {
         comment.setPostId(post.getId());
         comment.setUserId(currentUserContext.getCurrentUserId());
         comment.setAuthorName(currentUserContext.getCurrentUsername());
+        comment.setAvatarUrl(currentUserContext.getCurrentAvatarUrl());
         comment.setContent(Comment.normalizeContent(rawContent));
         comment.setParentId(parentId);
         return comment;

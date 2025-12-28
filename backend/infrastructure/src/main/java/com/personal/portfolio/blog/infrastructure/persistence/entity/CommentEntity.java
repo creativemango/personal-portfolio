@@ -39,6 +39,9 @@ public class CommentEntity {
     @TableField("like_count")
     private Integer likeCount;
 
+    @TableField("avatar_url")
+    private String avatarUrl;
+
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

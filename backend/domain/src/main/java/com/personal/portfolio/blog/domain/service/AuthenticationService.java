@@ -43,4 +43,14 @@ public interface AuthenticationService {
      * @return 用户ID
      */
     Long getUserIdFromToken(String token);
+    
+    /**
+     * 生成携带角色和头像的用户认证token
+     * @param username 用户名
+     * @param userId 用户ID
+     * @param role 角色（ADMIN/ VISITOR）
+     * @param avatarUrl 头像URL
+     * @return JWT token
+     */
+    String generateToken(String username, Long userId, String role, String avatarUrl);
 }

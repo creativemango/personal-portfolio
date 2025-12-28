@@ -42,11 +42,20 @@ public class ThreadLocalCurrentUserContext implements CurrentUserContext {
             return null;
         }
     }
-    
+
     @Override
     public String getCurrentHost() {
         try {
             return ProfileUtil.getHost();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Override
+    public String getCurrentAvatarUrl() {
+        try {
+            return ProfileUtil.getAvatarUrl();
         } catch (Exception e) {
             return null;
         }

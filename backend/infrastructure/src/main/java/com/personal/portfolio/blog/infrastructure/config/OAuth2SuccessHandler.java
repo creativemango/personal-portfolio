@@ -80,8 +80,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     role = "ADMIN";
                 }
                 
-                // 生成携带角色的 JWT Token
-                String token = jwtUtil.generateToken(username, userId, role);
+                // 生成携带角色和头像的 JWT Token
+                String token = jwtUtil.generateToken(username, userId, role, avatarUrl);
                 log.info("Generated JWT Token: " + token);
                 
                 // 确保用户名不为空

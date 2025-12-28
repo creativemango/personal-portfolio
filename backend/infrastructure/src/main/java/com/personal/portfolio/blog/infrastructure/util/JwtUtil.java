@@ -33,13 +33,17 @@ public class JwtUtil {
      * @return JWT Token
      */
     public String generateToken(String username, Long userId) {
-        return generateToken(username, userId, null);
+        return generateToken(username, userId, null, null);
+    }
+    
+    public String generateToken(String username, Long userId, String role) {
+        return generateToken(username, userId, role, null);
     }
 
     /**
-     * 生成携带角色的 JWT Token
+     * 生成携带角色和头像的 JWT Token
      */
-    public String generateToken(String username, Long userId, String role) {
+    public String generateToken(String username, Long userId, String role, String avatarUrl) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("username", username);
         payload.put("userId", userId);
@@ -47,6 +51,9 @@ public class JwtUtil {
         payload.put("expiresAt", new Date(System.currentTimeMillis() + jwtProperties.getExpiration() * 60 * 1000));
         if (role != null) {
             payload.put("role", role);
+        }
+        if (avatarUrl != null) {
+            payload.put("avatarUrl", avatarUrl);
         }
 
         JWTSigner signer = JWTSignerUtil.hs256(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
@@ -114,6 +121,19 @@ public class JwtUtil {
         try {
             JWT jwt = JWTUtil.parseToken(token);
             Object r = jwt.getPayload("role");
+            return r != null ? r.toString() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 从 Token 中获取头像URL
+     */
+    public String getAvatarUrlFromToken(String token) {
+        try {
+            JWT jwt = JWTUtil.parseToken(token);
+            Object r = jwt.getPayload("avatarUrl");
             return r != null ? r.toString() : null;
         } catch (Exception e) {
             return null;

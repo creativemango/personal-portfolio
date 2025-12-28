@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS comments (
     blog_post_id BIGINT NOT NULL,
     parent_id BIGINT,
     user_id BIGINT,
-    like_count INT DEFAULT 0
+    like_count INT DEFAULT 0,
+    avatar_url VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS comment_likes (

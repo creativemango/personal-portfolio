@@ -1,7 +1,6 @@
 package com.personal.portfolio.blog.infrastructure.filter;
 
-import static com.personal.portfolio.blog.infrastructure.context.ContextConstants.USER_ID;
-import static com.personal.portfolio.blog.infrastructure.context.ContextConstants.USERNAME;
+import com.personal.portfolio.blog.infrastructure.util.ProfileUtil;
 
 import com.personal.portfolio.blog.infrastructure.util.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -19,6 +18,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Enumeration;
+
+import static com.personal.portfolio.blog.infrastructure.context.ContextConstants.*;
 
 /**
  * JWT 认证过滤器
@@ -92,6 +93,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // 将用户ID设置到请求属性中，方便后续使用
                     request.setAttribute(USER_ID, userId);
                     request.setAttribute(USERNAME, username);
+                    
+                    // 提取头像URL并设置到ProfileUtil
+                    String avatarUrl = jwtUtil.getAvatarUrlFromToken(token);
+                    if (avatarUrl != null) {
+                        ProfileUtil.put(AVATAR_URL, avatarUrl);
+                    }
                     
                     log.debug("Authentication set for user: {}", username);
                 } else {

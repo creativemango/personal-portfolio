@@ -19,6 +19,7 @@ public class CommentResponse {
     private String content;
     private Long parentId;
     private Integer likeCount;
+    private String avatarUrl;
     private Boolean isLiked;
     private LocalDateTime createdAt;
 }

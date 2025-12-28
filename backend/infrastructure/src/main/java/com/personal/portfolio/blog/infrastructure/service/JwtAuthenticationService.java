@@ -40,4 +40,9 @@ public class JwtAuthenticationService implements AuthenticationService {
     public Long getUserIdFromToken(String token) {
         return jwtUtil.getUserIdFromToken(token);
     }
+
+    @Override
+    public String generateToken(String username, Long userId, String role, String avatarUrl) {
+        return jwtUtil.generateToken(username, userId, role, avatarUrl);
+    }
 }

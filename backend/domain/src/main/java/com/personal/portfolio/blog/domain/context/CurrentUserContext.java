@@ -30,10 +30,16 @@ public interface CurrentUserContext {
      * @return 用户语言
      */
     String getCurrentLanguage();
-    
+
     /**
      * 获取当前用户主机信息
      * @return 主机信息
      */
     String getCurrentHost();
+    
+    /**
+     * 获取当前用户头像URL
+     * @return 头像URL
+     */
+    String getCurrentAvatarUrl();
 }

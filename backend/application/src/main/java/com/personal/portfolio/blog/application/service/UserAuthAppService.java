@@ -36,7 +36,7 @@ public class UserAuthAppService {
         }
         
         String role = user.getRole() != null ? user.getRole().name() : "VISITOR";
-        String token = authenticationService.generateToken(user.getUsername(), user.getId(), role);
+        String token = authenticationService.generateToken(user.getUsername(), user.getId(), role, user.getAvatarUrl());
         
         RegisterResult result = new RegisterResult();
         result.setId(user.getId());

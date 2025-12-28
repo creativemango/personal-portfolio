@@ -15,6 +15,7 @@ public class Comment {
     private String content;
     private Long parentId;
     private Integer likeCount = 0;
+    private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
