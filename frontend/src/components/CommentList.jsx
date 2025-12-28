@@ -50,10 +50,10 @@ const CommentItem = ({ comment, depth = 0, canDelete, onDelete, onReply, replyTo
     }
   }
 
-  // Use specific avatar for admin
+  // Determine avatar source
   const avatarSrc = comment.authorName === 'admin' 
     ? '/images/default-avatar.png' 
-    : comment.avatarUrl
+    : (comment.avatarUrl || '/images/visitor-avatar.png')
 
   return (
     <div className={`${isRoot ? 'border-b border-gray-100 dark:border-gray-700/50 last:border-0 pb-6 mb-6 last:pb-0 last:mb-0' : 'mt-4 first:mt-0'}`}>

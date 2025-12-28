@@ -209,6 +209,8 @@ public class AuthController {
         
         RegisterResult result = userAuthAppService.register(username, password, email);
         RegisterResponse response = new RegisterResponse();
+        response.setToken(result.getToken());
+        
         RegisterResponse.UserInfo userInfo = new RegisterResponse.UserInfo();
         userInfo.setId(result.getId());
         userInfo.setUsername(result.getUsername());

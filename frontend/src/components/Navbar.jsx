@@ -11,6 +11,10 @@ const Navbar = () => {
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  // Robust property access for user object
+  const displayName = user?.displayName || user?.name || user?.username || user?.login
+  const avatarSrc = user?.avatarUrl || user?.avatar_url || user?.avatar
+
   const handleLogout = async () => {
     try {
       await logout();

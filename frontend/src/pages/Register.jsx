@@ -111,6 +111,9 @@ const Register = () => {
       if (result.success) {
         setUser(result.user)
         localStorage.setItem('user', JSON.stringify(result.user))
+        if (result.token) {
+          localStorage.setItem('token', result.token)
+        }
         navigate('/home', { replace: true })
       } else {
         setErrors({ submit: result.message })

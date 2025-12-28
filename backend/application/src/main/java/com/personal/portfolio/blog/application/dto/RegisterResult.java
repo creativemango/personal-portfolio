@@ -9,5 +9,6 @@ public class RegisterResult {
     private String email;
     private String displayName;
     private String role;
+    private String token;
 }
 

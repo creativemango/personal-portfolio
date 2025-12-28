@@ -147,7 +147,7 @@ public class User {
         user.password = password;
         user.displayName = username;
         user.isLocalAccount = true;
-        user.avatarUrl = "/images/default-avatar.png";
+        user.avatarUrl = "/images/visitor-avatar.png";
         user.role = UserRole.VISITOR;
 
         return user;

@@ -31,14 +31,20 @@ public class UserAuthAppService {
         User user = userRegistrationService.registerUser(username, password, email);
         if (adminPolicy.isAdminUsername(username)) {
             user.setRole(UserRole.ADMIN);
+            user.setAvatarUrl("/images/default-avatar.png");
             user = userRepository.save(user);
         }
+        
+        String role = user.getRole() != null ? user.getRole().name() : "VISITOR";
+        String token = authenticationService.generateToken(user.getUsername(), user.getId(), role);
+        
         RegisterResult result = new RegisterResult();
         result.setId(user.getId());
         result.setUsername(user.getUsername());
         result.setEmail(user.getEmail());
         result.setDisplayName(user.getDisplayName());
-        result.setRole(user.getRole() != null ? user.getRole().name() : "VISITOR");
+        result.setRole(role);
+        result.setToken(token);
         return result;
     }
 

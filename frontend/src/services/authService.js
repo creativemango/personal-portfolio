@@ -47,7 +47,7 @@ export const register = async (username, password, email) => {
       password,
       email: email || ''
     })
-    return { success: true, user: data }
+    return { success: true, user: data.user, token: data.token }
   } catch (error) {
     return { success: false, message: error.message }
   }
