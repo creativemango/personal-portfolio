@@ -36,9 +36,9 @@ public class CommentAppService {
     }
 
     @Transactional
-    public CommentDTO createComment(Long postId, String content) {
+    public CommentDTO createComment(Long postId, String content, Long parentId) {
         BlogPost post = blogPostRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found"));
-        Comment comment = commentDomainService.composeNewComment(post, content, currentUserContext);
+        Comment comment = commentDomainService.composeNewComment(post, content, parentId, currentUserContext);
         Comment saved = commentRepository.save(comment);
         Long count = commentRepository.countByPostId(postId);
         post.updateCommentCount(count.intValue());

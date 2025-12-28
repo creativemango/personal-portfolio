@@ -49,7 +49,7 @@ class CommentAppServiceTests {
         });
         when(commentRepository.countByPostId(10L)).thenReturn(3L);
 
-        CommentDTO saved = appService.createComment(10L, " hi ");
+        CommentDTO saved = appService.createComment(10L, " hi ", null);
         Assertions.assertEquals(99L, saved.getId());
         Assertions.assertEquals("hi", saved.getContent());
         Assertions.assertEquals(7L, saved.getUserId());

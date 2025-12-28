@@ -31,7 +31,7 @@ public class CommentController {
     @PostMapping("/blog/posts/{postId}/comments")
     @PreAuthorize("isAuthenticated()")
     public CommentResponse createComment(@PathVariable Long postId, @Valid @RequestBody CreateCommentRequest request) {
-        CommentDTO created = commentService.createComment(postId, request.getContent());
+        CommentDTO created = commentService.createComment(postId, request.getContent(), request.getParentId());
         return converter.convert(created, CommentResponse.class);
     }
 

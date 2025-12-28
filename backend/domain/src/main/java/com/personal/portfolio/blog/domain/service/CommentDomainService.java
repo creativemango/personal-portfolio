@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CommentDomainService {
-    public Comment composeNewComment(BlogPost post, String rawContent, CurrentUserContext currentUserContext) {
+    public Comment composeNewComment(BlogPost post, String rawContent, Long parentId, CurrentUserContext currentUserContext) {
         if (currentUserContext == null || !currentUserContext.isAuthenticated()) {
             throw new IllegalStateException("Unauthenticated");
         }
@@ -27,6 +27,7 @@ public class CommentDomainService {
         comment.setUserId(currentUserContext.getCurrentUserId());
         comment.setAuthorName(currentUserContext.getCurrentUsername());
         comment.setContent(Comment.normalizeContent(rawContent));
+        comment.setParentId(parentId);
         return comment;
     }
 

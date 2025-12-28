@@ -7,8 +7,8 @@ export const getComments = async (postId, page = 1, size = 20) => {
   return await api.get(`${API_BASE_PATH}/${postId}/comments`, { params })
 }
 
-export const createComment = async (postId, content) => {
-  return await api.post(`${API_BASE_PATH}/${postId}/comments`, { content })
+export const createComment = async (postId, content, parentId = null) => {
+  return await api.post(`${API_BASE_PATH}/${postId}/comments`, { content, parentId })
 }
 
 export const deleteComment = async (commentId) => {

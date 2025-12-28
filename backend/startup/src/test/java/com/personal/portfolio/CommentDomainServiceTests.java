@@ -35,7 +35,7 @@ class CommentDomainServiceTests {
         post.setId(1L);
         post.setIsPublished(true);
         Assertions.assertThrows(IllegalStateException.class, () ->
-            service.composeNewComment(post, "hello", new StubUserCtx(null, null))
+            service.composeNewComment(post, "hello", null, new StubUserCtx(null, null))
         );
     }
 
@@ -45,7 +45,7 @@ class CommentDomainServiceTests {
         post.setId(1L);
         post.setIsPublished(false);
         Assertions.assertThrows(IllegalStateException.class, () ->
-            service.composeNewComment(post, "hello", new StubUserCtx(2L, "u"))
+            service.composeNewComment(post, "hello", null, new StubUserCtx(2L, "u"))
         );
     }
 
@@ -55,7 +55,7 @@ class CommentDomainServiceTests {
         post.setId(1L);
         post.setIsPublished(true);
         Assertions.assertThrows(IllegalArgumentException.class, () ->
-            service.composeNewComment(post, "   ", new StubUserCtx(2L, "u"))
+            service.composeNewComment(post, "   ", null, new StubUserCtx(2L, "u"))
         );
     }
 
@@ -64,7 +64,7 @@ class CommentDomainServiceTests {
         BlogPost post = new BlogPost();
         post.setId(10L);
         post.setIsPublished(true);
-        Comment c = service.composeNewComment(post, "  abc  ", new StubUserCtx(3L, "alice"));
+        Comment c = service.composeNewComment(post, "  abc  ", null, new StubUserCtx(3L, "alice"));
         Assertions.assertEquals(10L, c.getPostId());
         Assertions.assertEquals(3L, c.getUserId());
         Assertions.assertEquals("alice", c.getAuthorName());
