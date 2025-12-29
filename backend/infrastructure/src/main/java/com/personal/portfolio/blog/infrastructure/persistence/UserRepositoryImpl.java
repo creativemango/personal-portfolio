@@ -143,6 +143,24 @@ public class UserRepositoryImpl implements UserRepository {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<User> findAllById(Iterable<Long> ids) {
+        List<UserEntity> entities = userMapper.selectBatchIds((java.util.Collection<Long>) ids);
+        return entities.stream()
+                .map(entity -> {
+                    User u = converter.convert(entity, User.class);
+                    if (entity.getRole() != null) {
+                        try {
+                            u.setRole(UserRole.valueOf(entity.getRole()));
+                        } catch (IllegalArgumentException ex) {
+                            u.setRole(UserRole.VISITOR);
+                        }
+                    }
+                    return u;
+                })
+                .collect(Collectors.toList());
+    }
     
     @Override
     public void delete(Long id) {

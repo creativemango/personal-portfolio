@@ -4,6 +4,7 @@ import com.personal.portfolio.blog.application.dto.CommentDTO;
 
 import com.personal.portfolio.blog.domain.context.AdminPolicy;
 import com.personal.portfolio.blog.domain.context.CurrentUserContext;
+import com.personal.portfolio.blog.domain.event.CommentCreatedEvent;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.model.Comment;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
@@ -12,6 +13,7 @@ import com.personal.portfolio.blog.domain.service.CommentDomainService;
 import com.personal.portfolio.converter.PageResultConverter;
 import com.personal.portfolio.page.PageResult;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class CommentAppService {
     private final CurrentUserContext currentUserContext;
     private final AdminPolicy adminPolicy;
     private final CommentDomainService commentDomainService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final Converter converter = new Converter();
     private static final PageResultConverter pageResultConverter = new PageResultConverter();
@@ -43,6 +46,17 @@ public class CommentAppService {
         Long count = commentRepository.countByPostId(postId);
         post.updateCommentCount(count.intValue());
         blogPostRepository.save(post);
+
+        // Publish event
+        eventPublisher.publishEvent(new CommentCreatedEvent(
+            saved.getId(),
+            saved.getPostId(),
+            saved.getUserId(),
+            saved.getContent(),
+            saved.getParentId(),
+            saved.getCreatedAt()
+        ));
+
         return converter.convert(saved, CommentDTO.class);
     }
 

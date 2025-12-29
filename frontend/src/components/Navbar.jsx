@@ -2,11 +2,11 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { Moon, Sun, Menu, X, LogOut } from 'lucide-react'
+import { Moon, Sun, Menu, X, LogOut, Bell } from 'lucide-react'
 import UserAvatar from './UserAvatar'
 
 const Navbar = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, unreadNotifications } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -68,6 +68,12 @@ const Navbar = () => {
             
             {user ? (
               <div className="hidden md:flex items-center gap-3 pl-2 border-l border-gray-200">
+                <Link to="/notifications" className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
+                  <Bell className="w-5 h-5" />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-red-500" />
+                  )}
+                </Link>
                 <UserAvatar
                   src={user.avatar_url}
                   name={user.login || user.username}
@@ -116,12 +122,27 @@ const Navbar = () => {
             
             <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mt-2">
               {user ? (
-                <button 
-                  onClick={() => { handleLogout(); setIsMenuOpen(false); }}
-                  className="w-full text-left text-red-600 dark:text-red-400 font-medium py-2"
-                >
-                  Logout
-                </button>
+                <>
+                  <Link 
+                    to="/notifications" 
+                    className="flex items-center gap-2 w-full text-left text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Bell className="w-4 h-4" />
+                    Notifications
+                    {unreadNotifications > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {unreadNotifications}
+                      </span>
+                    )}
+                  </Link>
+                  <button 
+                    onClick={() => { handleLogout(); setIsMenuOpen(false); }}
+                    className="w-full text-left text-red-600 dark:text-red-400 font-medium py-2"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 <Link 
                   to="/login" 

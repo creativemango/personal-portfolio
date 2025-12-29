@@ -1,11 +1,40 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { checkAuth, login as authLogin, logout as authLogout, register as authRegister } from '../services/authService';
+import { notificationService } from '../services/notificationService';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  // Poll for notifications
+  useEffect(() => {
+    let intervalId;
+
+    const fetchUnreadCount = async () => {
+      if (user) {
+        try {
+          const count = await notificationService.getUnreadCount();
+          setUnreadNotifications(Number(count));
+        } catch (error) {
+          console.error('Failed to fetch unread notifications:', error);
+        }
+      } else {
+        setUnreadNotifications(0);
+      }
+    };
+
+    if (user) {
+      fetchUnreadCount(); // Fetch immediately
+      intervalId = setInterval(fetchUnreadCount, 30000); // Poll every 30s
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [user]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -87,7 +116,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, logout, register }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, logout, register, unreadNotifications, setUnreadNotifications }}>
       {children}
     </AuthContext.Provider>
   );

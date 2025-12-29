@@ -40,6 +40,11 @@ public interface UserRepository {
      * 查找所有用户
      */
     List<User> findAll();
+
+    /**
+     * 根据ID列表查找用户
+     */
+    List<User> findAllById(Iterable<Long> ids);
     
     /**
      * 删除用户

@@ -10,6 +10,7 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import CreatorCenter from './pages/CreatorCenter'
 import OAuth2Success from './pages/OAuth2Success'
+import Notifications from './pages/Notifications'
 import { useAuth } from './context/AuthContext'
 import './App.css'
 
@@ -48,6 +49,10 @@ function App() {
           <Route 
             path="/oauth2/success" 
             element={<OAuth2Success />} 
+          />
+          <Route 
+            path="/notifications" 
+            element={user ? <Notifications /> : <Navigate to="/login" replace />} 
           />
         </Routes>
       </main>

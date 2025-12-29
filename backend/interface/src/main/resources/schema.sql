@@ -84,6 +84,18 @@ CREATE TABLE IF NOT EXISTS comment_likes (
     UNIQUE(user_id, comment_id)
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    recipient_id BIGINT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    content VARCHAR(500),
+    related_post_id BIGINT,
+    related_comment_id BIGINT,
+    sender_id BIGINT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 1. Spring Boot 3.0
 INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
