@@ -1,7 +1,6 @@
 package com.personal.portfolio.blog.application.service;
 
 import com.personal.portfolio.blog.application.dto.CommentDTO;
-
 import com.personal.portfolio.blog.domain.context.AdminPolicy;
 import com.personal.portfolio.blog.domain.context.CurrentUserContext;
 import com.personal.portfolio.blog.domain.event.CommentCreatedEvent;
@@ -12,13 +11,11 @@ import com.personal.portfolio.blog.domain.repository.CommentRepository;
 import com.personal.portfolio.blog.domain.service.CommentDomainService;
 import com.personal.portfolio.converter.PageResultConverter;
 import com.personal.portfolio.page.PageResult;
-
+import com.personal.portfolio.util.BeanCopyUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import io.github.linpeilie.Converter;
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +27,6 @@ public class CommentAppService {
     private final CommentDomainService commentDomainService;
     private final ApplicationEventPublisher eventPublisher;
 
-    private static final Converter converter = new Converter();
     private static final PageResultConverter pageResultConverter = new PageResultConverter();
 
     public PageResult<CommentDTO> listComments(Long postId, Integer page, Integer size) {
@@ -57,7 +53,7 @@ public class CommentAppService {
             saved.getCreatedAt()
         ));
 
-        return converter.convert(saved, CommentDTO.class);
+        return BeanCopyUtils.toBean(saved, CommentDTO.class);
     }
 
     @Transactional

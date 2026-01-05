@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 -- 1. Spring Boot 3.0
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Deep Dive into Spring Boot 3.0: A New Era for Java Development',
 'spring-boot-3-deep-dive',
@@ -183,7 +183,7 @@ FALSE, NOW(), 1, 'Technical', 'Java,Spring Boot,Backend', NOW(), NOW()
        );
 
 -- 2. React Hooks
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Mastering React Hooks: Best Practices and Common Pitfalls',
 'mastering-react-hooks',
@@ -300,7 +300,7 @@ TRUE, NOW(), 1, 'Technical', 'React,Frontend,JavaScript', NOW(), NOW()
        );
 
 -- 3. Docker & Kubernetes
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Docker and Kubernetes: A Comprehensive Guide for Beginners',
 'docker-kubernetes-beginners',
@@ -358,7 +358,7 @@ TRUE, NOW(), 1, 'DevOps', 'Docker,Kubernetes,DevOps,Cloud', NOW(), NOW()
        );
 
 -- 4. Clean Code
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'The Art of Clean Code: Principles for Maintainable Software',
 'art-of-clean-code',
@@ -418,7 +418,7 @@ TRUE, NOW(), 1, 'Engineering', 'Clean Code,Best Practices,Software Engineering',
        );
 
 -- 5. Microservices vs Monolith
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Microservices vs Monolith: Choosing the Right Architecture',
 'microservices-vs-monolith',
@@ -474,7 +474,7 @@ TRUE, NOW(), 1, 'Architecture', 'Microservices,System Design,Architecture', NOW(
        );
 
 -- 6. Rust
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Introduction to Rust: Memory Safety Without Garbage Collection',
 'intro-to-rust',
@@ -536,7 +536,7 @@ FALSE, NOW(), 1, 'Technical', 'Rust,Programming,Systems Programming', NOW(), NOW
        );
 
 -- 7. My Journey
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'My Journey into Tech: From Hello World to Full Stack',
 'my-tech-journey',
@@ -585,7 +585,7 @@ TRUE, NOW(), 1, 'Life', 'Career,Personal,Advice', NOW(), NOW()
        );
 
 -- 8. SQL Indexing
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Understanding SQL Indexing: How to Optimize Database Performance',
 'understanding-sql-indexing',
@@ -656,7 +656,7 @@ TRUE, NOW(), 1, 'Technical', 'SQL,Database,Performance', NOW(), NOW()
        );
 
 -- 9. Portfolio
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Building This Portfolio: Tech Stack and Design Decisions',
 'building-this-portfolio',
@@ -719,7 +719,7 @@ FALSE, NOW(), 1, 'Project', 'Portfolio,React,Spring Boot,Web Development', NOW()
        );
 
 -- 10. Productivity
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'Productivity Hacks for Developers: Work Smarter, Not Harder',
 'productivity-hacks',
@@ -782,7 +782,7 @@ TRUE, NOW(), 1, 'Life', 'Productivity,Career,Soft Skills', NOW(), NOW()
        );
 
 -- 11. AI Future
-INSERT INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
+INSERT IGNORE INTO blog_posts (title, slug, content, summary, is_published, published_at, author_id, category, tags, created_at, updated_at)
 VALUES (
 'The Future of AI in Coding: Will We Be Replaced?',
 'future-of-ai-coding',

@@ -4,22 +4,20 @@ import com.personal.portfolio.blog.application.dto.CreateBlogPostCommand;
 import com.personal.portfolio.blog.application.dto.QueryBlogPostCommand;
 import com.personal.portfolio.blog.application.service.BlogCreateAppService;
 import com.personal.portfolio.blog.application.service.BlogPostAppService;
-import com.personal.portfolio.page.PageResult;
 import com.personal.portfolio.blog.domain.context.CurrentUserContext;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.interfaces.dto.request.CreateBlogPostRequest;
 import com.personal.portfolio.blog.interfaces.dto.request.UpdateBlogPostRequest;
 import com.personal.portfolio.blog.interfaces.exception.AuthenticationException;
-
-import org.springframework.web.bind.annotation.*;
+import com.personal.portfolio.page.PageResult;
+import com.personal.portfolio.util.BeanCopyUtils;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-
-import io.github.linpeilie.Converter;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 /**
  * 博客文章控制器 - 处理HTTP请求和响应
@@ -32,7 +30,6 @@ public class BlogPostController {
     private final BlogPostAppService blogPostAppService;
     private final BlogCreateAppService blogcreateAppService;
     private final CurrentUserContext currentUserContext;
-    private static final Converter converter = new Converter();
 
     /**
      * 创建博客文章
@@ -46,7 +43,7 @@ public class BlogPostController {
             throw new AuthenticationException("用户未登录");
         }
         
-        CreateBlogPostCommand command = converter.convert(request, CreateBlogPostCommand.class);
+        CreateBlogPostCommand command = BeanCopyUtils.toBean(request, CreateBlogPostCommand.class);
         command.setAuthorId(authorId);
 
         // 使用命令对象调用应用服务

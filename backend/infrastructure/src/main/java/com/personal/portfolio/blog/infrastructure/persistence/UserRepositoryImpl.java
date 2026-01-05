@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import io.github.linpeilie.Converter;
+import com.personal.portfolio.util.BeanCopyUtils;
 
 /**
  * 用户仓储实现类 - 使用MyBatis Plus
@@ -23,15 +23,13 @@ public class UserRepositoryImpl implements UserRepository {
     
     private final UserMapper userMapper;
 
-    private static final Converter converter = new Converter();
-
     public UserRepositoryImpl(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
     
     @Override
     public User save(User user) {
-        UserEntity userEntity = converter.convert(user, UserEntity.class);
+        UserEntity userEntity = BeanCopyUtils.toBean(user, UserEntity.class);
         // 显式映射角色以避免类型不匹配
         if (user.getRole() != null) {
             userEntity.setRole(user.getRole().name());
@@ -49,7 +47,7 @@ public class UserRepositoryImpl implements UserRepository {
             userMapper.updateById(userEntity);
         }
         // 更新ID（如果是新增）
-        User saved = converter.convert(userEntity, User.class);
+        User saved = BeanCopyUtils.toBean(userEntity, User.class);
         if (userEntity.getRole() != null) {
             try {
                 saved.setRole(UserRole.valueOf(userEntity.getRole()));
@@ -64,7 +62,7 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findById(Long id) {
         UserEntity userEntity = userMapper.selectById(id);
         return Optional.ofNullable(userEntity).map(entity -> {
-            User u = converter.convert(entity, User.class);
+            User u = BeanCopyUtils.toBean(entity, User.class);
             if (entity.getRole() != null) {
                 try {
                     u.setRole(UserRole.valueOf(entity.getRole()));
@@ -80,7 +78,7 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findByGithubId(String githubId) {
         UserEntity userEntity = userMapper.selectByGithubId(githubId);
         return Optional.ofNullable(userEntity).map(entity -> {
-            User u = converter.convert(entity, User.class);
+            User u = BeanCopyUtils.toBean(entity, User.class);
             if (entity.getRole() != null) {
                 try {
                     u.setRole(UserRole.valueOf(entity.getRole()));
@@ -96,7 +94,7 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findByUsername(String username) {
         UserEntity userEntity = userMapper.selectByUsername(username);
         return Optional.ofNullable(userEntity).map(entity -> {
-            User u = converter.convert(entity, User.class);
+            User u = BeanCopyUtils.toBean(entity, User.class);
             if (entity.getRole() != null) {
                 try {
                     u.setRole(UserRole.valueOf(entity.getRole()));
@@ -112,7 +110,7 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findByEmail(String email) {
         UserEntity userEntity = userMapper.selectByEmail(email);
         return Optional.ofNullable(userEntity).map(entity -> {
-            User u = converter.convert(entity, User.class);
+            User u = BeanCopyUtils.toBean(entity, User.class);
             if (entity.getRole() != null) {
                 try {
                     u.setRole(UserRole.valueOf(entity.getRole()));
@@ -131,7 +129,7 @@ public class UserRepositoryImpl implements UserRepository {
         List<UserEntity> entities = userMapper.selectList(queryWrapper);
         return entities.stream()
                 .map(entity -> {
-                    User u = converter.convert(entity, User.class);
+                    User u = BeanCopyUtils.toBean(entity, User.class);
                     if (entity.getRole() != null) {
                         try {
                             u.setRole(UserRole.valueOf(entity.getRole()));
@@ -149,7 +147,7 @@ public class UserRepositoryImpl implements UserRepository {
         List<UserEntity> entities = userMapper.selectBatchIds((java.util.Collection<Long>) ids);
         return entities.stream()
                 .map(entity -> {
-                    User u = converter.convert(entity, User.class);
+                    User u = BeanCopyUtils.toBean(entity, User.class);
                     if (entity.getRole() != null) {
                         try {
                             u.setRole(UserRole.valueOf(entity.getRole()));

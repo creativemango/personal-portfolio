@@ -2,9 +2,6 @@ package com.personal.portfolio.blog.infrastructure.persistence.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.personal.portfolio.blog.domain.model.BlogPost;
-
-import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +15,6 @@ import java.util.List;
 @Getter
 @Setter
 @TableName("blog_posts")
-@AutoMapper(target = BlogPost.class)
 public class BlogPostEntity {
     
     @TableId(type = IdType.AUTO)

@@ -3,20 +3,19 @@ package com.personal.portfolio.blog.infrastructure.persistence;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.personal.portfolio.page.PageResult;
-import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.event.BlogPostCreatedEvent;
+import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
 import com.personal.portfolio.blog.infrastructure.persistence.entity.BlogPostEntity;
 import com.personal.portfolio.blog.infrastructure.persistence.mapper.BlogPostMapper;
+import com.personal.portfolio.page.PageResult;
+import com.personal.portfolio.util.BeanCopyUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import io.github.linpeilie.Converter;
 
 /**
  * 博客文章仓储实现类 - 使用MyBatis Plus和持久化实体
@@ -25,7 +24,6 @@ import io.github.linpeilie.Converter;
 public class BlogPostRepositoryImpl implements BlogPostRepository {
     
     private final BlogPostMapper blogPostMapper;
-    private static final Converter converter = new Converter();
     private final ApplicationEventPublisher applicationEventPublisher;
     
     public BlogPostRepositoryImpl(
@@ -40,7 +38,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         boolean isNew = blogPost.getId() == null;
         
         // 转换为持久化实体
-        BlogPostEntity entity = converter.convert(blogPost, BlogPostEntity.class);
+        BlogPostEntity entity = BeanCopyUtils.toBean(blogPost, BlogPostEntity.class);
         
         if (isNew) {
             // 新增
@@ -87,7 +85,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         if (entity == null) {
             return Optional.empty();
         }
-        BlogPost domain = converter.convert(entity, BlogPost.class);
+        BlogPost domain = BeanCopyUtils.toBean(entity, BlogPost.class);
         return Optional.ofNullable(domain);
     }
     
@@ -99,7 +97,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         
         // 转换为领域对象
         return entities.stream()
-                .map(entity -> converter.convert(entity, BlogPost.class))
+                .map(entity -> BeanCopyUtils.toBean(entity, BlogPost.class))
                 .collect(Collectors.toList());
     }
     
@@ -109,7 +107,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         
         // 转换为领域对象
         return entities.stream()
-                .map(entity -> converter.convert(entity, BlogPost.class))
+                .map(entity -> BeanCopyUtils.toBean(entity, BlogPost.class))
                 .collect(Collectors.toList());
     }
     
@@ -148,7 +146,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         
         // 转换为领域对象
         List<BlogPost> blogPosts = result.getRecords().stream()
-                .map(entity -> converter.convert(entity, BlogPost.class))
+                .map(entity -> BeanCopyUtils.toBean(entity, BlogPost.class))
                 .collect(Collectors.toList());
         
         // 转换为领域层的PageResult
@@ -178,7 +176,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         
         // 转换为领域对象
         List<BlogPost> blogPosts = result.getRecords().stream()
-                .map(entity -> converter.convert(entity, BlogPost.class))
+                .map(entity -> BeanCopyUtils.toBean(entity, BlogPost.class))
                 .collect(Collectors.toList());
         
         // 转换为领域层的PageResult
@@ -212,7 +210,7 @@ public class BlogPostRepositoryImpl implements BlogPostRepository {
         
         // 转换为领域对象
         List<BlogPost> blogPosts = result.getRecords().stream()
-                .map(entity -> converter.convert(entity, BlogPost.class))
+                .map(entity -> BeanCopyUtils.toBean(entity, BlogPost.class))
                 .collect(Collectors.toList());
         
         // 转换为领域层的PageResult

@@ -1,9 +1,6 @@
 package com.personal.portfolio.blog.infrastructure.persistence.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.personal.portfolio.blog.domain.model.User;
-
-import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,7 +13,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @TableName("users")
-@AutoMapper(target = User.class)
 public class UserEntity {
     
     @TableId(type = IdType.AUTO)

@@ -8,12 +8,10 @@ import com.personal.portfolio.blog.domain.repository.NotificationRepository;
 import com.personal.portfolio.blog.domain.repository.UserRepository;
 import com.personal.portfolio.converter.PageResultConverter;
 import com.personal.portfolio.page.PageResult;
-import io.github.linpeilie.Converter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,7 +22,6 @@ public class NotificationAppService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final CurrentUserContext currentUserContext;
-    private static final Converter converter = new Converter();
     private static final PageResultConverter pageResultConverter = new PageResultConverter();
 
     public PageResult<NotificationDTO> listMyNotifications(Integer page, Integer size) {

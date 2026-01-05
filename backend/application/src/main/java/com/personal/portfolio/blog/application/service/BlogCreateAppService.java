@@ -6,13 +6,12 @@ import com.personal.portfolio.blog.application.exception.BusinessException;
 import com.personal.portfolio.blog.domain.model.BlogPost;
 import com.personal.portfolio.blog.domain.repository.BlogPostRepository;
 import com.personal.portfolio.blog.domain.service.FileUploadService;
-import org.springframework.web.multipart.MultipartFile;
-
-import io.github.linpeilie.Converter;
+import com.personal.portfolio.util.BeanCopyUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 创建博客文章命令处理器
@@ -24,7 +23,6 @@ public class BlogCreateAppService {
     private final BlogPostRepository blogPostRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final FileUploadService fileUploadService;
-    private static final Converter converter = new Converter();
 
     @Transactional
     public BlogPost createBlogPost(CreateBlogPostCommand command) {
@@ -34,7 +32,7 @@ public class BlogCreateAppService {
         }
         
         // 创建博客文章
-        BlogPost blogPost = converter.convert(command, BlogPost.class);
+        BlogPost blogPost = BeanCopyUtils.toBean(command, BlogPost.class);
         blogPost.registerCreateEvent();
 
         // 验证博客文章是否有效

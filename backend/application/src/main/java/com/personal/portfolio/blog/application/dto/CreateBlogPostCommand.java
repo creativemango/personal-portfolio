@@ -1,8 +1,5 @@
 package com.personal.portfolio.blog.application.dto;
 
-import com.personal.portfolio.blog.domain.model.BlogPost;
-
-import io.github.linpeilie.annotations.AutoMapper;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -13,7 +10,6 @@ import java.util.List;
  * 用于封装创建博客文章的参数，减少方法参数数量
  */
 @Data
-@AutoMapper(target = BlogPost.class)
 public class CreateBlogPostCommand {
     
     private String title;

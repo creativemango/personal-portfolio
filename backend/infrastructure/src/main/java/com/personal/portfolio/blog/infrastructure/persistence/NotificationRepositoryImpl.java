@@ -10,7 +10,7 @@ import com.personal.portfolio.blog.infrastructure.persistence.entity.Notificatio
 import com.personal.portfolio.blog.infrastructure.persistence.mapper.NotificationMapper;
 import com.personal.portfolio.converter.PageResultConverter;
 import com.personal.portfolio.page.PageResult;
-import io.github.linpeilie.Converter;
+import com.personal.portfolio.util.BeanCopyUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -20,7 +20,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class NotificationRepositoryImpl implements NotificationRepository {
     private final NotificationMapper notificationMapper;
-    private static final Converter converter = new Converter();
     private static final PageResultConverter pageResultConverter = new PageResultConverter();
 
     @Override
@@ -35,7 +34,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
 
     @Override
     public Notification save(Notification notification) {
-        NotificationEntity entity = converter.convert(notification, NotificationEntity.class);
+        NotificationEntity entity = BeanCopyUtils.toBean(notification, NotificationEntity.class);
         if (entity.getId() == null) {
             notificationMapper.insert(entity);
             notification.setId(entity.getId());
@@ -51,7 +50,7 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         if (entity == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(converter.convert(entity, Notification.class));
+        return Optional.ofNullable(BeanCopyUtils.toBean(entity, Notification.class));
     }
 
     @Override

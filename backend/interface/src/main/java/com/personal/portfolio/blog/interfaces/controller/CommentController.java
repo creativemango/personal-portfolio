@@ -6,20 +6,17 @@ import com.personal.portfolio.blog.interfaces.dto.request.CreateCommentRequest;
 import com.personal.portfolio.blog.interfaces.dto.response.CommentResponse;
 import com.personal.portfolio.converter.PageResultConverter;
 import com.personal.portfolio.page.PageResult;
-
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import io.github.linpeilie.Converter;
+import com.personal.portfolio.util.BeanCopyUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class CommentController {
     private final CommentAppService commentService;
-    private static final Converter converter = new Converter();
     private static final PageResultConverter pageResultConverter = new PageResultConverter();
 
     @GetMapping("/blog/posts/{postId}/comments")
@@ -32,7 +29,7 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     public CommentResponse createComment(@PathVariable Long postId, @Valid @RequestBody CreateCommentRequest request) {
         CommentDTO created = commentService.createComment(postId, request.getContent(), request.getParentId());
-        return converter.convert(created, CommentResponse.class);
+        return BeanCopyUtils.toBean(created, CommentResponse.class);
     }
 
     @DeleteMapping("/comments/{id}")

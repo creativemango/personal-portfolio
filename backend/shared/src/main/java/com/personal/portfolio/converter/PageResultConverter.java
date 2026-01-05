@@ -2,15 +2,12 @@ package com.personal.portfolio.converter;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.personal.portfolio.page.PageResult;
+import com.personal.portfolio.util.BeanCopyUtils;
 
 import java.util.Collections;
 import java.util.List;
 
-import io.github.linpeilie.Converter;
-
 public class PageResultConverter {
-
-    private static final Converter converter = new Converter();
 
     /**
      * 通用 PageResult 转换
@@ -22,7 +19,7 @@ public class PageResultConverter {
 
         // 转换列表元素
         List<B> convertedList = source.getRecords() != null && !source.getRecords().isEmpty()
-                ? converter.convert(source.getRecords(), targetClass)
+                ? BeanCopyUtils.toList(source.getRecords(), targetClass)
                 : Collections.emptyList();
 
         // 创建新的 PageResult（保留分页信息）
@@ -44,7 +41,7 @@ public class PageResultConverter {
 
         // 转换列表元素
         List<D> convertedList = iPage.getRecords() != null && !iPage.getRecords().isEmpty()
-                ? converter.convert(iPage.getRecords(), targetClass)
+                ? BeanCopyUtils.toList(iPage.getRecords(), targetClass)
                 : Collections.emptyList();
 
         // 创建 PageResult

@@ -1,14 +1,10 @@
 package com.personal.portfolio.blog.application.dto;
 
-import com.personal.portfolio.blog.domain.model.Comment;
-
 import java.time.LocalDateTime;
 
-import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
 
 @Data
-@AutoMapper(target = Comment.class)
 public class CommentDTO {
     private Long id;
     private Long postId;

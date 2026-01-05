@@ -31,12 +31,6 @@
     </properties>
 
     <dependencies>
-        <!-- MapStruct Plus for object mapping -->
-        <dependency>
-            <groupId>io.github.linpeilie</groupId>
-            <artifactId>mapstruct-plus-spring-boot-starter</artifactId>
-            <version>1.4.6</version>
-        </dependency>
         <!-- MapStruct annotation processor -->
         <dependency>
             <groupId>org.mapstruct</groupId>
@@ -74,16 +68,6 @@
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                             <version>1.18.34</version>
-                        </path>
-                        <path>
-                            <groupId>io.github.linpeilie</groupId>
-                            <artifactId>mapstruct-plus-processor</artifactId>
-                            <version>1.4.6</version>
-                        </path>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok-mapstruct-binding</artifactId>
-                            <version>0.2.0</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

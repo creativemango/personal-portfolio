@@ -17,13 +17,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-import io.github.linpeilie.Converter;
+import com.personal.portfolio.util.BeanCopyUtils;
 
 @Repository
 public class CommentRepositoryImpl implements CommentRepository {
     private final CommentMapper commentMapper;
     private final CommentLikeMapper commentLikeMapper;
-    private static final Converter converter = new Converter();
     private static final PageResultConverter pageResultConverter = new PageResultConverter();
 
     public CommentRepositoryImpl(CommentMapper commentMapper, CommentLikeMapper commentLikeMapper) {
@@ -44,7 +43,7 @@ public class CommentRepositoryImpl implements CommentRepository {
 
     @Override
     public Comment save(Comment comment) {
-        CommentEntity entity = converter.convert(comment, CommentEntity.class);
+        CommentEntity entity = BeanCopyUtils.toBean(comment, CommentEntity.class);
         if (entity.getId() == null) {
             if (entity.getIsApproved() == null) {
                 entity.setIsApproved(true);
@@ -63,7 +62,7 @@ public class CommentRepositoryImpl implements CommentRepository {
         if (entity == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(converter.convert(entity, Comment.class));
+        return Optional.ofNullable(BeanCopyUtils.toBean(entity, Comment.class));
     }
 
     @Override
