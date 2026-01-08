@@ -9,27 +9,27 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://logiclane.site',
         changeOrigin: true,
         secure: false,
       },
       '/oauth2/authorization': {
-        target: 'http://localhost:8080',
+        target: 'http://logiclane.site',
         changeOrigin: true,
         secure: false,
       },
       '/login/oauth2': {
-        target: 'http://localhost:8080',
+        target: 'http://logiclane.site',
         changeOrigin: true,
         secure: false,
       },
       '/logout': {
-        target: 'http://localhost:8080',
+        target: 'http://logiclane.site',
         changeOrigin: true,
         secure: false,
       },
       '/uploads': {
-        target: 'http://localhost:8080',
+        target: 'http://logiclane.site',
         changeOrigin: true,
         secure: false,
       }
