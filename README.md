@@ -178,9 +178,64 @@ DELETE /api/blog/posts/{id}
 4. Application层协调Domain对象和Infrastructure
 5. Interface层处理HTTP请求和响应
 
+## 前端项目配置
+
+### 环境变量配置
+
+前端项目使用环境变量来配置不同环境的API endpoint。配置文件位于 `frontend/` 目录下：
+
+1. **`.env.development`** - 开发环境配置
+2. **`.env.production`** - 生产环境配置
+3. **`.env.example`** - 环境变量示例文件
+
+#### 开发环境配置
+在开发环境中，前端通过Vite代理访问后端API：
+```bash
+# 开发环境配置
+VITE_API_BASE_URL=/api
+VITE_API_PROXY_TARGET=http://11.11.11.11:8080
+```
+
+#### 生产环境配置
+在生产环境中，前端直接访问后端API：
+```bash
+# 生产环境配置
+VITE_API_BASE_URL=https://logiclane.site/api
+```
+
+#### 如何配置Vercel部署
+在Vercel控制台中设置环境变量：
+1. 进入项目设置
+2. 选择"Environment Variables"
+3. 添加以下变量：
+   - `VITE_API_BASE_URL`: 生产环境的API地址（如：`https://logiclane.site/api`）
+
+### 运行前端项目
+
+```bash
+# 进入前端目录
+cd frontend
+
+# 安装依赖
+npm install
+
+# 开发模式运行
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+### 前端开发说明
+- 开发时访问 `http://localhost:3001`
+- API请求会自动代理到 `VITE_API_PROXY_TARGET`
+- 生产环境构建时，API请求会直接发送到 `VITE_API_BASE_URL`
+
 ## 后续扩展
 
-- 添加前端模块 (React/Vue/Angular)
 - 添加用户认证和授权
 - 集成真实数据库(MySQL/PostgreSQL)
 - 添加文件上传功能
